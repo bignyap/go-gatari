@@ -1,6 +1,9 @@
 package middlewares
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -14,6 +17,30 @@ func CorsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check for the Authorization header
+		token := r.Header.Get("Authorization")
+		if token != "valid-token" { // Replace "valid-token" with your actual token logic
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// Call the next handler if authenticated
+		next.ServeHTTP(w, r)
+	})
+}
+
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log the request method and URL
+		log.Printf("Request: %s %s", r.Method, r.URL.Path)
+
+		// Call the next handler
 		next.ServeHTTP(w, r)
 	})
 }
