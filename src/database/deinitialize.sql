@@ -11,16 +11,16 @@ ALTER TABLE tier_base_pricing DROP FOREIGN KEY tier_base_pricing_ibfk_2;
 ALTER TABLE custom_endpoint_pricing DROP FOREIGN KEY custom_endpoint_pricing_ibfk_1;
 ALTER TABLE custom_endpoint_pricing DROP FOREIGN KEY custom_endpoint_pricing_ibfk_2;
 
-ALTER TABLE api_usage DROP FOREIGN KEY api_usage_ibfk_1;
-ALTER TABLE api_usage DROP FOREIGN KEY api_usage_ibfk_2;
-ALTER TABLE api_usage DROP FOREIGN KEY api_usage_ibfk_3;
+ALTER TABLE api_usage_summary DROP FOREIGN KEY api_usage_summary_ibfk_1;
+ALTER TABLE api_usage_summary DROP FOREIGN KEY api_usage_summary_ibfk_2;
+ALTER TABLE api_usage_summary DROP FOREIGN KEY api_usage_summary_ibfk_3;
 
 ALTER TABLE billing_history DROP FOREIGN KEY billing_history_ibfk_1;
 
 ALTER TABLE organization_permission DROP FOREIGN KEY organization_permission_ibfk_2;
 
 
-DROP TABLE IF EXISTS api_usage;
+DROP TABLE IF EXISTS api_usage_summary;
 DROP TABLE IF EXISTS billing_history;
 DROP TABLE IF EXISTS organization_permission;
 DROP TABLE IF EXISTS custom_endpoint_pricing;

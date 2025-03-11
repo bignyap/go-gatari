@@ -120,8 +120,6 @@ ALTER TABLE custom_endpoint_pricing ADD FOREIGN KEY (subscription_id) REFERENCES
 
 ALTER TABLE custom_endpoint_pricing ADD FOREIGN KEY (tier_base_pricing_id) REFERENCES tier_base_pricing (tier_base_pricing_id);
 
-ALTER TABLE api_usage ADD FOREIGN KEY (subscription_id) REFERENCES subscription (subscription_id);
-
 ALTER TABLE billing_history ADD FOREIGN KEY (subscription_id) REFERENCES subscription (subscription_id);
 
 ALTER TABLE api_usage_summary ADD FOREIGN KEY (subscription_id) REFERENCES subscription (subscription_id);
