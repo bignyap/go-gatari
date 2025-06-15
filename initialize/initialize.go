@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bignyap/go-gate-keeper/database/dbconn"
-	"github.com/bignyap/go-gate-keeper/database/sqlcgen"
-	"github.com/bignyap/go-gate-keeper/handler"
-	"github.com/bignyap/go-gate-keeper/middlewares"
-	"github.com/bignyap/go-gate-keeper/router"
+	"github.com/bignyap/go-admin/database/dbconn"
+	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-admin/handler"
+	"github.com/bignyap/go-admin/middlewares"
+	"github.com/bignyap/go-admin/router"
 	"github.com/joho/godotenv"
 )
 

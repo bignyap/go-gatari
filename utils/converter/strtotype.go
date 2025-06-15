@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bignyap/go-gate-keeper/utils/misc"
+	"github.com/bignyap/go-admin/utils/misc"
 )
 
 type Converter[T any] interface {

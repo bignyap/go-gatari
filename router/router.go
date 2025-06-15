@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/bignyap/go-gate-keeper/handler"
+	"github.com/bignyap/go-admin/handler"
 )
 
 func OrgTypeHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {

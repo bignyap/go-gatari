@@ -3,7 +3,7 @@ package handler
 import (
 	"database/sql"
 
-	"github.com/bignyap/go-gate-keeper/database/sqlcgen"
+	"github.com/bignyap/go-admin/database/sqlcgen"
 )
 
 type ApiConfig struct {

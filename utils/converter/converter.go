@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/bignyap/go-gate-keeper/utils/misc"
+	"github.com/bignyap/go-admin/utils/misc"
 )
 
 func StrTo[T any](str string, converter Converter[T]) (T, error) {

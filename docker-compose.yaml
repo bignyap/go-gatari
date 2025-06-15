@@ -1,12 +1,13 @@
 services:
   
   gate-keeper:
-    container_name: gate_keeper
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        CACHE_BUST: ${CACHE_BUST}
+    container_name: go-admin
+    image: go-admin:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
     restart: always
     environment:
       DB_HOST: ${DB_HOST}
@@ -27,8 +28,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src
+    # volumes:
+    #   - ./src:/app/src
 
   mysql:
    image: mysql:8.0.32
@@ -44,7 +45,7 @@ services:
    expose:
      - '3306'
    volumes:
-     - 'gate_keeper_mysql_data:/var/lib/mysql'
+     - 'go-admin-mysql-data:/var/lib/mysql'
    healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
@@ -67,7 +68,7 @@ services:
   redis:
     image: redis
     volumes:
-      - redis_data:/data
+      - go-admin-redis-data:/data
     ports:
       - '6379:6379'
     expose:
@@ -79,7 +80,7 @@ services:
       retries: 10
 
 volumes:
-  gate_keeper_mysql_data:
+  go-admin-mysql-data:
     driver: local
-  redis_data:
+  go-admin-redis-data:
     driver: local

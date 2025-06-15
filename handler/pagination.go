@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/bignyap/go-gate-keeper/utils/converter"
+	"github.com/bignyap/go-admin/utils/converter"
 )
 
 func ExtractPaginationDetail(w http.ResponseWriter, r *http.Request) (int, int) {

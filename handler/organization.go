@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bignyap/go-gate-keeper/database/dbutils"
-	"github.com/bignyap/go-gate-keeper/database/sqlcgen"
-	"github.com/bignyap/go-gate-keeper/utils/converter"
-	"github.com/bignyap/go-gate-keeper/utils/formvalidator"
-	"github.com/bignyap/go-gate-keeper/utils/misc"
+	"github.com/bignyap/go-admin/database/dbutils"
+	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-admin/utils/converter"
+	"github.com/bignyap/go-admin/utils/formvalidator"
+	"github.com/bignyap/go-admin/utils/misc"
 )
 
 type CreateOrganizationParams struct {
