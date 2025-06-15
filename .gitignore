@@ -18,6 +18,8 @@
 vendor/
 Godeps/
 dep/
+build/
+artifacts/
 
 # GoLand project files
 .idea/
