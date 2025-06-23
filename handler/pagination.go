@@ -1,15 +1,16 @@
 package handler
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/bignyap/go-admin/utils/converter"
+	"github.com/gin-gonic/gin"
 )
 
-func ExtractPaginationDetail(w http.ResponseWriter, r *http.Request) (int, int) {
+func ExtractPaginationDetail(c *gin.Context) (int, int, error) {
 
-	pageNumberStr := r.URL.Query().Get("page_number")
-	itemsPerPageStr := r.URL.Query().Get("items_per_page")
+	pageNumberStr := c.Query("page_number")
+	itemsPerPageStr := c.Query("items_per_page")
 
 	defaultPageNumber := 1
 	defaultItemsPerPage := 25
@@ -23,8 +24,7 @@ func ExtractPaginationDetail(w http.ResponseWriter, r *http.Request) (int, int) 
 	} else {
 		limit, err = converter.StrToInt(itemsPerPageStr)
 		if err != nil {
-			respondWithError(w, StatusBadRequest, "Invalid items_per_page format")
-			return 0, 0
+			return 0, 0, fmt.Errorf("Invalid items_per_page format")
 		}
 	}
 
@@ -33,11 +33,10 @@ func ExtractPaginationDetail(w http.ResponseWriter, r *http.Request) (int, int) 
 	} else {
 		offset, err = converter.StrToInt(pageNumberStr)
 		if err != nil {
-			respondWithError(w, StatusBadRequest, "Invalid page_number format")
-			return 0, 0
+			return 0, 0, fmt.Errorf("Invalid page_number format")
 		}
 		offset = ((offset - 1) * limit)
 	}
 
-	return limit, offset
+	return limit, offset, nil
 }

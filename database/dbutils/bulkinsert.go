@@ -2,36 +2,28 @@ package dbutils
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// https://docs.sqlc.dev/en/stable/howto/insert.html
-
 type BulkInserter interface {
-	InsertRows(ctx context.Context, tx *sql.Tx) (int64, error)
+	InsertRows(ctx context.Context, tx pgx.Tx) (int64, error)
 }
 
-func InsertWithTransaction(ctx context.Context, db *sql.DB, inserter BulkInserter) (int64, error) {
-
-	tx, err := db.Begin()
+func InsertWithTransaction(ctx context.Context, pool *pgxpool.Pool, inserter BulkInserter) (int64, error) {
+	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
+	defer tx.Rollback(ctx) // safe to call always
 
 	affectedRows, err := inserter.InsertRows(ctx, tx)
 	if err != nil {
-		tx.Rollback()
 		return 0, err
 	}
 
-	_, err = tx.ExecContext(ctx, "SHOW WARNINGS")
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return 0, err
 	}
 

@@ -9,6 +9,12 @@ BUILD_DIR = $(REPO_FOLDER)/build
 ENTRYPOINT = cmd/go-admin/main.go
 DEBUG_ENTRYPOINT = cmd/debug/debug.go
 PROFILE_OUTPUT = top
+ENABLE_PPROF = true
+
+GOOSE=go run github.com/pressly/goose/v3/cmd/goose
+DB_DRIVER=postgres
+DB_DSN=postgres://go-admin:go-admin@localhost:5432/go-admin?sslmode=disable
+MIGRATIONS_DIR=./database/sqlc/schema
 
 ######################
 # Go Clean & Setup
@@ -54,6 +60,21 @@ mem-profile:
 
 cpu-profile:
 	echo "$(PROFILE_OUTPUT)" | go tool pprof cpu.pprof
+
+######################
+# DB Migration With Goose
+######################
+migrate-up:
+	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" up
+
+migrate-down:
+	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" down
+
+migrate-status:
+	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" status
+
+sqlc-generate:
+	sqlc generate
 
 ######################
 # Build

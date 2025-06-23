@@ -1,129 +1,131 @@
 package router
 
 import (
-	"net/http"
-
+	"github.com/bignyap/go-admin/database/sqlcgen"
 	"github.com/bignyap/go-admin/handler"
+	"github.com/bignyap/go-utilities/logger/api"
+	"github.com/bignyap/go-utilities/server"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func OrgTypeHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /orgType", apiConfig.CreateOrgTypeHandler)
-	mux.HandleFunc("POST /orgType/batch", apiConfig.CreateOrgTypeInBatchHandler)
-	mux.HandleFunc("GET /orgType", apiConfig.ListOrgTypeHandler)
-	mux.HandleFunc("DELETE /orgType/{Id}", apiConfig.DeleteOrgTypeHandler)
-
+func OrgTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/orgType")
+	routerGrp.POST("/", h.CreateOrgTypeHandler)
+	routerGrp.POST("/batch", h.CreateOrgTypeInBatchHandler)
+	routerGrp.GET("/", h.ListOrgTypeHandler)
+	routerGrp.DELETE("/:Id", h.DeleteOrgTypeHandler)
 }
 
-func SubTierHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /subTier", apiConfig.CreateSubcriptionTierHandler)
-	mux.HandleFunc("POST /subTier/batch", apiConfig.CreateSubscriptionTierInBatchHandler)
-	mux.HandleFunc("GET /subTier", apiConfig.ListSubscriptionTiersHandler)
-	mux.HandleFunc("DELETE /subTier/{Id}", apiConfig.DeleteSubscriptionTierHandler)
-
+func SubTierHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/subTier")
+	routerGrp.POST("/", h.CreateSubscriptionTierHandler)
+	routerGrp.POST("/batch", h.CreateSubscriptionTierInBatchHandler)
+	routerGrp.GET("/", h.ListSubscriptionTiersHandler)
+	routerGrp.DELETE("/:Id", h.DeleteSubscriptionTierHandler)
 }
 
-func EndpointHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /endpoint", apiConfig.RegisterEndpointHandler)
-	mux.HandleFunc("POST /endpoint/batch", apiConfig.RegisterEndpointInBatchHandler)
-	mux.HandleFunc("GET /endpoint", apiConfig.ListEndpointsHandler)
-	mux.HandleFunc("DELETE /endpoint/{Id}", apiConfig.DeleteEndpointsByIdHandler)
-
+func EndpointHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/endpoint")
+	routerGrp.POST("/", h.RegisterEndpointHandler)
+	routerGrp.POST("/batch", h.RegisterEndpointInBatchHandler)
+	routerGrp.GET("/", h.ListEndpointsHandler)
+	routerGrp.DELETE("/:Id", h.DeleteEndpointsByIdHandler)
 }
 
-func OrganizationHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /org", apiConfig.CreateOrganizationandler)
-	mux.HandleFunc("POST /org/batch", apiConfig.CreateOrganizationInBatchandler)
-	mux.HandleFunc("GET /org", apiConfig.ListOrganizationsHandler)
-	mux.HandleFunc("DELETE /org/{Id}", apiConfig.DeleteOrganizationByIdHandler)
-	mux.HandleFunc("GET /org/{Id}", apiConfig.GetOrganizationByIdHandler)
-
+func OrganizationHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/org")
+	routerGrp.POST("/", h.CreateOrganizationandler)
+	routerGrp.POST("/batch", h.CreateOrganizationInBatchandler)
+	routerGrp.GET("/", h.ListOrganizationsHandler)
+	routerGrp.DELETE("/:Id", h.DeleteOrganizationByIdHandler)
+	routerGrp.GET("/:Id", h.GetOrganizationByIdHandler)
 }
 
-func TierPricingHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /tierPricing", apiConfig.CreateTierPricingHandler)
-	mux.HandleFunc("POST /tierPricing/batch", apiConfig.CreateTierPricingInBatchandler)
-	mux.HandleFunc("DELETE /tierPricing/tierId/{tier_id}", apiConfig.DeleteTierPricingHandler)
-	mux.HandleFunc("DELETE /tierPricing/id/{id}", apiConfig.DeleteTierPricingHandler)
-	mux.HandleFunc("GET /tierPricing/{tier_id}", apiConfig.GetTierPricingByTierIdHandler)
-
+func TierPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/tierPricing")
+	routerGrp.POST("/batch", h.CreateTierPricingInBatchandler)
+	routerGrp.DELETE("/tierId/:tier_id", h.DeleteTierPricingHandler)
+	routerGrp.DELETE("/id/:id", h.DeleteTierPricingHandler)
+	routerGrp.GET("/:tier_id", h.GetTierPricingByTierIdHandler)
 }
 
-func SubscriptionHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /subscription", apiConfig.CreateSubscriptionHandler)
-	mux.HandleFunc("POST /subscription/batch", apiConfig.CreateSubscriptionInBatchandler)
-	mux.HandleFunc("DELETE /subscription/id/{id}", apiConfig.DeleteSubscriptionHandler)
-	mux.HandleFunc("DELETE /subscription/orgId/{organization_id}", apiConfig.DeleteSubscriptionHandler)
-	mux.HandleFunc("GET /subscription/id/{id}", apiConfig.GetSubscriptionHandler)
-	mux.HandleFunc("GET /subscription/orgId/{organization_id}", apiConfig.GetSubscriptionByrgIdHandler)
-	mux.HandleFunc("GET /subscription", apiConfig.ListSubscriptionHandler)
-
+func SubscriptionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/subscription")
+	routerGrp.POST("/", h.CreateSubscriptionHandler)
+	routerGrp.POST("/batch", h.CreateSubscriptionInBatchandler)
+	routerGrp.DELETE("/id/:id", h.DeleteSubscriptionHandler)
+	routerGrp.DELETE("/orgId/:organization_id", h.DeleteSubscriptionHandler)
+	routerGrp.GET("/id/:id", h.GetSubscriptionHandler)
+	routerGrp.GET("/orgId/:organization_id", h.GetSubscriptionByrgIdHandler)
+	routerGrp.GET("/", h.ListSubscriptionHandler)
 }
 
-func CustomPricingHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /customPricing", apiConfig.CreateCustomPricingHandler)
-	mux.HandleFunc("POST /customPricing/batch", apiConfig.CreateCustomPricingInBatchandler)
-	mux.HandleFunc("DELETE /customPricing/subId/{subscription_id}", apiConfig.DeleteCustomPricingHandler)
-	mux.HandleFunc("DELETE /customPricing/id/{id}", apiConfig.DeleteCustomPricingHandler)
-	mux.HandleFunc("GET /customPricing/{subscription_id}", apiConfig.GetCustomPricingHandler)
-
+func CustomPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/customPricing")
+	routerGrp.POST("/", h.CreateCustomPricingHandler)
+	routerGrp.POST("/batch", h.CreateCustomPricingInBatchandler)
+	routerGrp.DELETE("/subId/:subscription_id", h.DeleteCustomPricingHandler)
+	routerGrp.DELETE("/id/:id", h.DeleteCustomPricingHandler)
+	routerGrp.GET("/:subscription_id", h.GetCustomPricingHandler)
 }
 
-func ResourceTypeHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /resourceType", apiConfig.CreateResurceTypeHandler)
-	mux.HandleFunc("POST /resourceType/batch", apiConfig.CreateResurceTypeInBatchHandler)
-	mux.HandleFunc("DELETE /resourceType/{id}", apiConfig.DeleteResourceTypeHandler)
-	mux.HandleFunc("GET /resourceType", apiConfig.ListResourceTypeHandler)
-
+func ResourceTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/resourceType")
+	routerGrp.POST("/", h.CreateResurceTypeHandler)
+	routerGrp.POST("/batch", h.CreateResurceTypeInBatchHandler)
+	routerGrp.DELETE("/:id", h.DeleteResourceTypeHandler)
+	routerGrp.GET("/", h.ListResourceTypeHandler)
 }
 
-func OrgPermissionHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /orgPermission", apiConfig.CreateOrgPermissionHandler)
-	mux.HandleFunc("POST /orgPermission/batch", apiConfig.CreateOrgPermissionInBatchHandler)
-	mux.HandleFunc("DELETE /orgPermission/{organization_id}", apiConfig.DeleteOrgPermissionHandler)
-	mux.HandleFunc("GET /orgPermission/{organization_id}", apiConfig.GetOrgPermissionHandler)
-
+func OrgPermissionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/orgPermission")
+	routerGrp.POST("/", h.CreateOrgPermissionHandler)
+	routerGrp.POST("/batch", h.CreateOrgPermissionInBatchHandler)
+	routerGrp.DELETE("/:organization_id", h.DeleteOrgPermissionHandler)
+	routerGrp.GET("/:organization_id", h.GetOrgPermissionHandler)
 }
 
-func BillingHistoryHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /billingHistory", apiConfig.CreateBillingHistoryHandler)
-	mux.HandleFunc("POST /billingHistory/batch", apiConfig.CreateBillingHistoryInBatchHandler)
-	mux.HandleFunc("GET /billingHistory/{id}", apiConfig.GetBillingHistoryByIdHandler)
-	mux.HandleFunc("GET /billingHistory/orgId/{organization_id}", apiConfig.GetBillingHistoryByOrgIdHandler)
-	mux.HandleFunc("GET /billingHistory/subId/{subscription_id}", apiConfig.GetBillingHistoryBySubIdHandler)
-
+func BillingHistoryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/billingHistory")
+	routerGrp.POST("/", h.CreateBillingHistoryHandler)
+	routerGrp.POST("/batch", h.CreateBillingHistoryInBatchHandler)
+	routerGrp.GET("/:id", h.GetBillingHistoryByIdHandler)
+	routerGrp.GET("/orgId/:organization_id", h.GetBillingHistoryByOrgIdHandler)
+	routerGrp.GET("/subId/:subscription_id", h.GetBillingHistoryBySubIdHandler)
 }
 
-func ApiUsageSummaryHandler(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
-
-	mux.HandleFunc("POST /apiUsageSummary", apiConfig.CreateApiUsageHander)
-	mux.HandleFunc("POST /apiUsageSummary/batch", apiConfig.CreateApiUsageInBatchHander)
-	mux.HandleFunc("GET /apiUsageSummary/orgId/{organization_id}", apiConfig.GetApiUsageSummaryByOrgIdHandler)
-	mux.HandleFunc("GET /apiUsageSummary/subId/{subscription_id}", apiConfig.GetApiUsageSummaryBySubIdHandler)
-	mux.HandleFunc("GET /apiUsageSummary/endpointId/{endpoint_id}", apiConfig.GetApiUsageSummaryByEndpointIdHandler)
+func ApiUsageSummaryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+	routerGrp := r.Group("/apiUsageSummary")
+	routerGrp.POST("/batch", h.CreateApiUsageInBatchHandler)
+	routerGrp.GET("/orgId/:organization_id", h.GetApiUsageSummaryByOrgIdHandler)
+	routerGrp.GET("/subId/:subscription_id", h.GetApiUsageSummaryBySubIdHandler)
+	routerGrp.GET("/endpointId/:endpoint_id", h.GetApiUsageSummaryByEndpointIdHandler)
 }
 
-func RegisterHandlers(mux *http.ServeMux, apiConfig *handler.ApiConfig) {
+func RegisterHandlers(
+	mainRouter *gin.RouterGroup,
+	logger api.Logger,
+	rw *server.ResponseWriter,
+	db *sqlcgen.Queries,
+	conn *pgxpool.Pool,
+	validator *validator.Validate,
+) {
 
-	mux.HandleFunc("/", handler.RootHandler)
-	OrgTypeHandler(mux, apiConfig)
-	SubTierHandler(mux, apiConfig)
-	EndpointHandler(mux, apiConfig)
-	OrganizationHandler(mux, apiConfig)
-	TierPricingHandler(mux, apiConfig)
-	SubscriptionHandler(mux, apiConfig)
-	CustomPricingHandler(mux, apiConfig)
-	ResourceTypeHandler(mux, apiConfig)
-	OrgPermissionHandler(mux, apiConfig)
-	BillingHistoryHandler(mux, apiConfig)
-	ApiUsageSummaryHandler(mux, apiConfig)
+	handler := handler.NewAdminHandler(logger, rw, db, conn, validator)
+
+	mainRouter.GET("/", handler.RootHandler)
+
+	OrgTypeHandler(mainRouter, handler)
+	SubTierHandler(mainRouter, handler)
+	EndpointHandler(mainRouter, handler)
+	OrganizationHandler(mainRouter, handler)
+	TierPricingHandler(mainRouter, handler)
+	SubscriptionHandler(mainRouter, handler)
+	CustomPricingHandler(mainRouter, handler)
+	ResourceTypeHandler(mainRouter, handler)
+	OrgPermissionHandler(mainRouter, handler)
+	BillingHistoryHandler(mainRouter, handler)
+	ApiUsageSummaryHandler(mainRouter, handler)
 }

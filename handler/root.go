@@ -2,9 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome !!")
+func (h *AdminHandler) RootHandler(c *gin.Context) {
+	fmt.Fprintf(c.Writer, "Welcome !!")
 }

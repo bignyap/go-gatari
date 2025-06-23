@@ -1,20 +1,25 @@
 -- name: GetOrgPermission :many
 SELECT * FROM organization_permission
-WHERE organization_id = ?
-LIMIT ? OFFSET ?;
+WHERE organization_id = $1
+LIMIT $2 OFFSET $3;
 
--- name: CreateOrgPermission :execresult 
-INSERT INTO organization_permission (resource_type_id, permission_code, organization_id) 
-VALUES (?, ?, ?);
+-- name: CreateOrgPermission :one 
+INSERT INTO organization_permission (
+    resource_type_id, permission_code, organization_id
+) 
+VALUES ($1, $2, $3)
+RETURNING organization_id;
 
 -- name: CreateOrgPermissions :copyfrom
-INSERT INTO organization_permission (resource_type_id, permission_code, organization_id) 
-VALUES (?, ?, ?);
+INSERT INTO organization_permission (
+    resource_type_id, permission_code, organization_id
+) 
+VALUES ($1, $2, $3);
 
 -- name: DeleteOrgPermissionById :exec
 DELETE FROM organization_permission
-WHERE organization_permission_id = ?;
+WHERE organization_permission_id = $1;
 
 -- name: DeleteOrgPermissionByOrgId :exec
 DELETE FROM organization_permission
-WHERE organization_id = ?;
+WHERE organization_id = $1;

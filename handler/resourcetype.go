@@ -1,199 +1,78 @@
 package handler
 
 import (
-	"context"
-	"database/sql"
-	"encoding/json"
 	"fmt"
-	"net/http"
+	"strconv"
 
-	"github.com/bignyap/go-admin/database/dbutils"
-	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/converter"
-	"github.com/bignyap/go-admin/utils/formvalidator"
+	srvErr "github.com/bignyap/go-utilities/server"
+	"github.com/gin-gonic/gin"
 )
 
-type CreateResourceTypeParams struct {
-	Name        string  `json:"name"`
-	Code        string  `json:"code"`
-	Description *string `json:"description"`
-}
+func (h *AdminHandler) CreateResurceTypeInBatchHandler(c *gin.Context) {
 
-type CreateResourceTypeOutput struct {
-	ID int `json:"id"`
-	CreateResourceTypeParams
-}
-
-func CreateResourceTypeFormValidator(r *http.Request) (*sqlcgen.CreateResourceTypeParams, error) {
-
-	err := formvalidator.ParseFormData(r)
+	input, err := h.ResourceService.CreateResourceTypeJSONValidation(c)
 	if err != nil {
-		return nil, err
-	}
-
-	strFields := []string{"name", "code"}
-	strParsed, err := formvalidator.ParseStringFromForm(r, strFields)
-	if err != nil {
-		return nil, err
-	}
-
-	nullStrField := []string{"description"}
-	nullStrParsed, err := formvalidator.ParseNullStringFromForm(r, nullStrField)
-	if err != nil {
-		return nil, err
-	}
-
-	input := sqlcgen.CreateResourceTypeParams{
-		ResourceTypeName:        strParsed["name"],
-		ResourceTypeCode:        strParsed["code"],
-		ResourceTypeDescription: nullStrParsed["description"],
-	}
-
-	return &input, nil
-}
-
-func CreateResourceTypeJSONValidation(r *http.Request) ([]sqlcgen.CreateResourceTypesParams, error) {
-
-	var inputs []CreateResourceTypeParams
-
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&inputs)
-	if err != nil {
-		return nil, err
-	}
-
-	var outputs []sqlcgen.CreateResourceTypesParams
-
-	for _, input := range inputs {
-		batchInput := sqlcgen.CreateResourceTypesParams{
-			ResourceTypeName:        input.Name,
-			ResourceTypeCode:        input.Code,
-			ResourceTypeDescription: converter.StrToNullStr(*input.Description),
-		}
-		outputs = append(outputs, batchInput)
-	}
-
-	return outputs, nil
-}
-
-type BulkCreateResourceTypeInserter struct {
-	ResourceType []sqlcgen.CreateResourceTypesParams
-	ApiConfig    *ApiConfig
-}
-
-func (input BulkCreateResourceTypeInserter) InsertRows(ctx context.Context, tx *sql.Tx) (int64, error) {
-
-	affectedRows, err := input.ApiConfig.DB.CreateResourceTypes(ctx, input.ResourceType)
-	if err != nil {
-		return 0, err
-	}
-
-	return affectedRows, nil
-}
-
-func (apiCfg *ApiConfig) CreateResurceTypeInBatchHandler(w http.ResponseWriter, r *http.Request) {
-
-	input, err := CreateResourceTypeJSONValidation(r)
-	if err != nil {
-		respondWithError(w, StatusBadRequest, err.Error())
+		h.ResponseWriter.BadRequest(c, err.Error())
 		return
 	}
 
-	inserter := BulkCreateResourceTypeInserter{
-		ResourceType: input,
-		ApiConfig:    apiCfg,
-	}
-
-	affectedRows, err := dbutils.InsertWithTransaction(r.Context(), apiCfg.Conn, inserter)
+	output, err := h.ResourceService.CreateResourceTypeInBatch(c, input)
 	if err != nil {
-		respondWithError(w, StatusBadRequest, fmt.Sprintf("couldn't create the resource types: %s", err))
+		srvErr.ToApiError(c, err)
 		return
 	}
 
-	respondWithJSON(w, StatusCreated, map[string]int64{"affected_rows": affectedRows})
+	h.ResponseWriter.Success(c, map[string]int{"affected_rows": output})
 }
 
-func (apiCfg *ApiConfig) CreateResurceTypeHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AdminHandler) CreateResurceTypeHandler(c *gin.Context) {
 
-	input, err := CreateResourceTypeFormValidator(r)
+	input, err := h.ResourceService.CreateResourceTypeFormValidator(c)
 	if err != nil {
-		respondWithError(w, StatusBadRequest, err.Error())
-	}
-
-	resoureType, err := apiCfg.DB.CreateResourceType(r.Context(), *input)
-	if err != nil {
-		respondWithError(w, StatusBadRequest, fmt.Sprintf("couldn't create the resource type: %s", err))
+		h.ResponseWriter.BadRequest(c, err.Error())
 		return
 	}
 
-	insertedID, err := resoureType.LastInsertId()
+	insertedID, err := h.ResourceService.CreateResourceType(c.Request.Context(), input)
 	if err != nil {
-		respondWithError(w, StatusInternalServerError, fmt.Sprintf("couldn't retrieve last insert ID: %s", err))
+		srvErr.ToApiError(c, err)
 		return
 	}
 
-	output := CreateResourceTypeOutput{
-		ID: int(insertedID),
-		CreateResourceTypeParams: CreateResourceTypeParams{
-			Name:        input.ResourceTypeName,
-			Code:        input.ResourceTypeCode,
-			Description: converter.NullStrToStr(&input.ResourceTypeDescription),
-		},
-	}
-
-	respondWithJSON(w, StatusCreated, output)
+	h.ResponseWriter.Success(c, insertedID)
 }
 
-func (apiCfg *ApiConfig) ListResourceTypeHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AdminHandler) ListResourceTypeHandler(c *gin.Context) {
 
-	limit, offset := ExtractPaginationDetail(w, r)
-	input := sqlcgen.ListResourceTypeParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
-	}
-
-	resourceTypes, err := apiCfg.DB.ListResourceType(r.Context(), input)
+	limit, offset, err := ExtractPaginationDetail(c)
 	if err != nil {
-		respondWithError(w, StatusBadRequest, fmt.Sprintf("couldn't retrieve the resource types: %s", err))
+		h.ResponseWriter.BadRequest(c, err.Error())
 		return
 	}
 
-	var output []CreateResourceTypeOutput
-
-	if len(resourceTypes) == 0 {
-		respondWithJSON(w, StatusOK, []CreateResourceTypeOutput{})
+	resourceTypes, err := h.ResourceService.ListResourceType(c.Request.Context(), limit, offset)
+	if err != nil {
+		srvErr.ToApiError(c, err)
 		return
 	}
 
-	for _, resourceType := range resourceTypes {
-		output = append(output, CreateResourceTypeOutput{
-			ID: int(resourceType.ResourceTypeID),
-			CreateResourceTypeParams: CreateResourceTypeParams{
-				Name:        resourceType.ResourceTypeName,
-				Code:        resourceType.ResourceTypeCode,
-				Description: converter.NullStrToStr(&resourceType.ResourceTypeDescription),
-			},
-		})
-	}
-
-	respondWithJSON(w, StatusOK, output)
+	h.ResponseWriter.Success(c, resourceTypes)
 }
 
-func (apiCfg *ApiConfig) DeleteResourceTypeHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AdminHandler) DeleteResourceTypeHandler(c *gin.Context) {
 
-	id, err := converter.StrToInt(r.PathValue("id"))
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		respondWithError(w, StatusBadRequest, "ID is required")
+		h.ResponseWriter.BadRequest(c, err.Error())
 		return
 	}
 
-	err = apiCfg.DB.DeleteResourceTypeById(r.Context(), int32(id))
-	if err != nil {
-		respondWithError(w, StatusBadRequest, fmt.Sprintf("couldn't delete the resource type: %s", err))
+	if err := h.ResourceService.DeleteResourceType(c.Request.Context(), int(id)); err != nil {
+		srvErr.ToApiError(c, err)
 		return
 	}
 
-	respondWithJSON(w, StatusNoContent, map[string]string{
-		"message": fmt.Sprintf("resource type with ID %d deleted successfully", int32(id)),
+	h.ResponseWriter.Success(c, map[string]string{
+		"message": fmt.Sprintf("resource type with ID %d deleted successfully", id),
 	})
 }
