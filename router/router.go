@@ -12,9 +12,9 @@ import (
 
 func OrgTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/orgType")
-	routerGrp.POST("/", h.CreateOrgTypeHandler)
+	routerGrp.POST("", h.CreateOrgTypeHandler)
 	routerGrp.POST("/batch", h.CreateOrgTypeInBatchHandler)
-	routerGrp.GET("/", h.ListOrgTypeHandler)
+	routerGrp.GET("", h.ListOrgTypeHandler)
 	routerGrp.DELETE("/:Id", h.DeleteOrgTypeHandler)
 }
 
@@ -28,17 +28,17 @@ func SubTierHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 
 func EndpointHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/endpoint")
-	routerGrp.POST("/", h.RegisterEndpointHandler)
+	routerGrp.POST("", h.RegisterEndpointHandler)
 	routerGrp.POST("/batch", h.RegisterEndpointInBatchHandler)
-	routerGrp.GET("/", h.ListEndpointsHandler)
+	routerGrp.GET("", h.ListEndpointsHandler)
 	routerGrp.DELETE("/:Id", h.DeleteEndpointsByIdHandler)
 }
 
 func OrganizationHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/org")
-	routerGrp.POST("/", h.CreateOrganizationandler)
+	routerGrp.POST("", h.CreateOrganizationandler)
 	routerGrp.POST("/batch", h.CreateOrganizationInBatchandler)
-	routerGrp.GET("/", h.ListOrganizationsHandler)
+	routerGrp.GET("", h.ListOrganizationsHandler)
 	routerGrp.DELETE("/:Id", h.DeleteOrganizationByIdHandler)
 	routerGrp.GET("/:Id", h.GetOrganizationByIdHandler)
 }
@@ -53,18 +53,18 @@ func TierPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 
 func SubscriptionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/subscription")
-	routerGrp.POST("/", h.CreateSubscriptionHandler)
+	routerGrp.POST("", h.CreateSubscriptionHandler)
 	routerGrp.POST("/batch", h.CreateSubscriptionInBatchandler)
 	routerGrp.DELETE("/id/:id", h.DeleteSubscriptionHandler)
 	routerGrp.DELETE("/orgId/:organization_id", h.DeleteSubscriptionHandler)
 	routerGrp.GET("/id/:id", h.GetSubscriptionHandler)
 	routerGrp.GET("/orgId/:organization_id", h.GetSubscriptionByrgIdHandler)
-	routerGrp.GET("/", h.ListSubscriptionHandler)
+	routerGrp.GET("", h.ListSubscriptionHandler)
 }
 
 func CustomPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/customPricing")
-	routerGrp.POST("/", h.CreateCustomPricingHandler)
+	routerGrp.POST("", h.CreateCustomPricingHandler)
 	routerGrp.POST("/batch", h.CreateCustomPricingInBatchandler)
 	routerGrp.DELETE("/subId/:subscription_id", h.DeleteCustomPricingHandler)
 	routerGrp.DELETE("/id/:id", h.DeleteCustomPricingHandler)
@@ -73,15 +73,15 @@ func CustomPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 
 func ResourceTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/resourceType")
-	routerGrp.POST("/", h.CreateResurceTypeHandler)
+	routerGrp.POST("", h.CreateResurceTypeHandler)
 	routerGrp.POST("/batch", h.CreateResurceTypeInBatchHandler)
 	routerGrp.DELETE("/:id", h.DeleteResourceTypeHandler)
-	routerGrp.GET("/", h.ListResourceTypeHandler)
+	routerGrp.GET("", h.ListResourceTypeHandler)
 }
 
 func OrgPermissionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/orgPermission")
-	routerGrp.POST("/", h.CreateOrgPermissionHandler)
+	routerGrp.POST("", h.CreateOrgPermissionHandler)
 	routerGrp.POST("/batch", h.CreateOrgPermissionInBatchHandler)
 	routerGrp.DELETE("/:organization_id", h.DeleteOrgPermissionHandler)
 	routerGrp.GET("/:organization_id", h.GetOrgPermissionHandler)
@@ -89,7 +89,7 @@ func OrgPermissionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 
 func BillingHistoryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/billingHistory")
-	routerGrp.POST("/", h.CreateBillingHistoryHandler)
+	routerGrp.POST("", h.CreateBillingHistoryHandler)
 	routerGrp.POST("/batch", h.CreateBillingHistoryInBatchHandler)
 	routerGrp.GET("/:id", h.GetBillingHistoryByIdHandler)
 	routerGrp.GET("/orgId/:organization_id", h.GetBillingHistoryByOrgIdHandler)
@@ -115,7 +115,7 @@ func RegisterHandlers(
 
 	handler := handler.NewAdminHandler(logger, rw, db, conn, validator)
 
-	mainRouter.GET("/", handler.RootHandler)
+	mainRouter.GET("", handler.RootHandler)
 
 	OrgTypeHandler(mainRouter, handler)
 	SubTierHandler(mainRouter, handler)

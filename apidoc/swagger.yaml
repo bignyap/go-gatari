@@ -3,7 +3,7 @@ info:
   title: Go Gate Keeper API
   version: 1.0.0
 servers:
-  - url: 'http://localhost:8080'
+  - url: 'http://localhost:8080/admin/'
     description: "localhost"
 paths:
   /endpoint:
@@ -30,8 +30,8 @@ paths:
     $ref: './paths/subTier.yaml#/paths/~1subTier~1batch'
   /subTier/{Id}:
     $ref: './paths/subTier.yaml#/paths/~1subTier~1{Id}'
-  /tierPricing:
-    $ref: './paths/tierPricing.yaml#/paths/~1tierPricing'
+  # /tierPricing:
+  #   $ref: './paths/tierPricing.yaml#/paths/~1tierPricing'
   /tierPricing/batch:
     $ref: './paths/tierPricing.yaml#/paths/~1tierPricing~1batch'
   /tierPricing/{tier_id}:
