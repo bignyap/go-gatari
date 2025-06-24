@@ -82,7 +82,7 @@ sqlc-generate:
 
 compile-artifacts: pre_compile compile
 
-pre_compile: clean mod-setup mod-update
+pre_compile: clean mod-update
 
 compile:
 	mkdir -p $(BUILD_DIR)

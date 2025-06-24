@@ -15,6 +15,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       APPLICATION_PORT: ${APPLICATION_PORT}
+      ENVIRONMENT: "dev"
     ports:
       - '8080:8080'
     expose:
