@@ -21,8 +21,8 @@ func (h *SubscriptionService) CreateSubscriptionInBatchValidation(c *gin.Context
 func (h *SubscriptionService) CreateSubscriptionValidation(c *gin.Context) (*CreateSubscriptionParams, error) {
 
 	var input CreateSubscriptionParams
-	if err := c.ShouldBindJSON(&input); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
 	}
 
 	now := time.Now()
@@ -37,8 +37,8 @@ func (h *SubscriptionService) CreateSubscriptionValidation(c *gin.Context) (*Cre
 func (h *SubscriptionService) CreateSubscriptionTierValidation(c *gin.Context) (*CreateSubTierParams, error) {
 
 	var input CreateSubTierParams
-	if err := c.ShouldBindJSON(&input); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("invalid inputs: %w", err)
 	}
 
 	return &input, nil

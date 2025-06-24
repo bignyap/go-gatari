@@ -8,13 +8,13 @@ import (
 )
 
 type CreateApiUsageSummaryParams struct {
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	TotalCalls     int       `json:"total_calls"`
-	TotalCost      float64   `json:"total_cost"`
-	SubscriptionId int       `json:"subscription_id"`
-	ApiEndpointId  int       `json:"api_endpoint_id"`
-	OrganizationId int       `json:"organization_id"`
+	StartDate      time.Time `json:"start_date" form:"start_date"`
+	EndDate        time.Time `json:"end_date" form:"end_date"`
+	TotalCalls     int       `json:"total_calls" form:"total_calls"`
+	TotalCost      float64   `json:"total_cost" form:"total_cost"`
+	SubscriptionId int       `json:"subscription_id" form:"subscription_id"`
+	ApiEndpointId  int       `json:"api_endpoint_id" form:"api_endpoint_id"`
+	OrganizationId int       `json:"organization_id" form:"organization_id"`
 }
 
 type CreateApiUsageSummaryOutput struct {

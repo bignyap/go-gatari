@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,11 +11,10 @@ import (
 )
 
 func (h *BillingService) CreateBillingHistoryJSONValidation(c *gin.Context) ([]sqlcgen.CreateBillingHistoriesParams, error) {
-	var inputs []CreateBillingHistoryParams
 
-	err := json.NewDecoder(c.Request.Body).Decode(&inputs)
-	if err != nil {
-		return nil, err
+	var inputs []CreateBillingHistoryParams
+	if err := c.ShouldBindJSON(&inputs); err != nil {
+		return nil, fmt.Errorf("invalid JSON: %w", err)
 	}
 
 	currentTime := time.Now()

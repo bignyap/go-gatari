@@ -14,24 +14,24 @@ func OrgTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/orgType")
 	routerGrp.POST("", h.CreateOrgTypeHandler)
 	routerGrp.POST("/batch", h.CreateOrgTypeInBatchHandler)
-	routerGrp.GET("", h.ListOrgTypeHandler)
 	routerGrp.DELETE("/:Id", h.DeleteOrgTypeHandler)
+	routerGrp.GET("", h.ListOrgTypeHandler)
 }
 
 func SubTierHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp := r.Group("/subTier")
-	routerGrp.POST("/", h.CreateSubscriptionTierHandler)
+	routerGrp.POST("", h.CreateSubscriptionTierHandler)
 	routerGrp.POST("/batch", h.CreateSubscriptionTierInBatchHandler)
-	routerGrp.GET("/", h.ListSubscriptionTiersHandler)
 	routerGrp.DELETE("/:Id", h.DeleteSubscriptionTierHandler)
+	routerGrp.GET("", h.ListSubscriptionTiersHandler)
 }
 
 func EndpointHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
-	routerGrp := r.Group("/endpoint")
+	routerGrp := r.Group("/apiEndpoint")
 	routerGrp.POST("", h.RegisterEndpointHandler)
 	routerGrp.POST("/batch", h.RegisterEndpointInBatchHandler)
-	routerGrp.GET("", h.ListEndpointsHandler)
 	routerGrp.DELETE("/:Id", h.DeleteEndpointsByIdHandler)
+	routerGrp.GET("", h.ListEndpointsHandler)
 }
 
 func OrganizationHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
@@ -113,6 +113,10 @@ func RegisterHandlers(
 	validator *validator.Validate,
 ) {
 
+	regRouterLogger := logger.WithComponent("router.RegisterHandlers")
+
+	regRouterLogger.Info("Starting")
+
 	handler := handler.NewAdminHandler(logger, rw, db, conn, validator)
 
 	mainRouter.GET("", handler.RootHandler)
@@ -128,4 +132,6 @@ func RegisterHandlers(
 	OrgPermissionHandler(mainRouter, handler)
 	BillingHistoryHandler(mainRouter, handler)
 	ApiUsageSummaryHandler(mainRouter, handler)
+
+	regRouterLogger.Info("Completed")
 }

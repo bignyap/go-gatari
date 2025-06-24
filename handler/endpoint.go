@@ -11,6 +11,8 @@ import (
 
 func (h *AdminHandler) RegisterEndpointHandler(c *gin.Context) {
 
+	fmt.Println(c.Request.Body)
+
 	input, err := h.ResourceService.ValidateRegisterInput(c)
 	if err != nil {
 		h.ResponseWriter.BadRequest(c, err.Error())
@@ -40,7 +42,7 @@ func (h *AdminHandler) RegisterEndpointInBatchHandler(c *gin.Context) {
 		return
 	}
 
-	h.ResponseWriter.Created(c, output)
+	h.ResponseWriter.Created(c, map[string]int{"affected_rows": output})
 }
 
 func (h *AdminHandler) ListEndpointsHandler(c *gin.Context) {

@@ -8,18 +8,18 @@ import (
 )
 
 type CreateBillingHistoryParams struct {
-	StartDate      time.Time  `json:"start_date" validate:"required"`
-	EndDate        time.Time  `json:"end_date" validate:"required,gtfield=StartDate"`
-	TotalAmountDue float64    `json:"total_amount_due" validate:"required,gte=0"`
-	TotalCalls     int        `json:"total_calls" validate:"required,gte=0"`
-	PaymentStatus  string     `json:"payment_status" validate:"required,oneof=paid pending failed"`
-	PaymentDate    *time.Time `json:"payment_date" validate:"omitempty"`
-	CreatedAt      time.Time  `json:"created_at" validate:"required"`
-	SubscriptionId int        `json:"subscription_id" validate:"required,gt=0"`
+	StartDate      time.Time  `json:"start_date" form:"start_date" validate:"required"`
+	EndDate        time.Time  `json:"end_date" form:"end_date" validate:"required,gtfield=StartDate"`
+	TotalAmountDue float64    `json:"total_amount_due" form:"total_amount_due" validate:"required,gte=0"`
+	TotalCalls     int        `json:"total_calls" form:"total_calls" validate:"required,gte=0"`
+	PaymentStatus  string     `json:"payment_status" form:"payment_status" validate:"required,oneof=paid pending failed"`
+	PaymentDate    *time.Time `json:"payment_date" form:"payment_date" validate:"omitempty"`
+	CreatedAt      time.Time  `json:"created_at" form:"created_at" validate:"required"`
+	SubscriptionId int        `json:"subscription_id" form:"subscription_id" validate:"required,gt=0"`
 }
 
 type CreateBillingHistoryOutput struct {
-	ID int `json:"id"`
+	ID int `json:"id" form:"id"`
 	CreateBillingHistoryParams
 }
 

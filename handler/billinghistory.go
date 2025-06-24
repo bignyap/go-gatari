@@ -44,7 +44,7 @@ func (h *AdminHandler) CreateBillingHistoryInBatchHandler(c *gin.Context) {
 		return
 	}
 
-	h.ResponseWriter.Success(c, output)
+	h.ResponseWriter.Success(c, map[string]int{"affected_rows": output})
 }
 
 func (h *AdminHandler) GetBillingHistoryByOrgIdHandler(c *gin.Context) {

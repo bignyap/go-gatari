@@ -1,8 +1,8 @@
 package resource
 
 type RegisterEndpointParams struct {
-	Name        string  `json:"name" validate:"required"`
-	Description *string `json:"description"` // optional
+	Name        string  `form:"name" json:"name" validate:"required"`
+	Description *string `form:"description" json:"description"` // optional
 }
 
 type RegisterEndpointOutputs struct {
@@ -11,9 +11,9 @@ type RegisterEndpointOutputs struct {
 }
 
 type CreateResourceTypeParams struct {
-	Name        string  `json:"name" validate:"required,min=1"`
-	Code        string  `json:"code" validate:"required,min=1"`
-	Description *string `json:"description"`
+	Name        string  `form:"name" json:"name" validate:"required,min=1"`
+	Code        string  `form:"code" json:"code" validate:"required,min=1"`
+	Description *string `form:"description" json:"description"`
 }
 
 type CreateResourceTypeOutput struct {

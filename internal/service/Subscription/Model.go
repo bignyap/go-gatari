@@ -7,17 +7,17 @@ import (
 )
 
 type CreateSubscriptionParams struct {
-	Name               string     `json:"name" validate:"required"`
-	Type               string     `json:"type" validate:"required"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
-	StartDate          time.Time  `json:"start_date"`
-	APILimit           *int       `json:"api_limit"`
-	ExpiryDate         *time.Time `json:"expiry_date"`
-	Description        *string    `json:"description"`
-	Status             *bool      `json:"status"`
-	OrganizationID     int        `json:"organization_id" validate:"required"`
-	SubscriptionTierID int        `json:"subscription_tier_id" validate:"required"`
+	Name               string     `json:"name" form:"name" validate:"required"`
+	Type               string     `json:"type" form:"type" validate:"required"`
+	CreatedAt          time.Time  `json:"created_at" form:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at" form:"updated_at"`
+	StartDate          time.Time  `json:"start_date" form:"start_date"`
+	APILimit           *int       `json:"api_limit" form:"api_limit"`
+	ExpiryDate         *time.Time `json:"expiry_date" form:"expiry_date"`
+	Description        *string    `json:"description" form:"description"`
+	Status             *bool      `json:"status" form:"status"`
+	OrganizationID     int        `json:"organization_id" form:"organization_id" validate:"required"`
+	SubscriptionTierID int        `json:"subscription_tier_id" form:"subscription_tier_id" validate:"required"`
 }
 
 type CreateSubscriptionOutput struct {
@@ -74,10 +74,10 @@ func ToListSubscriptionOutputWithCount(inputs []sqlcgen.ListSubscriptionRow) Lis
 }
 
 type CreateSubTierParams struct {
-	Name        string    `json:"name" validate:"required"`
-	Description *string   `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Name        string    `json:"name" form:"name" validate:"required"`
+	Description *string   `json:"description" form:"description"`
+	CreatedAt   time.Time `json:"created_at" form:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" form:"updated_at"`
 }
 
 type CreateSubTierOutput struct {

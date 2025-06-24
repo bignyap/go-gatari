@@ -1,5 +1,5 @@
 paths:
-  /endpoint:
+  /apiEndpoint:
     post:
       summary: Register an endpoint
       operationId: registerEndpoint
@@ -30,12 +30,12 @@ paths:
         '200':
           description: OK
           content:
-            application/x-www-form-urlencoded:
+            application/json:
               schema:
                 type: array
                 items:
                   $ref: '../schemas/Endpoint.yaml#/RegisterEndpointOutput'
-  /endpoint/batch:
+  /apiEndpoint/batch:
     post:
       summary: Register endpoints in bulk
       operationId: registerEndpointInBulk
@@ -52,7 +52,7 @@ paths:
       responses:
         '201':
           description: Created
-  /endpoint/{Id}:
+  /apiEndpoint/{Id}:
     delete:
       summary: Delete an endpoint
       operationId: deleteEndpoint

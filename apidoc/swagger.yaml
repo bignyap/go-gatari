@@ -6,12 +6,12 @@ servers:
   - url: 'http://localhost:8080/admin/'
     description: "localhost"
 paths:
-  /endpoint:
-    $ref: './paths/endpoint.yaml#/paths/~1endpoint'
-  /endpoint/batch:
-    $ref: './paths/endpoint.yaml#/paths/~1endpoint~1batch'
-  /endpoint/{Id}:
-    $ref: './paths/endpoint.yaml#/paths/~1endpoint~1{Id}'
+  /apiEndpoint:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint'
+  /apiEndpoint/batch:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint~1batch'
+  /apiEndpoint/{Id}:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint~1{Id}'
   /resourceType:
     $ref: './paths/resourceType.yaml#/paths/~1resourceType'
   /resourceType/batch:

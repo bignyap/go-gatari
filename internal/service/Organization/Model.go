@@ -8,56 +8,56 @@ import (
 )
 
 type CreateOrgTypeInput struct {
-	Name string `json:"name" validate:"required,min=1"`
+	Name string `json:"name" form:"name" validate:"required,min=1"`
 }
 
 type CreateOrgTypeOutput struct {
-	ID int `json:"id"`
+	ID int `json:"id" form:"id"`
 	CreateOrgTypeInput
 }
 
 type CreateOrgTypeParams struct {
-	Names []string `json:"name" validate:"required,dive,required,min=1"`
+	Names []string `json:"name" form:"name" validate:"required,dive,required,min=1"`
 }
 
 type CreateOrgPermissionParams struct {
-	ResourceTypeID int    `json:"resource_type_id" validate:"required"`
-	OrganizationID int    `json:"organization_id" validate:"required"`
-	PermissionCode string `json:"permission_code" validate:"required"`
+	ResourceTypeID int    `json:"resource_type_id" form:"resource_type_id" validate:"required"`
+	OrganizationID int    `json:"organization_id" form:"organization_id" validate:"required"`
+	PermissionCode string `json:"permission_code" form:"permission_code" validate:"required"`
 }
 
 type CreateOrgPermissionOutput struct {
-	ID int `json:"id"`
+	ID int `json:"id" form:"id"`
 	CreateOrgPermissionParams
 }
 
 type CreateOrganizationParams struct {
-	Name         string    `json:"name" validate:"required"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	Realm        string    `json:"realm" validate:"required"`
-	Country      *string   `json:"country"`
-	SupportEmail string    `json:"support_email" validate:"required,email"`
-	Active       *bool     `json:"active"`
-	ReportQ      *bool     `json:"report_q"`
-	Config       *string   `json:"config"`
-	TypeID       int       `json:"type_id" validate:"required,min=1"`
+	Name         string    `json:"name" form:"name" validate:"required"`
+	CreatedAt    time.Time `json:"created_at" form:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" form:"updated_at"`
+	Realm        string    `json:"realm" form:"realm" validate:"required"`
+	Country      *string   `json:"country" form:"country"`
+	SupportEmail string    `json:"support_email" form:"support_email" validate:"required,email"`
+	Active       *bool     `json:"active" form:"active"`
+	ReportQ      *bool     `json:"report_q" form:"report_q"`
+	Config       *string   `json:"config" form:"config"`
+	TypeID       int       `json:"type_id" form:"type_id" validate:"required,min=1"`
 }
 
 type CreateOrganizationOutput struct {
-	ID int `json:"id"`
+	ID int `json:"id" form:"id"`
 	CreateOrganizationParams
 }
 
 type ListOrganizationOutput struct {
-	ID                   int    `json:"id"`
-	OrganizationTypeName string `json:"type"`
+	ID                   int    `json:"id" form:"id"`
+	OrganizationTypeName string `json:"type" form:"type"`
 	CreateOrganizationParams
 }
 
 type ListOrganizationOutputWithCount struct {
-	TotalItems int                      `json:"total_items"`
-	Data       []ListOrganizationOutput `json:"data"`
+	TotalItems int                      `json:"total_items" form:"total_items"`
+	Data       []ListOrganizationOutput `json:"data" form:"data"`
 }
 
 func ToListOrganizationOutputWithCount(inputs []sqlcgen.ListOrganizationRow) ListOrganizationOutputWithCount {

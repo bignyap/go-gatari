@@ -36,6 +36,10 @@ func NewAdminService(
 
 func (s *AdminService) Setup(server server.Server) error {
 
+	setupLogger := s.Logger.WithComponent("server.Setup")
+
+	setupLogger.Info("Starting")
+
 	s.ResponseWriter = server.GetResponseWriter()
 
 	adminGrp := server.Router().Group("/admin")
@@ -44,25 +48,35 @@ func (s *AdminService) Setup(server server.Server) error {
 		adminGrp,
 		s.Logger, s.ResponseWriter, s.DB, s.Conn, s.Validator,
 	)
-	s.Logger.Info("AuthService setup completed")
+
+	setupLogger.Info("Completed")
+
 	return nil
 }
 
 func (s *AdminService) Shutdown() error {
-	s.Logger.Info("AuthService shutdown initiated")
+
+	shtLogger := s.Logger.WithComponent("server.Shutdown")
+
+	shtLogger.Info("Starting")
 
 	if s.Conn != nil {
 		s.Conn.Close()
-		s.Logger.Info("Database connection pool closed")
+		shtLogger.Info("Database connection pool closed")
 	}
 
 	// Add any other cleanup logic here if needed (e.g., flushing logs)
 
-	s.Logger.Info("AuthService shutdown completed")
+	shtLogger.Info("Completed")
+
 	return nil
 }
 
 func InitializeWebServer(logger api.Logger, conn *pgxpool.Pool, validator *validator.Validate) error {
+
+	srvLogger := logger.WithComponent("server.InitializeWebServer")
+
+	srvLogger.Info("Starting")
 
 	adminService := NewAdminService(
 		logger, conn, validator,
@@ -71,6 +85,17 @@ func InitializeWebServer(logger api.Logger, conn *pgxpool.Pool, validator *valid
 	config := server.DefaultConfig()
 	ensureDefaultServerConfig(config)
 
+	srvLogger.Info("Configs",
+		api.Field{
+			Key:   "Port",
+			Value: config.Port,
+		},
+		api.Field{
+			Key:   "Environment",
+			Value: config.Environment,
+		},
+	)
+
 	s := server.NewHTTPServer(
 		config,
 		server.WithLogger(logger),
@@ -78,8 +103,10 @@ func InitializeWebServer(logger api.Logger, conn *pgxpool.Pool, validator *valid
 	)
 
 	if err := s.Start(); err != nil {
-		logger.Error("Server failed", err)
+		srvLogger.Error("Server failed", err)
 	}
+
+	srvLogger.Info("Completed")
 
 	return nil
 }

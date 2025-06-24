@@ -24,7 +24,7 @@ func ExtractPaginationDetail(c *gin.Context) (int, int, error) {
 	} else {
 		limit, err = converter.StrToInt(itemsPerPageStr)
 		if err != nil {
-			return 0, 0, fmt.Errorf("Invalid items_per_page format")
+			return 0, 0, fmt.Errorf("invalid items_per_page format")
 		}
 	}
 
@@ -33,7 +33,7 @@ func ExtractPaginationDetail(c *gin.Context) (int, int, error) {
 	} else {
 		offset, err = converter.StrToInt(pageNumberStr)
 		if err != nil {
-			return 0, 0, fmt.Errorf("Invalid page_number format")
+			return 0, 0, fmt.Errorf("invalid page_number format")
 		}
 		offset = ((offset - 1) * limit)
 	}

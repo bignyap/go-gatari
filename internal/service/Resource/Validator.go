@@ -11,8 +11,8 @@ import (
 func (h *ResourceService) ValidateRegisterInput(c *gin.Context) (*RegisterEndpointParams, error) {
 
 	var input RegisterEndpointParams
-	if err := c.ShouldBindJSON(&input); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
 	}
 
 	if err := h.Validator.Struct(input); err != nil {
@@ -40,16 +40,9 @@ func (h *ResourceService) ValidateRegisterBatchInput(c *gin.Context) ([]Register
 
 func (h *ResourceService) CreateResourceTypeFormValidator(c *gin.Context) (*sqlcgen.CreateResourceTypeParams, error) {
 
-	description := c.PostForm("description")
-
-	input := CreateResourceTypeParams{
-		Name: c.PostForm("name"),
-		Code: c.PostForm("code"),
-	}
-
-	// Optional field handling
-	if description != "" {
-		input.Description = &description
+	var input CreateResourceTypeParams
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
 	}
 
 	// Validate struct
