@@ -1,32 +1,32 @@
 services:
-  # gate-keeper:
-  #   container_name: go-admin
-  #   image: go-admin:latest
-  #   # build:
-  #   #   context: .
-  #   #   dockerfile: Dockerfile
-  #   #   args:
-  #   #     CACHE_BUST: ${CACHE_BUST}
-  #   restart: always
-  #   environment:
-  #     DB_HOST: ${DB_HOST}
-  #     DB_PORT: ${DB_PORT}
-  #     DB_USER: ${DB_USER}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #     DB_NAME: ${DB_NAME}
-  #     APPLICATION_PORT: ${APPLICATION_PORT}
-  #   ports:
-  #     - '8080:8080'
-  #   expose:
-  #     - '8080'
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
-  #     interval: 19s
-  #     timeout: 5s
-  #     retries: 10
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  gate-keeper:
+    container_name: go-admin
+    image: go-admin:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
+    restart: always
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      APPLICATION_PORT: ${APPLICATION_PORT}
+    ports:
+      - '8080:8080'
+    expose:
+      - '8080'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
+      interval: 19s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:15
