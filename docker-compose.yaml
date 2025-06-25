@@ -1,12 +1,12 @@
 services:
-  
   gate-keeper:
-    container_name: gate_keeper
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        CACHE_BUST: ${CACHE_BUST}
+    container_name: go-admin
+    image: go-admin:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
     restart: always
     environment:
       DB_HOST: ${DB_HOST}
@@ -15,55 +15,67 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       APPLICATION_PORT: ${APPLICATION_PORT}
+      ENVIRONMENT: "dev"
     ports:
-        - '8080:8080'
+      - '8080:8080'
     expose:
-     - '8080'
+      - '8080'
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
       interval: 19s
       timeout: 5s
       retries: 10
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src
 
-  mysql:
-   image: mysql:8.0.32
-   command: --default-authentication-plugin=mysql_native_password --local-infile=ON
-   restart: always
-   environment:
-     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-     MYSQL_DATABASE: ${DB_NAME}
-     MYSQL_USER: ${DB_USER}
-     MYSQL_PASSWORD: ${DB_PASSWORD}
-   ports:
-     - '3306:3306'
-   expose:
-     - '3306'
-   volumes:
-     - 'gate_keeper_mysql_data:/var/lib/mysql'
-   healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '5432:5432'
+    expose:
+      - '5432'
+    volumes:
+      - go-admin-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
       retries: 10
 
   apidoc:
-    image: swaggerapi/swagger-ui
+    image: styled-swagger-ui:latest
     restart: always
-    environment:
-      SWAGGER_JSON: /api/spec.yaml
     ports:
-        - '8081:8080'
+      - '8081:80'
     expose:
-     - '8081'
+      - '8081'
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./apidoc:/api
+      - ./apidoc:/usr/share/nginx/html/apidoc
+
+  redis:
+    image: redis
+    volumes:
+      - go-admin-redis-data:/data
+    ports:
+      - '6379:6379'
+    expose:
+      - '6379'
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  gate_keeper_mysql_data:
+  go-admin-postgres-data:
+    driver: local
+  go-admin-redis-data:
     driver: local

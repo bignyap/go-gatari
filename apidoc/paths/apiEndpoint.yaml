@@ -1,0 +1,69 @@
+paths:
+  /apiEndpoint:
+    post:
+      summary: Register an endpoint
+      operationId: registerEndpoint
+      tags:
+        - Register Endpoint
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '../schemas/Endpoint.yaml#/RegisterEndpointInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/Endpoint.yaml#/RegisterEndpointOutput'
+    get:
+      summary: List endpoints
+      operationId: listEndpoints
+      tags:
+        - Register Endpoint
+      parameters:
+        - $ref: '../schemas/Pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../schemas/Pagination.yaml#/components/parameters/ItemsPerPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/Endpoint.yaml#/RegisterEndpointOutput'
+  /apiEndpoint/batch:
+    post:
+      summary: Register endpoints in bulk
+      operationId: registerEndpointInBulk
+      tags:
+        - Register Endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../schemas/Endpoint.yaml#/RegisterEndpointInput'
+      responses:
+        '201':
+          description: Created
+  /apiEndpoint/{Id}:
+    delete:
+      summary: Delete an endpoint
+      operationId: deleteEndpoint
+      tags:
+        - Register Endpoint
+      parameters:
+        - name: Id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content

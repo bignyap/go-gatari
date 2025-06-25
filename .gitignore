@@ -18,6 +18,8 @@
 vendor/
 Godeps/
 dep/
+build/
+artifacts/
 
 # GoLand project files
 .idea/
@@ -60,3 +62,4 @@ go.work.sum
 
 
 .env
+.codegpt

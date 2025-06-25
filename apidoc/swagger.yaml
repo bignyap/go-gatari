@@ -1,0 +1,138 @@
+openapi: 3.0.0
+info:
+  title: Go Gate Keeper API
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8080/admin/'
+    description: "localhost"
+paths:
+  /apiEndpoint:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint'
+  /apiEndpoint/batch:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint~1batch'
+  /apiEndpoint/{Id}:
+    $ref: './paths/apiEndpoint.yaml#/paths/~1apiEndpoint~1{Id}'
+  /resourceType:
+    $ref: './paths/resourceType.yaml#/paths/~1resourceType'
+  /resourceType/batch:
+    $ref: './paths/resourceType.yaml#/paths/~1resourceType~1batch'
+  /resourceType/{id}:
+    $ref: './paths/resourceType.yaml#/paths/~1resourceType~1{id}'
+  /orgType:
+    $ref: './paths/orgType.yaml#/paths/~1orgType'
+  /orgType/batch:
+    $ref: './paths/orgType.yaml#/paths/~1orgType~1batch'
+  /orgType/{Id}:
+    $ref: './paths/orgType.yaml#/paths/~1orgType~1{Id}'
+  /subTier:
+    $ref: './paths/subTier.yaml#/paths/~1subTier'
+  /subTier/batch:
+    $ref: './paths/subTier.yaml#/paths/~1subTier~1batch'
+  /subTier/{Id}:
+    $ref: './paths/subTier.yaml#/paths/~1subTier~1{Id}'
+  # /tierPricing:
+  #   $ref: './paths/tierPricing.yaml#/paths/~1tierPricing'
+  /tierPricing/batch:
+    $ref: './paths/tierPricing.yaml#/paths/~1tierPricing~1batch'
+  /tierPricing/{tier_id}:
+    $ref: './paths/tierPricing.yaml#/paths/~1tierPricing~1{tier_id}'
+  /tierPricing/id/{id}:
+    $ref: './paths/tierPricing.yaml#/paths/~1tierPricing~1id~1{id}'
+  /tierPricing/tierId/{tier_id}:
+    $ref: './paths/tierPricing.yaml#/paths/~1tierPricing~1tierId~1{tier_id}'
+  /org:
+    $ref: './paths/organization.yaml#/paths/~1org'
+  /org/batch:
+    $ref: './paths/organization.yaml#/paths/~1org~1batch'
+  /org/{Id}:
+    $ref: './paths/organization.yaml#/paths/~1org~1{Id}'
+  /orgPermission:
+    $ref: './paths/orgPermission.yaml#/paths/~1orgPermission'
+  /orgPermission/batch:
+    $ref: './paths/orgPermission.yaml#/paths/~1orgPermission~1batch'
+  /orgPermission/{organization_id}:
+    $ref: './paths/orgPermission.yaml#/paths/~1orgPermission~1{organization_id}'
+  /subscription:
+    $ref: './paths/subscription.yaml#/paths/~1subscription'
+  /subscription/batch:
+    $ref: './paths/subscription.yaml#/paths/~1subscription~1batch'
+  /subscription/id/{id}:
+    $ref: './paths/subscription.yaml#/paths/~1subscription~1id~1{id}'
+  /subscription/orgId/{organization_id}:
+    $ref: './paths/subscription.yaml#/paths/~1subscription~1orgId~1{organization_id}'
+  /subscription/{id}:
+    $ref: './paths/subscription.yaml#/paths/~1subscription~1{id}'
+  /subscription/{organization_id}:
+    $ref: './paths/subscription.yaml#/paths/~1subscription~1organization~1{organization_id}'
+  /customPricing:
+    $ref: './paths/customPricing.yaml#/paths/~1customPricing'
+  /customPricing/batch:
+    $ref: './paths/customPricing.yaml#/paths/~1customPricing~1batch'
+  /customPricing/{subscription_id}:
+    $ref: './paths/customPricing.yaml#/paths/~1customPricing~1{subscription_id}'
+  /customPricing/subId/{subscription_id}:
+    $ref: './paths/customPricing.yaml#/paths/~1customPricing~1subId~1{subscription_id}'
+  /customPricing/id/{id}:
+    $ref: './paths/customPricing.yaml#/paths/~1customPricing~1id~1{id}'
+  /apiUsageSummary:
+    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary'
+  /apiUsageSummary/batch:
+    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1batch'
+  /apiUsageSummary/subId/{subscription_id}:
+    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1subId~1{subscription_id}'
+  /apiUsageSummary/orgId/{organization_id}:
+    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1orgId~1{organization_id}'
+  /apiUsageSummary/endpointId/{endpoint_id}:
+    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1endpointId~1{endpoint_id}'
+  /billingHistory:
+    $ref: './paths/billinghistory.yaml#/paths/~1billingHistory'
+  /billingHistory/batch:
+    $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1batch'
+  /billingHistory/subId/{subscription_id}:
+    $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1subId~1{subscription_id}'
+  /billingHistory/orgId/{organization_id}:
+    $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1orgId~1{organization_id}'
+  /billingHistory/endpointId/id/{id}:
+    $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1id~1{billing_id}'
+components:
+  schemas:
+    CreateCustomPricingInput:
+      $ref: './schemas/CustomPricing.yaml#/CreateCustomPricingInput'
+    CreateCustomPricingOutputs:
+      $ref: './schemas/CustomPricing.yaml#/CreateCustomPricingOutput'
+    RegisterEndpointInput:
+      $ref: './schemas/CustomPricing.yaml#/CreateCustomPricingInput'
+    RegisterEndpointOutput:
+      $ref: './schemas/CustomPricing.yaml#/CreateCustomPricingOutput'
+    CreateOrganizationInput:
+      $ref: './schemas/Organization.yaml#/CreateOrganizationInput'
+    CreateOrganizationOutput:
+      $ref: './schemas/Organization.yaml#/CreateOrganizationOutput'
+    CreateOrgPermissionInput:
+      $ref: './schemas/OrgPermission.yaml#/CreateOrgPermissionInput'
+    CreateOrgPermissionOutput:
+      $ref: './schemas/OrgPermission.yaml#/CreateOrgPermissionOutput'
+    CreateOrgTypeInput:
+      $ref: './schemas/OrgType.yaml#/CreateOrgTypeInput'
+    CreateOrgTypeOutput:
+      $ref: './schemas/OrgType.yaml#/CreateOrgTypeOutput'
+    CreateResourceTypeInput:
+      $ref: './schemas/ResourceType.yaml#/CreateResourceTypeInput'
+    CreteResourceTypeOutput:
+      $ref: './schemas/ResourceType.yaml#/CreteResourceTypeOutput'
+    CreateSubscriptionInput:
+      $ref: './schemas/Subscription.yaml#/CreateSubscriptionInput'
+    CreateSubscriptionOutput:
+      $ref: './schemas/Subscription.yaml#/CreateSubscriptionOutput'
+    CreateTierPricingInput:
+      $ref: './schemas/TierPricing.yaml#/CreateTierPricingInput'
+    CreateTierPricingOutput:
+      $ref: './schemas/TierPricing.yaml#/CreateTierPricingOutput'
+    CreateApiUsageSummaryInput:
+      $ref: './schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryInput'
+    CreateApiUsageSummaryOutput:
+      $ref: './schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
+    CreateBillingHistoryInput:
+      $ref: './schemas/BillingHistory.yaml#/CreateBillingHistoryInput'
+    CreateBillingHistoryOutput:
+      $ref: './schemas/BillingHistory.yaml#/CreateBillingHistoryOutput'
