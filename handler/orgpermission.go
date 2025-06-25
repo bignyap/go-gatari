@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	converter "github.com/bignyap/go-utilities/converter"
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func (h *AdminHandler) CreateOrgPermissionInBatchHandler(c *gin.Context) {
 
 	output, err := h.OrganizationService.CreateOrgPermissionInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -35,7 +34,7 @@ func (h *AdminHandler) CreateOrgPermissionHandler(c *gin.Context) {
 
 	insertedID, err := h.OrganizationService.CreateOrgPermission(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -58,7 +57,7 @@ func (h *AdminHandler) GetOrgPermissionHandler(c *gin.Context) {
 
 	orgPermissions, err := h.OrganizationService.GetOrgPermission(c.Request.Context(), id, limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -77,7 +76,7 @@ func (h *AdminHandler) DeleteOrgPermissionHandler(c *gin.Context) {
 			return
 		}
 		if err := h.OrganizationService.DeleteOrgPermission(c.Request.Context(), "organization ", int(id32)); err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 		h.ResponseWriter.Success(c,
@@ -95,7 +94,7 @@ func (h *AdminHandler) DeleteOrgPermissionHandler(c *gin.Context) {
 			return
 		}
 		if err := h.OrganizationService.DeleteOrgPermission(c.Request.Context(), "resource ", int(id32)); err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 		h.ResponseWriter.Success(c,

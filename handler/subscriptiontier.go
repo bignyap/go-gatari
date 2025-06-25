@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func (h *AdminHandler) CreateSubscriptionTierInBatchHandler(c *gin.Context) {
 
 	affectedRows, err := h.SubscriptionService.CreateSubscriptionTierInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -35,7 +34,7 @@ func (h *AdminHandler) CreateSubscriptionTierHandler(c *gin.Context) {
 
 	output, err := h.SubscriptionService.CreateSubscriptionTier(c.Request.Context(), *input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -56,7 +55,7 @@ func (h *AdminHandler) ListSubscriptionTiersHandler(c *gin.Context) {
 
 	subTiers, err := h.SubscriptionService.ListSubscriptionTiers(c.Request.Context(), limit, offset, archived)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -73,7 +72,7 @@ func (h *AdminHandler) DeleteSubscriptionTierHandler(c *gin.Context) {
 
 	err = h.SubscriptionService.DeleteSubscriptionTier(c.Request.Context(), int(id))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

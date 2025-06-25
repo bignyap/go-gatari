@@ -72,9 +72,14 @@ func (s *PricingService) GetTierPricingByTierId(ctx context.Context, id int, lim
 		}
 	}
 
+	totalItems := 0
+	if len(tierPricings) > 0 {
+		totalItems = int(tierPricings[0].TotalItems)
+	}
+
 	return CreateTierPricingOutputWithCount{
 		Data:       output,
-		TotalItems: int(tierPricings[0].TotalItems),
+		TotalItems: totalItems,
 	}, nil
 }
 

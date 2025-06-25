@@ -3,7 +3,6 @@ package handler
 import (
 	usage "github.com/bignyap/go-admin/internal/service/Usage"
 	converter "github.com/bignyap/go-utilities/converter"
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +16,7 @@ func (h *AdminHandler) CreateApiUsageInBatchHandler(c *gin.Context) {
 
 	output, err := h.UsageService.CreateApiUsageInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -34,7 +33,7 @@ func (h *AdminHandler) CreateApiUsageInBatchHandler(c *gin.Context) {
 
 // 	output, err := usageSrv.CreateApiUsage(c.Request.Context(), input)
 // 	if err != nil {
-// 		srvErr.ToApiError(err)
+// 		h.ResponseWriter.Error(err)
 // 		return
 // 	}
 
@@ -57,7 +56,7 @@ func (h *AdminHandler) GetApiUsageSummaryByOrgIdHandler(c *gin.Context) {
 
 	output, err := h.UsageService.GetApiUsageSummaryByOrgId(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -80,7 +79,7 @@ func (h *AdminHandler) GetApiUsageSummaryBySubIdHandler(c *gin.Context) {
 
 	output, err := h.UsageService.GetApiUsageSummaryBySubId(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -103,7 +102,7 @@ func (h *AdminHandler) GetApiUsageSummaryByEndpointIdHandler(c *gin.Context) {
 
 	output, err := h.UsageService.GetApiUsageSummaryByEndpointId(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

@@ -4,8 +4,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-
-	srvErr "github.com/bignyap/go-utilities/server"
 )
 
 func (h *AdminHandler) CreateOrganizationandler(c *gin.Context) {
@@ -18,7 +16,7 @@ func (h *AdminHandler) CreateOrganizationandler(c *gin.Context) {
 
 	output, err := h.OrganizationService.CreateOrganization(c, input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -35,26 +33,12 @@ func (h *AdminHandler) CreateOrganizationInBatchandler(c *gin.Context) {
 
 	output, err := h.OrganizationService.CreateOrganizationInBatch(c, input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
 	h.ResponseWriter.Success(c, map[string]int{"affected_rows": output})
 }
-
-// func toText(val *string) pgtype.Text {
-// 	if val == nil {
-// 		return pgtype.Text{Valid: false}
-// 	}
-// 	return pgtype.Text{String: *val, Valid: true}
-// }
-
-// func toBool(val *bool) pgtype.Bool {
-// 	if val == nil {
-// 		return pgtype.Bool{Valid: false}
-// 	}
-// 	return pgtype.Bool{Bool: *val, Valid: true}
-// }
 
 func (h *AdminHandler) ListOrganizationsHandler(c *gin.Context) {
 
@@ -66,7 +50,7 @@ func (h *AdminHandler) ListOrganizationsHandler(c *gin.Context) {
 
 	organizations, err := h.OrganizationService.ListOrganizations(c.Request.Context(), limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -83,7 +67,7 @@ func (h *AdminHandler) GetOrganizationByIdHandler(c *gin.Context) {
 
 	organization, err := h.OrganizationService.GetOrganizationById(c.Request.Context(), int(id64))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -100,7 +84,7 @@ func (h *AdminHandler) DeleteOrganizationByIdHandler(c *gin.Context) {
 
 	err = h.OrganizationService.DeleteOrganizationById(c.Request.Context(), int(id64))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

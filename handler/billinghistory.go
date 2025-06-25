@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	billing "github.com/bignyap/go-admin/internal/service/Billing"
-	srvErr "github.com/bignyap/go-utilities/server"
 )
 
 func (h *AdminHandler) CreateBillingHistoryHandler(c *gin.Context) {
@@ -22,7 +21,7 @@ func (h *AdminHandler) CreateBillingHistoryHandler(c *gin.Context) {
 
 	output, err := h.BillingService.CreateBillingHistory(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -40,7 +39,7 @@ func (h *AdminHandler) CreateBillingHistoryInBatchHandler(c *gin.Context) {
 
 	output, err := h.BillingService.CreateBillingHistoryInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -63,7 +62,7 @@ func (h *AdminHandler) GetBillingHistoryByOrgIdHandler(c *gin.Context) {
 
 	output, err := h.BillingService.GetBillingHistoryByOrgId(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -86,7 +85,7 @@ func (h *AdminHandler) GetBillingHistoryBySubIdHandler(c *gin.Context) {
 
 	output, err := h.BillingService.GetBillingHistoryBySubId(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -109,7 +108,7 @@ func (h *AdminHandler) GetBillingHistoryByIdHandler(c *gin.Context) {
 
 	output, err := h.BillingService.GetBillingHistoryById(c.Request.Context(), id, n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

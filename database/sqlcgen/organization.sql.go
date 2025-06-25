@@ -79,17 +79,19 @@ func (q *Queries) DeleteOrganizationById(ctx context.Context, organizationID int
 
 const listOrganization = `-- name: ListOrganization :many
 SELECT 
-    organization.organization_id, organization.organization_name, organization.organization_created_at, organization.organization_updated_at, organization.organization_realm, organization.organization_country, organization.organization_support_email, organization.organization_active, organization.organization_report_q, organization.organization_config, organization.organization_type_id, organization_type.organization_type_name, 
-    COUNT(organization_id) OVER() AS total_items 
+    organization.organization_id, organization.organization_name, organization.organization_created_at, organization.organization_updated_at, organization.organization_realm, organization.organization_country, organization.organization_support_email, organization.organization_active, organization.organization_report_q, organization.organization_config, organization.organization_type_id, 
+    organization_type.organization_type_name, 
+    COUNT(*) OVER() AS total_items
 FROM organization
-INNER JOIN organization_type ON organization.organization_type_id = organization_type.organization_type_id
-WHERE ($1 IS NULL OR organization.organization_id = $2)
-ORDER BY organization_id DESC
+INNER JOIN organization_type 
+    ON organization.organization_type_id = organization_type.organization_type_id
+WHERE ($1::INTEGER = 0 OR organization.organization_id = $2)
+ORDER BY organization.organization_id DESC
 LIMIT $3 OFFSET $4
 `
 
 type ListOrganizationParams struct {
-	Column1        interface{}
+	Column1        int32
 	OrganizationID int32
 	Limit          int32
 	Offset         int32

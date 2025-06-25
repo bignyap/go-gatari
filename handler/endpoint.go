@@ -5,8 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-
-	srvErr "github.com/bignyap/go-utilities/server"
 )
 
 func (h *AdminHandler) RegisterEndpointHandler(c *gin.Context) {
@@ -21,7 +19,7 @@ func (h *AdminHandler) RegisterEndpointHandler(c *gin.Context) {
 
 	output, err := h.ResourceService.RegisterApiEndpoint(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -38,7 +36,7 @@ func (h *AdminHandler) RegisterEndpointInBatchHandler(c *gin.Context) {
 
 	output, err := h.ResourceService.RegisterApiEndpointInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -55,7 +53,7 @@ func (h *AdminHandler) ListEndpointsHandler(c *gin.Context) {
 
 	output, err := h.ResourceService.ListApiEndpoints(c.Request.Context(), n, page)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -72,7 +70,7 @@ func (h *AdminHandler) DeleteEndpointsByIdHandler(c *gin.Context) {
 
 	err = h.ResourceService.DeleteApiEndpointsById(c.Request.Context(), int(id64))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	converter "github.com/bignyap/go-utilities/converter"
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func (h *AdminHandler) CreateOrgTypeInBatchHandler(c *gin.Context) {
 
 	output, err := h.OrganizationService.CreateOrgTypeInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -35,7 +34,7 @@ func (h *AdminHandler) CreateOrgTypeHandler(c *gin.Context) {
 
 	insertedID, err := h.OrganizationService.CreateOrgType(c.Request.Context(), name)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -52,7 +51,7 @@ func (h *AdminHandler) ListOrgTypeHandler(c *gin.Context) {
 
 	orgTypes, err := h.OrganizationService.ListOrgType(c.Request.Context(), limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -68,7 +67,7 @@ func (h *AdminHandler) DeleteOrgTypeHandler(c *gin.Context) {
 	}
 
 	if err := h.OrganizationService.DeleteOrgType(c.Request.Context(), int(id)); err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

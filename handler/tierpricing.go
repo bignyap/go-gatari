@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	converter "github.com/bignyap/go-utilities/converter"
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func (h *AdminHandler) CreateTierPricingInBatchandler(c *gin.Context) {
 
 	affectedRows, err := h.PricingService.CreateTierPricingInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -41,7 +40,7 @@ func (h *AdminHandler) GetTierPricingByTierIdHandler(c *gin.Context) {
 
 	output, err := h.PricingService.GetTierPricingByTierId(c.Request.Context(), id, limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -76,7 +75,7 @@ func (h *AdminHandler) DeleteTierPricingHandler(c *gin.Context) {
 
 		err = h.PricingService.DeleteTierPricing(c.Request.Context(), "tier", int(id32))
 		if err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 
@@ -96,7 +95,7 @@ func (h *AdminHandler) DeleteTierPricingHandler(c *gin.Context) {
 
 		err = h.PricingService.DeleteTierPricing(c.Request.Context(), "id", int(id32))
 		if err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 

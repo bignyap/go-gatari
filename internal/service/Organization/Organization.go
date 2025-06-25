@@ -96,8 +96,9 @@ func (input BulkOrganizationInserter) InsertRows(ctx context.Context, tx pgx.Tx)
 func (s *OrganizationService) ListOrganizations(ctx context.Context, limit int, offset int) (ListOrganizationOutputWithCount, error) {
 
 	input := sqlcgen.ListOrganizationParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Limit:   int32(limit),
+		Offset:  int32(offset),
+		Column1: 0, // it's equivalent to 0. Workaround for sqlc issue
 	}
 
 	organizations, err := s.DB.ListOrganization(ctx, input)
@@ -119,6 +120,7 @@ func (s *OrganizationService) GetOrganizationById(ctx context.Context, orgId int
 		Limit:          1,
 		Offset:         0,
 		OrganizationID: int32(orgId),
+		Column1:        int32(orgId),
 	}
 
 	organization, err := s.DB.ListOrganization(ctx, input)

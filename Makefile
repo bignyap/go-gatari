@@ -97,6 +97,9 @@ build-container:
 	docker build -t $(CONTAINER_IMAGE) . && \
 	docker tag $(CONTAINER_IMAGE) $(CONTAINER_IMAGE_LATEST)
 
+remove-container:
+	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(SERVICE_NAME)' | xargs -r docker rmi
+
 start-container:
 	docker compose -f docker-compose.yaml up -d
 

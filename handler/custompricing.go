@@ -2,7 +2,6 @@ package handler
 
 import (
 	converter "github.com/bignyap/go-utilities/converter"
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +15,7 @@ func (h *AdminHandler) CreateCustomPricingInBatchandler(c *gin.Context) {
 
 	output, err := h.PricingService.CreateCustomPricingInBatch(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -33,7 +32,7 @@ func (h *AdminHandler) CreateCustomPricingHandler(c *gin.Context) {
 
 	output, err := h.PricingService.CreateCustomPricing(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -55,7 +54,7 @@ func (h *AdminHandler) DeleteCustomPricingHandler(c *gin.Context) {
 
 		err = h.PricingService.DeleteCustomPricing(c.Request.Context(), "tier", id32)
 		if err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 
@@ -72,7 +71,7 @@ func (h *AdminHandler) DeleteCustomPricingHandler(c *gin.Context) {
 
 		err = h.PricingService.DeleteCustomPricing(c.Request.Context(), "id", id32)
 		if err != nil {
-			srvErr.ToApiError(c, err)
+			h.ResponseWriter.Error(c, err)
 			return
 		}
 
@@ -99,7 +98,7 @@ func (h *AdminHandler) GetCustomPricingHandler(c *gin.Context) {
 
 	customPricings, err := h.PricingService.GetCustomPricing(c.Request.Context(), id, limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 	h.ResponseWriter.Success(c, customPricings)

@@ -1,11 +1,13 @@
 -- name: ListOrganization :many
 SELECT 
-    organization.*, organization_type.organization_type_name, 
-    COUNT(organization_id) OVER() AS total_items 
+    organization.*, 
+    organization_type.organization_type_name, 
+    COUNT(*) OVER() AS total_items
 FROM organization
-INNER JOIN organization_type ON organization.organization_type_id = organization_type.organization_type_id
-WHERE ($1 IS NULL OR organization.organization_id = $2)
-ORDER BY organization_id DESC
+INNER JOIN organization_type 
+    ON organization.organization_type_id = organization_type.organization_type_id
+WHERE ($1::INTEGER = 0 OR organization.organization_id = $2)
+ORDER BY organization.organization_id DESC
 LIMIT $3 OFFSET $4;
 
 -- name: CreateOrganization :one 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func (h *AdminHandler) CreateResurceTypeInBatchHandler(c *gin.Context) {
 
 	output, err := h.ResourceService.CreateResourceTypeInBatch(c, input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -35,7 +34,7 @@ func (h *AdminHandler) CreateResurceTypeHandler(c *gin.Context) {
 
 	insertedID, err := h.ResourceService.CreateResourceType(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -52,7 +51,7 @@ func (h *AdminHandler) ListResourceTypeHandler(c *gin.Context) {
 
 	resourceTypes, err := h.ResourceService.ListResourceType(c.Request.Context(), limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -68,7 +67,7 @@ func (h *AdminHandler) DeleteResourceTypeHandler(c *gin.Context) {
 	}
 
 	if err := h.ResourceService.DeleteResourceType(c.Request.Context(), int(id)); err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 

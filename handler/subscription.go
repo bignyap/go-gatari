@@ -3,11 +3,8 @@ package handler
 import (
 	"fmt"
 	"strconv"
-	"time"
 
-	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *AdminHandler) CreateSubscriptionHandler(c *gin.Context) {
@@ -20,7 +17,7 @@ func (h *AdminHandler) CreateSubscriptionHandler(c *gin.Context) {
 
 	outptut, err := h.SubscriptionService.CreateSubscription(c.Request.Context(), input)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -37,7 +34,7 @@ func (h *AdminHandler) CreateSubscriptionInBatchandler(c *gin.Context) {
 
 	affectedRows, err := h.SubscriptionService.CreateSubscriptionInBatch(c.Request.Context(), inputs)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -54,7 +51,7 @@ func (h *AdminHandler) DeleteSubscriptionHandler(c *gin.Context) {
 
 	err = h.SubscriptionService.DeleteSubscription(c.Request.Context(), int(id))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -73,7 +70,7 @@ func (h *AdminHandler) GetSubscriptionHandler(c *gin.Context) {
 
 	subscription, err := h.SubscriptionService.GetSubscription(c.Request.Context(), int(id))
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -96,7 +93,7 @@ func (h *AdminHandler) GetSubscriptionByrgIdHandler(c *gin.Context) {
 
 	subscriptions, err := h.SubscriptionService.GetSubscriptionByOrgId(c.Request.Context(), orgId, limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
@@ -113,84 +110,9 @@ func (h *AdminHandler) ListSubscriptionHandler(c *gin.Context) {
 
 	subscriptions, err := h.SubscriptionService.ListSubscription(c.Request.Context(), limit, offset)
 	if err != nil {
-		srvErr.ToApiError(c, err)
+		h.ResponseWriter.Error(c, err)
 		return
 	}
 
 	h.ResponseWriter.Success(c, subscriptions)
-}
-
-// -------- pgtype helpers --------
-
-func toPgInt4(ptr *int) pgtype.Int4 {
-	if ptr == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{Int32: int32(*ptr), Valid: true}
-}
-
-// func toPgInt4Ptr(value int) pgtype.Int4 {
-// 	return pgtype.Int4{Int32: int32(value), Valid: true}
-// }
-
-func toPgInt4Ptr(v *int) pgtype.Int4 {
-	if v == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{Int32: int32(*v), Valid: true}
-}
-
-func toPgInt4FromTime(t time.Time) pgtype.Int4 {
-	return pgtype.Int4{Int32: int32(t.Unix()), Valid: true}
-}
-
-func toPgInt4FromTimePtr(ptr *time.Time) pgtype.Int4 {
-	if ptr == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return toPgInt4FromTime(*ptr)
-}
-
-func toPgText(ptr *string) pgtype.Text {
-	if ptr == nil {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: *ptr, Valid: true}
-}
-
-func toPgBool(ptr *bool) pgtype.Bool {
-	if ptr == nil {
-		return pgtype.Bool{Valid: false}
-	}
-	return pgtype.Bool{Bool: *ptr, Valid: true}
-}
-
-func fromPgInt4Ptr(v pgtype.Int4) *int {
-	if !v.Valid {
-		return nil
-	}
-	val := int(v.Int32)
-	return &val
-}
-
-func fromPgInt4TimePtr(v pgtype.Int4) *time.Time {
-	if !v.Valid {
-		return nil
-	}
-	t := time.Unix(int64(v.Int32), 0)
-	return &t
-}
-
-func fromPgText(v pgtype.Text) *string {
-	if !v.Valid {
-		return nil
-	}
-	return &v.String
-}
-
-func fromPgBool(v pgtype.Bool) *bool {
-	if !v.Valid {
-		return nil
-	}
-	return &v.Bool
 }
