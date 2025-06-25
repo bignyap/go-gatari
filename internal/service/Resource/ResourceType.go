@@ -2,10 +2,10 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,7 +27,11 @@ func (s *ResourceService) CreateResourceTypeInBatch(ctx context.Context, input [
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the resource types: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the resource types",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -37,7 +41,11 @@ func (s *ResourceService) CreateResourceType(ctx context.Context, input *sqlcgen
 
 	insertedID, err := s.DB.CreateResourceType(ctx, *input)
 	if err != nil {
-		return CreateResourceTypeOutput{}, fmt.Errorf("couldn't create the resource type: %s", err)
+		return CreateResourceTypeOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the resource type",
+			err,
+		)
 	}
 
 	description := (*string)(nil)
@@ -66,7 +74,11 @@ func (s *ResourceService) ListResourceType(ctx context.Context, limit int, offse
 
 	resourceTypes, err := s.DB.ListResourceType(ctx, input)
 	if err != nil {
-		return []CreateResourceTypeOutput{}, fmt.Errorf("couldn't retrieve the resource types: %s", err)
+		return []CreateResourceTypeOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the resource types",
+			err,
+		)
 	}
 
 	if len(resourceTypes) == 0 {
@@ -95,7 +107,11 @@ func (s *ResourceService) ListResourceType(ctx context.Context, limit int, offse
 func (s *ResourceService) DeleteResourceType(ctx context.Context, id int) error {
 
 	if err := s.DB.DeleteResourceTypeById(ctx, int32(id)); err != nil {
-		return fmt.Errorf("couldn't delete the resource type: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't delete the resource type",
+			err,
+		)
 	}
 
 	return nil

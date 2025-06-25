@@ -2,11 +2,11 @@ package pricing
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -29,7 +29,11 @@ func (s *PricingService) CreateTierPricingInBatch(ctx context.Context, input []s
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the tier pricings: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the tier pricings",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -45,7 +49,11 @@ func (s *PricingService) GetTierPricingByTierId(ctx context.Context, id int, lim
 
 	tierPricings, err := s.DB.GetTierPricingByTierId(ctx, input)
 	if err != nil {
-		return CreateTierPricingOutputWithCount{}, fmt.Errorf("couldn't retrieve the tier pricing list: %s", err)
+		return CreateTierPricingOutputWithCount{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the tier pricing list",
+			err,
+		)
 	}
 
 	output := make([]CreateTierPricingWithTierName, len(tierPricings))
@@ -84,12 +92,20 @@ func (s *PricingService) DeleteTierPricing(ctx context.Context, idType string, i
 	case "id":
 		err := s.DB.DeleteTierPricingById(ctx, int32(id))
 		if err != nil {
-			return fmt.Errorf("couldn't delete the subscription by organization_id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the subscription by organization_id",
+				err,
+			)
 		}
 	case "tier":
 		err := s.DB.DeleteTierPricingByTierId(ctx, int32(id))
 		if err != nil {
-			return fmt.Errorf("couldn't delete the subscription by id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the subscription by id",
+				err,
+			)
 		}
 	}
 

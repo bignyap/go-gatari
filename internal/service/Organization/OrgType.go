@@ -2,10 +2,10 @@ package organization
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,7 +27,11 @@ func (s *OrganizationService) CreateOrgTypeInBatch(ctx context.Context, input Cr
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the organization types: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the organization types",
+			err,
+		)
 	}
 
 	return affectedRows, nil
@@ -37,7 +41,11 @@ func (s *OrganizationService) CreateOrgType(ctx context.Context, name string) (C
 
 	insertedID, err := s.DB.CreateOrgType(ctx, name)
 	if err != nil {
-		return CreateOrgTypeOutput{}, fmt.Errorf("couldn't create the organization type: %s", err)
+		return CreateOrgTypeOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the organization type",
+			err,
+		)
 	}
 
 	output := CreateOrgTypeOutput{
@@ -59,7 +67,11 @@ func (s *OrganizationService) ListOrgType(ctx context.Context, limit int, offset
 
 	orgTypes, err := s.DB.ListOrgType(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the organization types: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the organization types",
+			err,
+		)
 	}
 
 	if len(orgTypes) == 0 {
@@ -82,7 +94,11 @@ func (s *OrganizationService) ListOrgType(ctx context.Context, limit int, offset
 func (s *OrganizationService) DeleteOrgType(ctx context.Context, typeId int) error {
 
 	if err := s.DB.DeleteOrgTypeById(ctx, int32(typeId)); err != nil {
-		return fmt.Errorf("couldn't delete the organization type: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't delete the organization type",
+			err,
+		)
 	}
 
 	return nil

@@ -2,11 +2,11 @@ package billing
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -24,7 +24,11 @@ func (s *BillingService) CreateBillingHistory(ctx context.Context, input CreateB
 	input.CreatedAt = time.Now()
 
 	if err := s.Validator.Struct(input); err != nil {
-		return CreateBillingHistoryOutput{}, fmt.Errorf("validation error: %s", err.Error())
+		return CreateBillingHistoryOutput{}, server.NewError(
+			server.ErrorBadRequest,
+			"validation error",
+			err,
+		)
 	}
 
 	sqlInput := sqlcgen.CreateBillingHistoryParams{
@@ -40,7 +44,11 @@ func (s *BillingService) CreateBillingHistory(ctx context.Context, input CreateB
 
 	billingID, err := s.DB.CreateBillingHistory(ctx, sqlInput)
 	if err != nil {
-		return CreateBillingHistoryOutput{}, fmt.Errorf("couldn't create the billing history: %s", err)
+		return CreateBillingHistoryOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the billing history",
+			err,
+		)
 	}
 
 	output := CreateBillingHistoryOutput{
@@ -60,7 +68,11 @@ func (s *BillingService) CreateBillingHistoryInBatch(ctx context.Context, input 
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the billing histories: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the billing histories",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -76,7 +88,11 @@ func (s *BillingService) GetBillingHistoryByOrgId(ctx context.Context, orgId int
 
 	billingHistories, err := s.DB.GetBillingHistoryByOrgId(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the billing histories: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the billing histories",
+			err,
+		)
 	}
 
 	return billingHistories, nil
@@ -92,7 +108,11 @@ func (s *BillingService) GetBillingHistoryBySubId(ctx context.Context, subId int
 
 	billingHistories, err := s.DB.GetBillingHistoryBySubId(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the billing histories: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the billing histories",
+			err,
+		)
 	}
 
 	return billingHistories, nil
@@ -108,7 +128,11 @@ func (s *BillingService) GetBillingHistoryById(ctx context.Context, id int, n in
 
 	billingHistories, err := s.DB.GetBillingHistoryById(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the billing histories: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the billing histories",
+			err,
+		)
 	}
 
 	return billingHistories, nil

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -28,7 +29,11 @@ func (s *OrganizationService) CreateOrgPermissionInBatch(ctx context.Context, in
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the organization permissions: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the organization permissions",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -63,7 +68,11 @@ func (s *OrganizationService) GetOrgPermission(ctx context.Context, orgId int, l
 
 	orgPermissions, err := s.DB.GetOrgPermission(ctx, input)
 	if err != nil {
-		return []CreateOrgPermissionOutput{}, fmt.Errorf("couldn't retrieve the resource types: %s", err)
+		return []CreateOrgPermissionOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the resource types",
+			err,
+		)
 	}
 
 	var output []CreateOrgPermissionOutput
@@ -86,12 +95,20 @@ func (s *OrganizationService) DeleteOrgPermission(ctx context.Context, idType st
 	switch strings.ToLower(idType) {
 	case "organization":
 		if err := s.DB.DeleteOrgPermissionByOrgId(ctx, int32(id)); err != nil {
-			return fmt.Errorf("couldn't delete the resource permission by organization_id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the resource permission by organization_id",
+				err,
+			)
 		}
 
 	case "resource":
 		if err := s.DB.DeleteResourceTypeById(ctx, int32(id)); err != nil {
-			return fmt.Errorf("couldn't delete the resource permission by id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the resource permission by id",
+				err,
+			)
 		}
 	}
 

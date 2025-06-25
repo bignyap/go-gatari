@@ -4,9 +4,9 @@ import (
 	"github.com/bignyap/go-admin/database/sqlcgen"
 
 	"context"
-	"fmt"
 
 	"github.com/bignyap/go-admin/database/dbutils"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -34,7 +34,11 @@ func (s *UsageSummaryService) CreateApiUsageInBatch(ctx context.Context, input [
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the api usage summaries: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the api usage summaries",
+			err,
+		)
 	}
 	return affectedRows, nil
 }
@@ -43,7 +47,11 @@ func (s *UsageSummaryService) CreateApiUsage(ctx context.Context, input *sqlcgen
 
 	insertedID, err := s.DB.CreateApiUsageSummary(ctx, *input)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the API usage summary: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the API usage summary",
+			err,
+		)
 	}
 
 	return insertedID, nil
@@ -59,7 +67,11 @@ func (s *UsageSummaryService) GetApiUsageSummaryByOrgId(ctx context.Context, org
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByOrgId(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the api usage summaries: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the api usage summaries",
+			err,
+		)
 	}
 
 	var output []CreateApiUsageSummaryOutput
@@ -82,7 +94,11 @@ func (s *UsageSummaryService) GetApiUsageSummaryBySubId(ctx context.Context, sub
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryBySubId(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the api usage summaries: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the api usage summaries",
+			err,
+		)
 	}
 
 	var output []CreateApiUsageSummaryOutput
@@ -105,7 +121,11 @@ func (s *UsageSummaryService) GetApiUsageSummaryByEndpointId(ctx context.Context
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByEndpointId(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve the api usage summaries: %s", err)
+		return nil, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the api usage summaries",
+			err,
+		)
 	}
 
 	var output []CreateApiUsageSummaryOutput

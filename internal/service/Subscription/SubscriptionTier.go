@@ -2,11 +2,11 @@ package subscription
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -29,7 +29,11 @@ func (s *SubscriptionService) CreateSubscriptionTierInBatch(ctx context.Context,
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the subscription tiers: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the subscription tiers",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -38,7 +42,11 @@ func (s *SubscriptionService) CreateSubscriptionTierInBatch(ctx context.Context,
 func (s *SubscriptionService) CreateSubscriptionTier(ctx context.Context, input CreateSubTierParams) (CreateSubTierOutput, error) {
 
 	if err := s.Validator.Struct(input); err != nil {
-		return CreateSubTierOutput{}, fmt.Errorf("validation failed: %s", err.Error())
+		return CreateSubTierOutput{}, server.NewError(
+			server.ErrorInternal,
+			"validation failed",
+			err,
+		)
 	}
 
 	currentTime := int32(time.Now().Unix())
@@ -60,12 +68,20 @@ func (s *SubscriptionService) CreateSubscriptionTier(ctx context.Context, input 
 
 	err := s.DB.ArchiveExistingSubscriptionTier(ctx, input.Name)
 	if err != nil {
-		return CreateSubTierOutput{}, err
+		return CreateSubTierOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't archive the existing subscription tier",
+			err,
+		)
 	}
 
 	insertedID, err := s.DB.CreateSubscriptionTier(ctx, subTierParams)
 	if err != nil {
-		return CreateSubTierOutput{}, fmt.Errorf("couldn't create the subscription tier: %s", err)
+		return CreateSubTierOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the subscription tier",
+			err,
+		)
 	}
 
 	output := CreateSubTierOutput{
@@ -91,7 +107,11 @@ func (s *SubscriptionService) ListSubscriptionTiers(ctx context.Context, limit i
 
 	subTiers, err := s.DB.ListSubscriptionTier(ctx, input)
 	if err != nil {
-		return CreateSubTierOutputWithCount{}, fmt.Errorf("couldn't retrieve the subscription tiers: %s", err)
+		return CreateSubTierOutputWithCount{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the subscription tiers",
+			err,
+		)
 	}
 
 	var output []CreateSubTierOutput
@@ -128,7 +148,11 @@ func (s *SubscriptionService) DeleteSubscriptionTier(ctx context.Context, id int
 
 	err := s.DB.DeleteSubscriptionTierById(ctx, int32(id))
 	if err != nil {
-		return fmt.Errorf("couldn't delete the subscription tier: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't delete the subscription tier",
+			err,
+		)
 	}
 
 	return nil

@@ -2,13 +2,13 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 )
 
 type BulkRegisterEndpointInserter struct {
@@ -34,7 +34,11 @@ func (s *ResourceService) RegisterApiEndpoint(ctx context.Context, input *Regist
 
 	insertedID, err := s.DB.RegisterApiEndpoint(ctx, params)
 	if err != nil {
-		return RegisterEndpointOutputs{}, fmt.Errorf("couldn't register the API endpoint: %s", err)
+		return RegisterEndpointOutputs{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't register the API endpoint",
+			err,
+		)
 	}
 
 	output := RegisterEndpointOutputs{
@@ -70,7 +74,11 @@ func (s *ResourceService) RegisterApiEndpointInBatch(ctx context.Context, inputs
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't register endpoints: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't register endpoints",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -85,7 +93,11 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 
 	apiEndpoints, err := s.DB.ListApiEndpoint(ctx, input)
 	if err != nil {
-		return []RegisterEndpointOutputs{}, fmt.Errorf("couldn't retrieve endpoints: %s", err)
+		return []RegisterEndpointOutputs{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve endpoints",
+			err,
+		)
 	}
 
 	var output []RegisterEndpointOutputs
@@ -111,7 +123,11 @@ func (s *ResourceService) DeleteApiEndpointsById(ctx context.Context, id int) er
 
 	err := s.DB.DeleteApiEndpointById(ctx, int32(id))
 	if err != nil {
-		return fmt.Errorf("couldn't delete the endpoint: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't delete the endpoint",
+			err,
+		)
 	}
 
 	return nil

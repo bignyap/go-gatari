@@ -2,11 +2,11 @@ package subscription
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jinzhu/copier"
@@ -39,7 +39,11 @@ func (s *SubscriptionService) CreateSubscription(ctx context.Context, input *Cre
 
 	insertedID, err := s.DB.CreateSubscription(ctx, params)
 	if err != nil {
-		return CreateSubscriptionOutput{}, fmt.Errorf("DB error: %s", err)
+		return CreateSubscriptionOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create subscription",
+			err,
+		)
 	}
 
 	output := CreateSubscriptionOutput{
@@ -55,9 +59,13 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 	var params []sqlcgen.CreateSubscriptionsParams
 	currentTime := int32(time.Now().Unix())
 
-	for i, input := range inputs {
+	for _, input := range inputs {
 		if err := s.Validator.Struct(input); err != nil {
-			return 0, fmt.Errorf("validation failed at index %d: %s", i, err.Error())
+			return 0, server.NewError(
+				server.ErrorInternal,
+				"validation failed",
+				err,
+			)
 		}
 
 		params = append(params, sqlcgen.CreateSubscriptionsParams{
@@ -82,7 +90,11 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("insert failed: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"insert failed",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -92,7 +104,11 @@ func (s *SubscriptionService) DeleteSubscription(ctx context.Context, subId int)
 
 	err := s.DB.DeleteOrganizationById(ctx, int32(subId))
 	if err != nil {
-		return fmt.Errorf("couldn't delete the organization: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't delete the subscription",
+			err,
+		)
 	}
 
 	return nil
@@ -102,7 +118,11 @@ func (s *SubscriptionService) GetSubscription(ctx context.Context, id int) (List
 
 	subscription, err := s.DB.GetSubscriptionById(ctx, int32(id))
 	if err != nil {
-		return ListSubscriptionOutput{}, fmt.Errorf("couldn't retrieve the subscription: %s", err)
+		return ListSubscriptionOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the subscription",
+			err,
+		)
 	}
 
 	row := sqlcgen.ListSubscriptionRow{}
@@ -122,7 +142,11 @@ func (s *SubscriptionService) GetSubscriptionByOrgId(ctx context.Context, orgId 
 
 	subscriptions, err := s.DB.GetSubscriptionByOrgId(ctx, input)
 	if err != nil {
-		return ListSubscriptionOutputWithCount{}, fmt.Errorf("couldn't retrieve the subscriptions: %s", err)
+		return ListSubscriptionOutputWithCount{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the subscriptions",
+			err,
+		)
 	}
 
 	listSubscriptionRows := make([]sqlcgen.ListSubscriptionRow, len(subscriptions))
@@ -143,7 +167,11 @@ func (s *SubscriptionService) ListSubscription(ctx context.Context, limit int, o
 
 	subscriptions, err := s.DB.ListSubscription(ctx, input)
 	if err != nil {
-		return ListSubscriptionOutputWithCount{}, fmt.Errorf("couldn't retrieve the subscriptions: %s", err)
+		return ListSubscriptionOutputWithCount{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the subscriptions",
+			err,
+		)
 	}
 
 	output := ToListSubscriptionOutputWithCount(subscriptions)

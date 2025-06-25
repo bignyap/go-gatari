@@ -2,11 +2,11 @@ package pricing
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -34,7 +34,11 @@ func (s *PricingService) CreateCustomPricingInBatch(ctx context.Context, input [
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, s.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the tier pricings: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the tier pricings",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -44,7 +48,11 @@ func (s *PricingService) CreateCustomPricing(ctx context.Context, input *sqlcgen
 
 	insertedID, err := s.DB.CreateCustomPricing(ctx, *input)
 	if err != nil {
-		return CreateCustomPricingOutput{}, fmt.Errorf("couldn't create the custom pricing: %s", err)
+		return CreateCustomPricingOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the custom pricing",
+			err,
+		)
 	}
 
 	output := CreateCustomPricingOutput{
@@ -66,12 +74,20 @@ func (s *PricingService) DeleteCustomPricing(ctx context.Context, idType string,
 	case "subscription":
 		err := s.DB.DeleteCustomPricingBySubscriptionId(ctx, int32(id))
 		if err != nil {
-			return fmt.Errorf("couldn't delete the custom pricing by subscription_id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the custom pricing by subscription_id",
+				err,
+			)
 		}
 	case "pricing":
 		err := s.DB.DeleteCustomPricingById(ctx, int32(id))
 		if err != nil {
-			return fmt.Errorf("couldn't delete the custom pricing by id: %s", err)
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the custom pricing by id",
+				err,
+			)
 		}
 
 	}
@@ -89,7 +105,11 @@ func (s *PricingService) GetCustomPricing(ctx context.Context, sId int, limit in
 
 	customPricings, err := s.DB.GetCustomPricing(ctx, input)
 	if err != nil {
-		return []CreateCustomPricingOutput{}, fmt.Errorf("couldn't retrieve the custom pricing list: %s", err)
+		return []CreateCustomPricingOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the custom pricing list",
+			err,
+		)
 	}
 
 	var output []CreateCustomPricingOutput

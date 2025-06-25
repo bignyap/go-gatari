@@ -2,7 +2,6 @@ package organization
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -10,6 +9,8 @@ import (
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
 	"github.com/bignyap/go-admin/utils/misc"
+
+	"github.com/bignyap/go-utilities/server"
 )
 
 func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input *CreateOrganizationParams) (CreateOrganizationOutput, error) {
@@ -30,7 +31,11 @@ func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input
 
 	insertedID, err := apiCfg.DB.CreateOrganization(ctx, org)
 	if err != nil {
-		return CreateOrganizationOutput{}, fmt.Errorf("couldn't create the organization: %s", err)
+		return CreateOrganizationOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the organization",
+			err,
+		)
 	}
 
 	input.CreatedAt = misc.FromUnixTime32(currentTime)
@@ -69,7 +74,11 @@ func (apiCfg *OrganizationService) CreateOrganizationInBatch(ctx context.Context
 
 	affectedRows, err := dbutils.InsertWithTransaction(ctx, apiCfg.Conn, inserter)
 	if err != nil {
-		return 0, fmt.Errorf("couldn't create the organizations: %s", err)
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the organizations",
+			err,
+		)
 	}
 
 	return int(affectedRows), nil
@@ -93,7 +102,11 @@ func (s *OrganizationService) ListOrganizations(ctx context.Context, limit int, 
 
 	organizations, err := s.DB.ListOrganization(ctx, input)
 	if err != nil {
-		return ListOrganizationOutputWithCount{}, fmt.Errorf("couldn't retrieve the organizations: %s", err)
+		return ListOrganizationOutputWithCount{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the organizations",
+			err,
+		)
 	}
 
 	output := ToListOrganizationOutputWithCount(organizations)
@@ -110,7 +123,11 @@ func (s *OrganizationService) GetOrganizationById(ctx context.Context, orgId int
 
 	organization, err := s.DB.ListOrganization(ctx, input)
 	if err != nil {
-		return ListOrganizationOutput{}, fmt.Errorf("couldn't retrieve the organization: %s", err)
+		return ListOrganizationOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the organizations",
+			err,
+		)
 	}
 
 	if len(organization) == 0 {
@@ -125,7 +142,11 @@ func (s *OrganizationService) DeleteOrganizationById(ctx context.Context, id int
 
 	err := s.DB.DeleteOrganizationById(ctx, int32(id))
 	if err != nil {
-		return fmt.Errorf("couldn't delete the organization: %s", err)
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve the organizations",
+			err,
+		)
 	}
 
 	return nil
