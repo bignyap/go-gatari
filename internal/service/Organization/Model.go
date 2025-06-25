@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/misc"
+	"github.com/bignyap/go-utilities/converter"
 )
 
 type CreateOrgTypeInput struct {
@@ -84,8 +84,8 @@ func ToListOrganizationOutput(input sqlcgen.ListOrganizationRow) ListOrganizatio
 		CreateOrganizationParams: CreateOrganizationParams{
 			Name:         input.OrganizationName,
 			SupportEmail: input.OrganizationSupportEmail,
-			CreatedAt:    misc.FromUnixTime32(input.OrganizationCreatedAt),
-			UpdatedAt:    misc.FromUnixTime32(input.OrganizationUpdatedAt),
+			CreatedAt:    converter.FromUnixTime32(input.OrganizationCreatedAt),
+			UpdatedAt:    converter.FromUnixTime32(input.OrganizationUpdatedAt),
 			Realm:        input.OrganizationRealm,
 			Active:       &input.OrganizationActive.Bool,
 			ReportQ:      &input.OrganizationReportQ.Bool,

@@ -2,7 +2,7 @@ package handler
 
 import (
 	usage "github.com/bignyap/go-admin/internal/service/Usage"
-	"github.com/bignyap/go-admin/utils/converter"
+	converter "github.com/bignyap/go-utilities/converter"
 	srvErr "github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 )

@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 
-	"github.com/bignyap/go-admin/utils/converter"
+	converter "github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
 )
 

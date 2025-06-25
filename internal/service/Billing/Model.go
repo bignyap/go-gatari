@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/misc"
+	"github.com/bignyap/go-utilities/converter"
 )
 
 type CreateBillingHistoryParams struct {
@@ -33,10 +33,10 @@ type LocalCreateBillingHistoryParams struct {
 
 func (billingHistory LocalCreateBillingHistory) ToCreateBillingHistoryParams() CreateBillingHistoryParams {
 	return CreateBillingHistoryParams{
-		StartDate:      misc.FromUnixTime32(billingHistory.BillingStartDate),
-		EndDate:        misc.FromUnixTime32(billingHistory.BillingEndDate),
+		StartDate:      converter.FromUnixTime32(billingHistory.BillingStartDate),
+		EndDate:        converter.FromUnixTime32(billingHistory.BillingEndDate),
 		PaymentDate:    int4ToTimePtr(billingHistory.PaymentDate),
-		CreatedAt:      misc.FromUnixTime32(billingHistory.BillingCreatedAt),
+		CreatedAt:      converter.FromUnixTime32(billingHistory.BillingCreatedAt),
 		TotalCalls:     int(billingHistory.TotalCalls),
 		TotalAmountDue: billingHistory.TotalAmountDue,
 		PaymentStatus:  billingHistory.PaymentStatus,
@@ -46,10 +46,10 @@ func (billingHistory LocalCreateBillingHistory) ToCreateBillingHistoryParams() C
 
 func (billingHistory LocalCreateBillingHistoryParams) ToCreateBillingHistoryParams() CreateBillingHistoryParams {
 	return CreateBillingHistoryParams{
-		StartDate:      misc.FromUnixTime32(billingHistory.BillingStartDate),
-		EndDate:        misc.FromUnixTime32(billingHistory.BillingEndDate),
+		StartDate:      converter.FromUnixTime32(billingHistory.BillingStartDate),
+		EndDate:        converter.FromUnixTime32(billingHistory.BillingEndDate),
 		PaymentDate:    int4ToTimePtr(billingHistory.PaymentDate),
-		CreatedAt:      misc.FromUnixTime32(billingHistory.BillingCreatedAt),
+		CreatedAt:      converter.FromUnixTime32(billingHistory.BillingCreatedAt),
 		TotalCalls:     int(billingHistory.TotalCalls),
 		TotalAmountDue: billingHistory.TotalAmountDue,
 		PaymentStatus:  billingHistory.PaymentStatus,

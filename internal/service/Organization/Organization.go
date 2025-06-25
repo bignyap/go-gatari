@@ -8,14 +8,14 @@ import (
 
 	"github.com/bignyap/go-admin/database/dbutils"
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/misc"
+	"github.com/bignyap/go-utilities/converter"
 
 	"github.com/bignyap/go-utilities/server"
 )
 
 func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input *CreateOrganizationParams) (CreateOrganizationOutput, error) {
 
-	currentTime := int32(misc.ToUnixTime())
+	currentTime := int32(converter.ToUnixTime())
 	org := sqlcgen.CreateOrganizationParams{
 		OrganizationName:         input.Name,
 		OrganizationRealm:        input.Realm,
@@ -38,8 +38,8 @@ func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input
 		)
 	}
 
-	input.CreatedAt = misc.FromUnixTime32(currentTime)
-	input.UpdatedAt = misc.FromUnixTime32(currentTime)
+	input.CreatedAt = converter.FromUnixTime32(currentTime)
+	input.UpdatedAt = converter.FromUnixTime32(currentTime)
 
 	return CreateOrganizationOutput{
 		ID:                       int(insertedID),
@@ -49,7 +49,7 @@ func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input
 
 func (apiCfg *OrganizationService) CreateOrganizationInBatch(ctx context.Context, inputs []CreateOrganizationParams) (int, error) {
 
-	currentTime := int32(misc.ToUnixTime())
+	currentTime := int32(converter.ToUnixTime())
 	var batch []sqlcgen.CreateOrganizationsParams
 
 	for _, input := range inputs {

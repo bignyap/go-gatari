@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/converter"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
 )
 

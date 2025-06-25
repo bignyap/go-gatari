@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/utils/misc"
+	"github.com/bignyap/go-utilities/converter"
 )
 
 type CreateApiUsageSummaryParams struct {
@@ -36,8 +36,8 @@ type LocalCreateApiUsageSummaryParams struct {
 
 func (apiSummary LocalApiUsageSummary) ToCreateApiUsageSummaryParams() CreateApiUsageSummaryParams {
 	return CreateApiUsageSummaryParams{
-		StartDate:      misc.FromUnixTime32(apiSummary.UsageStartDate),
-		EndDate:        misc.FromUnixTime32(apiSummary.UsageEndDate),
+		StartDate:      converter.FromUnixTime32(apiSummary.UsageStartDate),
+		EndDate:        converter.FromUnixTime32(apiSummary.UsageEndDate),
 		TotalCalls:     int(apiSummary.TotalCalls),
 		TotalCost:      apiSummary.TotalCost,
 		SubscriptionId: int(apiSummary.SubscriptionID),
@@ -48,8 +48,8 @@ func (apiSummary LocalApiUsageSummary) ToCreateApiUsageSummaryParams() CreateApi
 
 func (apiSummary LocalCreateApiUsageSummaryParams) ToCreateApiUsageSummaryParams() CreateApiUsageSummaryParams {
 	return CreateApiUsageSummaryParams{
-		StartDate:      misc.FromUnixTime32(apiSummary.UsageStartDate),
-		EndDate:        misc.FromUnixTime32(apiSummary.UsageEndDate),
+		StartDate:      converter.FromUnixTime32(apiSummary.UsageStartDate),
+		EndDate:        converter.FromUnixTime32(apiSummary.UsageEndDate),
 		TotalCalls:     int(apiSummary.TotalCalls),
 		TotalCost:      apiSummary.TotalCost,
 		SubscriptionId: int(apiSummary.SubscriptionID),
