@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/initialize"
-	"github.com/bignyap/go-admin/router"
+	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-admin/internal/initialize"
+	"github.com/bignyap/go-admin/internal/router"
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/logger/config"
 	"github.com/bignyap/go-utilities/logger/factory"

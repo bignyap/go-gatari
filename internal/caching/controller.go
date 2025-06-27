@@ -6,61 +6,94 @@ import (
 
 	"github.com/bignyap/go-utilities/memcache"
 	"github.com/bignyap/go-utilities/redisclient"
+	"github.com/redis/go-redis/v9"
 )
 
 type CacheController struct {
+	local       *memcache.Client
+	redis       redis.UniversalClient
+	localTTL    time.Duration
+	redisTTL    time.Duration
+	serialize   func(interface{}) (string, error)
+	deserialize func(string) (interface{}, error)
+}
+
+type CacheControllerConfig struct {
 	LocalTTL     time.Duration
 	RedisTTL     time.Duration
+	MemcacheCfg  *memcache.Config
+	RedisCfg     *redisclient.RedisConfig
 	Serializer   func(interface{}) (string, error)
 	Deserializer func(string) (interface{}, error)
 }
 
-func NewCacheController(localTTL, redisTTL time.Duration, ser func(interface{}) (string, error), deser func(string) (interface{}, error)) *CacheController {
-	return &CacheController{
-		LocalTTL:     localTTL,
-		RedisTTL:     redisTTL,
-		Serializer:   ser,
-		Deserializer: deser,
+func NewCacheController(ctx context.Context, cfg CacheControllerConfig) (*CacheController, error) {
+	memCfg := cfg.MemcacheCfg
+	if memCfg == nil {
+		memCfg = &memcache.Config{
+			DefaultTTL:      cfg.LocalTTL,
+			CleanupInterval: 5 * time.Minute,
+		}
 	}
+	memClient := memcache.New(*memCfg)
+
+	var redisClient redis.UniversalClient
+	var err error
+	if cfg.RedisCfg != nil {
+		redisClient, err = redisclient.New(ctx, *cfg.RedisCfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &CacheController{
+		local:       memClient,
+		redis:       redisClient,
+		localTTL:    cfg.LocalTTL,
+		redisTTL:    cfg.RedisTTL,
+		serialize:   cfg.Serializer,
+		deserialize: cfg.Deserializer,
+	}, nil
 }
 
-func (cc *CacheController) Get(ctx context.Context, key string, fetchFromSource func() (interface{}, error)) (interface{}, error) {
-	// Check in-memory cache
-	if val, ok := memcache.Get(key); ok {
+func (cc *CacheController) Get(ctx context.Context, key string, fetch func() (interface{}, error)) (interface{}, error) {
+	// In-memory
+	if val, ok := cc.local.Get(key); ok {
 		return val, nil
 	}
 
-	// Check Redis
-	rdb, err := redisclient.GetRedisClient()
-	if err == nil {
-		if strVal, err := rdb.Get(ctx, key).Result(); err == nil {
-			val, err := cc.Deserializer(strVal)
+	// Redis
+	if cc.redis != nil {
+		if strVal, err := cc.redis.Get(ctx, key).Result(); err == nil {
+			val, err := cc.deserialize(strVal)
 			if err == nil {
-				memcache.Set(key, val, cc.LocalTTL)
+				cc.local.Set(key, val, cc.localTTL)
 				return val, nil
 			}
 		}
 	}
 
-	// Fetch from source
-	val, err := fetchFromSource()
+	// Fallback
+	val, err := fetch()
 	if err != nil {
 		return nil, err
 	}
 
-	// Serialize and store in Redis and memcache
-	if rdb != nil {
-		if strVal, err := cc.Serializer(val); err == nil {
-			rdb.Set(ctx, key, strVal, cc.RedisTTL)
+	// Save to both
+	cc.local.Set(key, val, cc.localTTL)
+
+	if cc.redis != nil {
+		if strVal, err := cc.serialize(val); err == nil {
+			cc.redis.Set(ctx, key, strVal, cc.redisTTL)
 		}
 	}
-	memcache.Set(key, val, cc.LocalTTL)
+
 	return val, nil
 }
 
-func (cc *CacheController) Invalidate(key string) {
-	memcache.Invalidate(key)
-	if rdb, err := redisclient.GetRedisClient(); err == nil {
-		rdb.Del(context.Background(), key)
+func (cc *CacheController) Invalidate(ctx context.Context, key string) {
+	cc.local.Delete(key)
+	if cc.redis != nil {
+		cc.redis.Del(ctx, key)
 	}
 }
