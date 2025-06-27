@@ -1,4 +1,4 @@
-package handler
+package adminHandler
 
 import (
 	usage "github.com/bignyap/go-admin/internal/service/Usage"

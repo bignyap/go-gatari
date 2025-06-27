@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/bignyap/go-admin/database/sqlcgen"
-	"github.com/bignyap/go-admin/handler"
+	adminHandler "github.com/bignyap/go-admin/handler/admin"
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func OrgTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func OrgTypeHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/orgType")
 	routerGrp.POST("", h.CreateOrgTypeHandler)
 	routerGrp.POST("/batch", h.CreateOrgTypeInBatchHandler)
@@ -18,7 +18,7 @@ func OrgTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("", h.ListOrgTypeHandler)
 }
 
-func SubTierHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func SubTierHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/subTier")
 	routerGrp.POST("", h.CreateSubscriptionTierHandler)
 	routerGrp.POST("/batch", h.CreateSubscriptionTierInBatchHandler)
@@ -26,7 +26,7 @@ func SubTierHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("", h.ListSubscriptionTiersHandler)
 }
 
-func EndpointHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func EndpointHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/apiEndpoint")
 	routerGrp.POST("", h.RegisterEndpointHandler)
 	routerGrp.POST("/batch", h.RegisterEndpointInBatchHandler)
@@ -34,7 +34,7 @@ func EndpointHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("", h.ListEndpointsHandler)
 }
 
-func OrganizationHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func OrganizationHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/org")
 	routerGrp.POST("", h.CreateOrganizationandler)
 	routerGrp.POST("/batch", h.CreateOrganizationInBatchandler)
@@ -43,7 +43,7 @@ func OrganizationHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/:Id", h.GetOrganizationByIdHandler)
 }
 
-func TierPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func TierPricingHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/tierPricing")
 	routerGrp.POST("/batch", h.CreateTierPricingInBatchandler)
 	routerGrp.DELETE("/tierId/:tier_id", h.DeleteTierPricingHandler)
@@ -51,7 +51,7 @@ func TierPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/:tier_id", h.GetTierPricingByTierIdHandler)
 }
 
-func SubscriptionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func SubscriptionHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/subscription")
 	routerGrp.POST("", h.CreateSubscriptionHandler)
 	routerGrp.POST("/batch", h.CreateSubscriptionInBatchandler)
@@ -62,7 +62,7 @@ func SubscriptionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("", h.ListSubscriptionHandler)
 }
 
-func CustomPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func CustomPricingHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/customPricing")
 	routerGrp.POST("", h.CreateCustomPricingHandler)
 	routerGrp.POST("/batch", h.CreateCustomPricingInBatchandler)
@@ -71,7 +71,7 @@ func CustomPricingHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/:subscription_id", h.GetCustomPricingHandler)
 }
 
-func ResourceTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func ResourceTypeHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/resourceType")
 	routerGrp.POST("", h.CreateResurceTypeHandler)
 	routerGrp.POST("/batch", h.CreateResurceTypeInBatchHandler)
@@ -79,7 +79,7 @@ func ResourceTypeHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("", h.ListResourceTypeHandler)
 }
 
-func OrgPermissionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func OrgPermissionHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/orgPermission")
 	routerGrp.POST("", h.CreateOrgPermissionHandler)
 	routerGrp.POST("/batch", h.CreateOrgPermissionInBatchHandler)
@@ -87,7 +87,7 @@ func OrgPermissionHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/:organization_id", h.GetOrgPermissionHandler)
 }
 
-func BillingHistoryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func BillingHistoryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/billingHistory")
 	routerGrp.POST("", h.CreateBillingHistoryHandler)
 	routerGrp.POST("/batch", h.CreateBillingHistoryInBatchHandler)
@@ -96,7 +96,7 @@ func BillingHistoryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/subId/:subscription_id", h.GetBillingHistoryBySubIdHandler)
 }
 
-func ApiUsageSummaryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
+func ApiUsageSummaryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/apiUsageSummary")
 	routerGrp.POST("/batch", h.CreateApiUsageInBatchHandler)
 	routerGrp.GET("/orgId/:organization_id", h.GetApiUsageSummaryByOrgIdHandler)
@@ -104,8 +104,8 @@ func ApiUsageSummaryHandler(r *gin.RouterGroup, h *handler.AdminHandler) {
 	routerGrp.GET("/endpointId/:endpoint_id", h.GetApiUsageSummaryByEndpointIdHandler)
 }
 
-func RegisterHandlers(
-	mainRouter *gin.RouterGroup,
+func RegisterAdminHandlers(
+	router *gin.Engine,
 	logger api.Logger,
 	rw *server.ResponseWriter,
 	db *sqlcgen.Queries,
@@ -114,24 +114,24 @@ func RegisterHandlers(
 ) {
 
 	regRouterLogger := logger.WithComponent("router.RegisterHandlers")
-
 	regRouterLogger.Info("Starting")
 
-	handler := handler.NewAdminHandler(logger, rw, db, conn, validator)
+	adminGrpRouter := router.Group("/admin")
+	handler := adminHandler.NewAdminHandler(logger, rw, db, conn, validator)
 
-	mainRouter.GET("", handler.RootHandler)
+	adminGrpRouter.GET("", handler.RootHandler)
 
-	OrgTypeHandler(mainRouter, handler)
-	SubTierHandler(mainRouter, handler)
-	EndpointHandler(mainRouter, handler)
-	OrganizationHandler(mainRouter, handler)
-	TierPricingHandler(mainRouter, handler)
-	SubscriptionHandler(mainRouter, handler)
-	CustomPricingHandler(mainRouter, handler)
-	ResourceTypeHandler(mainRouter, handler)
-	OrgPermissionHandler(mainRouter, handler)
-	BillingHistoryHandler(mainRouter, handler)
-	ApiUsageSummaryHandler(mainRouter, handler)
+	OrgTypeHandler(adminGrpRouter, handler)
+	SubTierHandler(adminGrpRouter, handler)
+	EndpointHandler(adminGrpRouter, handler)
+	OrganizationHandler(adminGrpRouter, handler)
+	TierPricingHandler(adminGrpRouter, handler)
+	SubscriptionHandler(adminGrpRouter, handler)
+	CustomPricingHandler(adminGrpRouter, handler)
+	ResourceTypeHandler(adminGrpRouter, handler)
+	OrgPermissionHandler(adminGrpRouter, handler)
+	BillingHistoryHandler(adminGrpRouter, handler)
+	ApiUsageSummaryHandler(adminGrpRouter, handler)
 
 	regRouterLogger.Info("Completed")
 }
