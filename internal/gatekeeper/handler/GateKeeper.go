@@ -3,6 +3,7 @@ package gateKeeperHandler
 import (
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
 	"github.com/bignyap/go-utilities/logger/api"
 	server "github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
@@ -10,14 +11,11 @@ import (
 )
 
 type GateKeeperHandler struct {
-	// OrganizationService organization.OrganizationService
-	// PricingService      pricing.PricingService
-	// ResourceService     resource.ResourceService
-	// SubscriptionService subscription.SubscriptionService
-	ResponseWriter  *server.ResponseWriter
-	Logger          api.Logger
-	Validator       *validator.Validate
-	CacheController *caching.CacheController
+	GateKeepingService *gatekeeping.GateKeepingService
+	ResponseWriter     *server.ResponseWriter
+	Logger             api.Logger
+	Validator          *validator.Validate
+	Cache              *caching.CacheController
 }
 
 func NewGateKeeperHandler(
@@ -31,34 +29,17 @@ func NewGateKeeperHandler(
 
 	return &GateKeeperHandler{
 
-		ResponseWriter:  server.NewResponseWriter(logger),
-		Logger:          logger,
-		Validator:       validator,
-		CacheController: cacheContoller,
+		ResponseWriter: server.NewResponseWriter(logger),
+		Logger:         logger,
+		Validator:      validator,
+		Cache:          cacheContoller,
 
-		// OrganizationService: organization.OrganizationService{
-		// 	Logger:    logger,
-		// 	Validator: validator,
-		// 	DB:        db,
-		// 	Conn:      conn,
-		// },
-		// PricingService: pricing.PricingService{
-		// 	Logger:    logger,
-		// 	Validator: validator,
-		// 	DB:        db,
-		// 	Conn:      conn,
-		// },
-		// ResourceService: resource.ResourceService{
-		// 	Logger:    logger,
-		// 	Validator: validator,
-		// 	DB:        db,
-		// 	Conn:      conn,
-		// },
-		// SubscriptionService: subscription.SubscriptionService{
-		// 	Logger:    logger,
-		// 	Validator: validator,
-		// 	DB:        db,
-		// 	Conn:      conn,
-		// },
+		GateKeepingService: &gatekeeping.GateKeepingService{
+			Logger:    logger,
+			Validator: validator,
+			DB:        db,
+			Conn:      conn,
+			Cache:     cacheContoller,
+		},
 	}
 }

@@ -91,6 +91,20 @@ func (cc *CacheController) Get(ctx context.Context, key string, fetch func() (in
 	return val, nil
 }
 
+func (cc *CacheController) Set(ctx context.Context, key string, val interface{}) error {
+	cc.local.Set(key, val, cc.localTTL)
+
+	if cc.redis != nil {
+		strVal, err := cc.serialize(val)
+		if err != nil {
+			return err
+		}
+		return cc.redis.Set(ctx, key, strVal, cc.redisTTL).Err()
+	}
+
+	return nil
+}
+
 func (cc *CacheController) Invalidate(ctx context.Context, key string) {
 	cc.local.Delete(key)
 	if cc.redis != nil {
