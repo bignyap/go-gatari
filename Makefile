@@ -1,20 +1,31 @@
-SERVICE_NAME = go-admin
+SERVICE_NAME ?= go-admin
+REPO_FOLDER ?= $(shell pwd)
+BUILD_DIR = $(REPO_FOLDER)/build
 GIT_HASH = $(shell git rev-parse --short HEAD)
 GIT_TAG = $(shell git describe --tags --exact-match HEAD 2>/dev/null)
 CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
 CONTAINER_IMAGE = $(SERVICE_NAME):$(CONTAINER_IMAGE_TAG)
 CONTAINER_IMAGE_LATEST = $(SERVICE_NAME):latest
-REPO_FOLDER ?= $(shell pwd)
-BUILD_DIR = $(REPO_FOLDER)/build
-ENTRYPOINT = cmd/go-admin/main.go
-DEBUG_ENTRYPOINT = cmd/debug/debug.go
-PROFILE_OUTPUT = top
-ENABLE_PPROF = true
 
-GOOSE=go run github.com/pressly/goose/v3/cmd/goose
-DB_DRIVER=postgres
-DB_DSN=postgres://go-admin:go-admin@localhost:5432/go-admin?sslmode=disable
-MIGRATIONS_DIR=./database/sqlc/schema
+# Entry point defaults based on service
+ifeq ($(SERVICE_NAME),go-admin)
+	ENTRYPOINT = cmd/go-admin/main.go
+	DEBUG_ENTRYPOINT = cmd/debug/debug.go
+	DB_NAME = go-admin
+else ifeq ($(SERVICE_NAME),gate-keeper)
+	ENTRYPOINT = cmd/gate-keeper/main.go
+	DEBUG_ENTRYPOINT = cmd/gate-keeper/debug.go
+	DB_NAME = gate-keeper
+endif
+
+ENABLE_PPROF = true
+PROFILE_OUTPUT = top
+
+# Goose / DB
+GOOSE = go run github.com/pressly/goose/v3/cmd/goose
+DB_DRIVER = postgres
+DB_DSN = postgres://$(DB_NAME):$(DB_NAME)@localhost:5432/$(DB_NAME)?sslmode=disable
+MIGRATIONS_DIR = ./database/sqlc/schema
 
 ######################
 # Go Clean & Setup
@@ -42,6 +53,14 @@ run-prod:
 debug:
 	go run $(DEBUG_ENTRYPOINT)
 
+######################
+# Service-Specific Run Shortcuts
+######################
+run-go-admin:
+	$(MAKE) run-debug SERVICE_NAME=go-admin
+
+run-gatekeeper:
+	$(MAKE) run-debug SERVICE_NAME=gate-keeper
 
 ######################
 # Testing
@@ -79,7 +98,6 @@ sqlc-generate:
 ######################
 # Build
 ######################
-
 compile-artifacts: pre_compile compile
 
 pre_compile: clean mod-update
@@ -91,10 +109,8 @@ compile:
 ######################
 # Container
 ######################
-
-build-container:
-	cd $(REPO_FOLDER) && \
-	docker build -t $(CONTAINER_IMAGE) . && \
+build-container: compile-artifacts
+	docker build --build-arg BINARY_NAME=$(SERVICE_NAME) -t $(CONTAINER_IMAGE) . && \
 	docker tag $(CONTAINER_IMAGE) $(CONTAINER_IMAGE_LATEST)
 
 remove-container:

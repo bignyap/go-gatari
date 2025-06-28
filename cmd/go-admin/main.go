@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/bignyap/go-admin/initialize"
+	"github.com/bignyap/go-admin/internal/admin/initializer"
 )
 
-func main() { initialize.InitializeApp() }
+func main() {
+	initializer.InitializeAdminServer()
+}

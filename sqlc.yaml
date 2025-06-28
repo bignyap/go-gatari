@@ -1,10 +1,10 @@
 version: "2"
 sql:
-  - schema: "database/sqlc/schema"
-    queries: "database/sqlc/queries"
+  - schema: "internal/database/sqlc/schema"
+    queries: "internal/database/sqlc/queries"
     engine: "postgresql"
     gen:
       go:
-        out: "database/sqlcgen"
+        out: "internal/database/sqlcgen"
         sql_package: pgx/v5
         emit_empty_slices: true

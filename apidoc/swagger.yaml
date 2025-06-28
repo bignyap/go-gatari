@@ -3,7 +3,7 @@ info:
   title: Go Gate Keeper API
   version: 1.0.0
 servers:
-  - url: 'http://localhost:8080/admin/'
+  - url: 'http://localhost:8081/admin/'
     description: "localhost"
 paths:
   /apiEndpoint:

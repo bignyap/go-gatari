@@ -1,5 +1,5 @@
 services:
-  gate-keeper:
+  go-admin:
     container_name: go-admin
     image: go-admin:latest
     # build:
@@ -7,6 +7,7 @@ services:
     #   dockerfile: Dockerfile
     #   args:
     #     CACHE_BUST: ${CACHE_BUST}
+    #     BINARY_NAME: "go-admin"
     restart: always
     environment:
       DB_HOST: ${DB_HOST}
@@ -14,12 +15,46 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      APPLICATION_PORT: 8080
+      ENVIRONMENT: "dev"
+    ports:
+      - '8081:8080'
+    expose:
+      - '8081'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
+      interval: 19s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gate-keeper:
+    container_name: gate-keeper
+    image: gate-keeper:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
+    #     BINARY_NAME: "gate-keeper"
+    restart: always
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      REDIS_ADDR: ${REDIS_ADDR}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: ${REDIS_DB}
       APPLICATION_PORT: ${APPLICATION_PORT}
       ENVIRONMENT: "dev"
     ports:
-      - '8080:8080'
+      - '8082:8080'
     expose:
-      - '8080'
+      - '8082'
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
       interval: 19s
@@ -52,9 +87,9 @@ services:
     image: styled-swagger-ui:latest
     restart: always
     ports:
-      - '8081:80'
+      - '8083:80'
     expose:
-      - '8081'
+      - '8083'
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -62,6 +97,10 @@ services:
 
   redis:
     image: redis
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - go-admin-redis-data:/data
     ports:
@@ -69,7 +108,7 @@ services:
     expose:
       - '6379'
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
       interval: 5s
       timeout: 5s
       retries: 10
