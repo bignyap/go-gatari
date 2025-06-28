@@ -109,7 +109,7 @@ compile:
 ######################
 # Container
 ######################
-build-container:
+build-container: compile-artifacts
 	docker build --build-arg BINARY_NAME=$(SERVICE_NAME) -t $(CONTAINER_IMAGE) . && \
 	docker tag $(CONTAINER_IMAGE) $(CONTAINER_IMAGE_LATEST)
 
