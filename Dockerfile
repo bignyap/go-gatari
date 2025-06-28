@@ -1,9 +1,13 @@
+# File: Dockerfile
 FROM gcr.io/distroless/base
 
 EXPOSE 8080
 
-ADD build/go-admin /
+# The binary name is passed in during build
+ARG BINARY_NAME
+
+ADD build/${BINARY_NAME} /app
 
 WORKDIR /
 
-CMD ["/go-admin"]
+CMD ["/app"]

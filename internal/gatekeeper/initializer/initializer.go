@@ -2,8 +2,6 @@ package initializer
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -16,7 +14,6 @@ import (
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/logger/config"
 	"github.com/bignyap/go-utilities/logger/factory"
-	"github.com/bignyap/go-utilities/redisclient"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -83,6 +80,7 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 }
 
 func (s *GateKeeperService) Shutdown() error {
+
 	shtLogger := s.Logger.WithComponent("server.Shutdown")
 	shtLogger.Info("Starting")
 
@@ -91,12 +89,21 @@ func (s *GateKeeperService) Shutdown() error {
 
 	ctx := context.Background()
 
+	// Flush caches to Redis/DB
 	s.CacheManager.SyncIncrementalToRedis(ctx, "usage")
 	s.CacheManager.SyncAggregatedToDB(ctx, "usage", func(key string, count int) error {
 		return s.CacheManager.IncrementUsageFromCacheKey(ctx, key, count)
 	})
 	shtLogger.Info("Cache flushed")
 
+	// Close Redis connection if possible
+	if err := s.CacheContoller.Close(); err != nil {
+		shtLogger.Error("Error closing Redis", err)
+	} else {
+		shtLogger.Info("Redis connection closed")
+	}
+
+	// Close DB
 	if s.Conn != nil {
 		s.Conn.Close()
 		shtLogger.Info("Database connection pool closed")
@@ -122,6 +129,7 @@ func InitializeGateKeeperServer() {
 		log.Fatal("PROXY_TARGET must be set in proxy mode")
 	}
 
+	// Logger setup
 	var logConfig config.LogConfig
 	if environment == "prod" {
 		logConfig = config.ProductionConfig()
@@ -130,44 +138,23 @@ func InitializeGateKeeperServer() {
 	}
 	logger, _ := factory.NewLogger(logConfig)
 
+	// Database connection
 	conn, err := initialize.LoadDBConn()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer conn.Close()
 
+	// Validator
 	validator := validator.New()
 
-	var mySer = func(val interface{}) (string, error) {
-		b, err := json.Marshal(val)
-		if err != nil {
-			return "", fmt.Errorf("serialize error: %w", err)
-		}
-		return string(b), nil
-	}
-
-	var myDeser = func(data string) (interface{}, error) {
-		var user interface{}
-		err := json.Unmarshal([]byte(data), &user)
-		if err != nil {
-			return nil, fmt.Errorf("deserialize error: %w", err)
-		}
-		return user, nil
-	}
-
-	cacheController, err := caching.NewCacheController(context.Background(), caching.CacheControllerConfig{
-		LocalTTL:     5 * time.Minute,
-		RedisTTL:     30 * time.Minute,
-		Serializer:   mySer,
-		Deserializer: myDeser,
-		RedisCfg: &redisclient.RedisConfig{
-			Addr: "localhost:6379",
-		},
-	})
+	// Redis cache controller from env
+	cacheController, err := initialize.LoadRedisController()
 	if err != nil {
-		log.Fatalf("cache init failed: %v", err)
+		log.Fatalf("Failed to initialize Redis: %v", err)
 	}
 
+	// Cache manager
 	cacheManager := &cachemanagement.CacheManagementService{
 		Logger:    logger,
 		Cache:     cacheController,
@@ -176,12 +163,14 @@ func InitializeGateKeeperServer() {
 		Validator: validator,
 	}
 
-	adminSrvc := NewGateKeeperService(
+	// Main service
+	gkService := NewGateKeeperService(
 		logger, conn, validator, cacheController,
 		mode, target, cacheManager,
 	)
 
-	if err := initialize.InitializeWebServer(logger, adminSrvc); err != nil {
+	// Start web server
+	if err := initialize.InitializeWebServer(logger, gkService); err != nil {
 		log.Fatalf("Failed to start web server: %v", err)
 	}
 }

@@ -210,3 +210,10 @@ func (cc *CacheController) DeleteRedisValue(ctx context.Context, prefix, key str
 		cc.redis.Del(ctx, fullKey)
 	}
 }
+
+func (c *CacheController) Close() error {
+	if closer, ok := c.redis.(interface{ Close() error }); ok {
+		return closer.Close()
+	}
+	return nil
+}

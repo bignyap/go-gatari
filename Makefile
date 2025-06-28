@@ -110,8 +110,7 @@ compile:
 # Container
 ######################
 build-container:
-	cd $(REPO_FOLDER) && \
-	docker build -t $(CONTAINER_IMAGE) . && \
+	docker build --build-arg BINARY_NAME=$(SERVICE_NAME) -t $(CONTAINER_IMAGE) . && \
 	docker tag $(CONTAINER_IMAGE) $(CONTAINER_IMAGE_LATEST)
 
 remove-container:
