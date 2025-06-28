@@ -8,7 +8,7 @@ import (
 
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
-	"github.com/bignyap/go-admin/internal/gatekeeper/service/cachemanagement"
+	cachemanagement "github.com/bignyap/go-admin/internal/gatekeeper/service/CacheManagement"
 	"github.com/bignyap/go-admin/internal/initialize"
 	"github.com/bignyap/go-admin/internal/router"
 	"github.com/bignyap/go-utilities/logger/api"

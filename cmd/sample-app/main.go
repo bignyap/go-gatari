@@ -1,10 +1,9 @@
 package main
 
-import (
-	"github.com/gin-gonic/gin"
-)
+import "fmt"
 
-func HandleAPIRequest(c *gin.Context) {
+func main() {
+	fmt.Println("Hello!!")
 	// orgName := c.GetHeader("X-Organization-Name")
 	// endpoint := c.FullPath() // or c.Request.URL.Path, depending on route setup
 
