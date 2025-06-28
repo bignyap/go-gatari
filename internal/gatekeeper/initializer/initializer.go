@@ -10,6 +10,7 @@ import (
 
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-admin/internal/gatekeeper/service/cachemanagement"
 	"github.com/bignyap/go-admin/internal/initialize"
 	"github.com/bignyap/go-admin/internal/router"
 	"github.com/bignyap/go-utilities/logger/api"
@@ -28,6 +29,10 @@ type GateKeeperService struct {
 	Conn           *pgxpool.Pool
 	Validator      *validator.Validate
 	CacheContoller *caching.CacheController
+	CacheManager   *cachemanagement.CacheManagementService
+	Mode           string
+	Target         string
+	stopFlush      chan struct{}
 }
 
 func NewGateKeeperService(
@@ -35,6 +40,9 @@ func NewGateKeeperService(
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
 	cacheController *caching.CacheController,
+	mode string,
+	target string,
+	cacheManager *cachemanagement.CacheManagementService,
 ) *GateKeeperService {
 	return &GateKeeperService{
 		Logger:         logger,
@@ -42,47 +50,63 @@ func NewGateKeeperService(
 		DB:             sqlcgen.New(conn),
 		Conn:           conn,
 		CacheContoller: cacheController,
+		CacheManager:   cacheManager,
+		Mode:           mode,
+		Target:         target,
+		stopFlush:      make(chan struct{}),
 	}
 }
 
 func (s *GateKeeperService) Setup(server server.Server) error {
-
 	setupLogger := s.Logger.WithComponent("server.Setup")
-
 	setupLogger.Info("Starting")
 
 	s.ResponseWriter = server.GetResponseWriter()
 
-	router.RegisterAdminHandlers(
+	router.RegisterGateKeeperHandlers(
 		server.Router(),
-		s.Logger, s.ResponseWriter, s.DB, s.Conn, s.Validator,
+		s.Logger,
+		s.ResponseWriter,
+		s.DB,
+		s.Conn,
+		s.Validator,
+		s.CacheContoller,
+		s.Mode,
+		s.Target,
 	)
 
-	setupLogger.Info("Completed")
+	// Start periodic cache sync
+	cachemanagement.StartPeriodicFlush(s.CacheManager, 30*time.Second, s.stopFlush)
 
+	setupLogger.Info("Completed")
 	return nil
 }
 
 func (s *GateKeeperService) Shutdown() error {
-
 	shtLogger := s.Logger.WithComponent("server.Shutdown")
-
 	shtLogger.Info("Starting")
+
+	// Stop periodic flushing
+	close(s.stopFlush)
+
+	ctx := context.Background()
+
+	s.CacheManager.SyncIncrementalToRedis(ctx, "usage")
+	s.CacheManager.SyncAggregatedToDB(ctx, "usage", func(key string, count int) error {
+		return s.CacheManager.IncrementUsageFromCacheKey(ctx, key, count)
+	})
+	shtLogger.Info("Cache flushed")
 
 	if s.Conn != nil {
 		s.Conn.Close()
 		shtLogger.Info("Database connection pool closed")
 	}
 
-	// Add any other cleanup logic here if needed (e.g., flushing logs)
-
 	shtLogger.Info("Completed")
-
 	return nil
 }
 
 func InitializeGateKeeperServer() {
-
 	if err := initialize.GetEnvVals(); err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
@@ -90,6 +114,12 @@ func InitializeGateKeeperServer() {
 	environment := os.Getenv("ENVIRONMENT")
 	if environment == "" {
 		environment = "dev"
+	}
+	mode := os.Getenv("GATEKEEPER_MODE") // "proxy", "middleware", or "auth-middleware"
+	target := os.Getenv("PROXY_TARGET")  // required if mode is "proxy"
+
+	if mode == "proxy" && target == "" {
+		log.Fatal("PROXY_TARGET must be set in proxy mode")
 	}
 
 	var logConfig config.LogConfig
@@ -138,8 +168,17 @@ func InitializeGateKeeperServer() {
 		log.Fatalf("cache init failed: %v", err)
 	}
 
+	cacheManager := &cachemanagement.CacheManagementService{
+		Logger:    logger,
+		Cache:     cacheController,
+		DB:        sqlcgen.New(conn),
+		Conn:      conn,
+		Validator: validator,
+	}
+
 	adminSrvc := NewGateKeeperService(
 		logger, conn, validator, cacheController,
+		mode, target, cacheManager,
 	)
 
 	if err := initialize.InitializeWebServer(logger, adminSrvc); err != nil {

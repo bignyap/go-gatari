@@ -9,17 +9,16 @@ import (
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 )
 
-func (s *GateKeepingService) ValidateRequest(ctx context.Context, orgName, endpointName string) error {
-
-	orgAny, err := s.Cache.Get(ctx, "org:"+orgName, func() (interface{}, error) {
-		return s.DB.GetOrganizationByName(ctx, orgName)
+func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) error {
+	orgAny, err := s.Cache.Get(ctx, "org:"+input.OrganizationName, func() (interface{}, error) {
+		return s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	})
 	if err != nil {
 		return errors.New("organization not found")
 	}
 
-	endpointAny, err := s.Cache.Get(ctx, "endpoint:"+endpointName, func() (interface{}, error) {
-		return s.DB.GetEndpointByName(ctx, endpointName)
+	endpointAny, err := s.Cache.Get(ctx, "endpoint:"+input.EndpointName, func() (interface{}, error) {
+		return s.DB.GetEndpointByName(ctx, input.EndpointName)
 	})
 	if err != nil {
 		return errors.New("endpoint not found")
@@ -38,25 +37,24 @@ func (s *GateKeepingService) ValidateRequest(ctx context.Context, orgName, endpo
 		return errors.New("subscription expired")
 	}
 
-	// Usage check from cache
-	key := usageCacheKey(org.ID, endpoint.ID)
-	val, _ := s.Cache.Get(ctx, key, func() (interface{}, error) {
-		return 0, nil
-	})
-	if count, ok := val.(int); ok && int32(count) >= sub.ApiLimit.Int32 && sub.ApiLimit.Int32 > 0 {
-		return errors.New("quota exceeded")
+	if sub.ApiLimit.Int32 > 0 {
+		key := usageKey(org.ID, endpoint.ID)
+		snapshot := s.Cache.GetAllLocalValues("usage")
+		if count := snapshot[key]; int32(count) >= sub.ApiLimit.Int32 {
+			return errors.New("quota exceeded")
+		}
 	}
 
 	return nil
 }
 
-func (s *GateKeepingService) RecordUsage(ctx context.Context, orgName, endpointName string) (float64, error) {
-	org, err := s.DB.GetOrganizationByName(ctx, orgName)
+func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsageInput) (float64, error) {
+	org, err := s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	if err != nil {
 		return 0, errors.New("organization not found")
 	}
 
-	endpoint, err := s.DB.GetEndpointByName(ctx, endpointName)
+	endpoint, err := s.DB.GetEndpointByName(ctx, input.EndpointName)
 	if err != nil {
 		return 0, errors.New("endpoint not found")
 	}
@@ -77,29 +75,13 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, orgName, endpointN
 		return 0, errors.New("pricing error")
 	}
 
-	key := usageCacheKey(org.ID, endpoint.ID)
-
-	// Try to get current usage count from cache
-	val, _ := s.Cache.Get(ctx, key, func() (interface{}, error) {
-		return 0, nil // Default count if not in cache
-	})
-
-	if count, ok := val.(int); ok {
-		_ = s.Cache.Set(ctx, key, count+1)
-	} else {
-		_ = s.Cache.Set(ctx, key, 1)
-	}
-
-	// Async DB usage record
-	go s.DB.IncrementUsage(context.Background(), sqlcgen.IncrementUsageParams{
-		OrganizationID: org.ID,
-		SubscriptionID: sub.ID,
-		ApiEndpointID:  endpoint.ID,
-	})
+	// Use new incremental tracking
+	key := usageKey(org.ID, endpoint.ID)
+	s.Cache.IncrementLocalValue("usage", key, 1)
 
 	return pricing, nil
 }
 
-func usageCacheKey(orgID, endpointID int32) string {
-	return fmt.Sprintf("usage:%d:%d", orgID, endpointID)
+func usageKey(orgID, endpointID int32) string {
+	return fmt.Sprintf("%d:%d", orgID, endpointID)
 }
