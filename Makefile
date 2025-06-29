@@ -25,7 +25,7 @@ PROFILE_OUTPUT = top
 GOOSE = go run github.com/pressly/goose/v3/cmd/goose
 DB_DRIVER = postgres
 DB_DSN = postgres://$(DB_NAME):$(DB_NAME)@localhost:5432/$(DB_NAME)?sslmode=disable
-MIGRATIONS_DIR = ./database/sqlc/schema
+MIGRATIONS_DIR = ./internal/database/sqlc/schema
 
 ######################
 # Go Clean & Setup
