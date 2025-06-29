@@ -1,0 +1,139 @@
+version: '3'
+
+vars:
+  SERVICE_NAME: go-admin
+  REPO_FOLDER:
+    sh: pwd
+  BUILD_DIR: "{{.REPO_FOLDER}}/build"
+  GIT_HASH:
+    sh: git rev-parse --short HEAD
+  GIT_TAG:
+    sh: git describe --tags --exact-match HEAD 2>/dev/null || echo ""
+  CONTAINER_IMAGE_TAG: "{{if .GIT_TAG}}{{.GIT_TAG}}{{else}}{{.GIT_HASH}}{{end}}"
+  CONTAINER_IMAGE: "{{.SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+  CONTAINER_IMAGE_LATEST: "{{.SERVICE_NAME}}:latest"
+  ENABLE_PPROF: "true"
+  PROFILE_OUTPUT: top
+  DB_DRIVER: postgres
+  DB_NAME: "{{.SERVICE_NAME}}"
+  DB_DSN: "postgres://{{.DB_NAME}}:{{.DB_NAME}}@localhost:5432/{{.DB_NAME}}?sslmode=disable"
+  MIGRATIONS_DIR: ./internal/database/sqlc/schema
+  ENTRYPOINT: "cmd/{{.SERVICE_NAME}}/main.go"
+  DEBUG_ENTRYPOINT: "cmd/debug/debug.go"
+
+tasks:
+  clean:
+    cmds:
+      - go clean
+      - go clean -modcache
+
+  mod-update:
+    cmds:
+      - go mod tidy
+      - go mod vendor
+
+  run-debug:
+    cmds:
+      - ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=debug go run {{.ENTRYPOINT}}
+
+  run-dev:
+    cmds:
+      - ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=dev go run {{.ENTRYPOINT}}
+
+  run-prod:
+    cmds:
+      - ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=prod go run {{.ENTRYPOINT}}
+
+  debug:
+    cmds:
+      - go run {{.DEBUG_ENTRYPOINT}}
+
+  run-go-admin:
+    vars: { SERVICE_NAME: go-admin }
+    cmds:
+      - task: run-debug
+
+  run-gatekeeper:
+    vars: { SERVICE_NAME: gate-keeper }
+    cmds:
+      - task: run-debug
+
+  test:
+    cmds:
+      - go test -v ./...
+
+  test-summary:
+    cmds:
+      - go test -v -json ./... | tparse
+
+  mem-profile:
+    cmds:
+      - echo "{{.PROFILE_OUTPUT}}" | go tool pprof mem.pprof
+
+  cpu-profile:
+    cmds:
+      - echo "{{.PROFILE_OUTPUT}}" | go tool pprof cpu.pprof
+
+  migrate-up:
+    cmds:
+      - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" up
+
+  migrate-down:
+    cmds:
+      - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" down
+
+  migrate-status:
+    cmds:
+      - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" status
+
+  sqlc-generate:
+    cmds:
+      - sqlc generate
+
+  compile-artifacts:
+    cmds:
+      - task: pre_compile
+        vars: { SERVICE_NAME: "{{.SERVICE_NAME}}" }
+      - task: compile
+        vars: { SERVICE_NAME: "{{.SERVICE_NAME}}" }
+
+  pre_compile:
+    cmds:
+      - task: clean
+      - task: mod-update
+
+  compile:
+    dir: "{{.REPO_FOLDER}}/cmd/{{.SERVICE_NAME}}"
+    cmds:
+      - echo "SERVICE_NAME={{.SERVICE_NAME}}"
+      - echo "PWD=$(pwd)"
+      - task: mkdir-build-dir
+      - GOOS=linux GOARCH=amd64 go build -o ../../build/{{.SERVICE_NAME}} main.go
+
+  mkdir-build-dir:
+    cmds:
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "if (!(Test-Path '{{.BUILD_DIR}}')) { New-Item -ItemType Directory -Path '{{.BUILD_DIR}}' }"
+        {{else}}
+        mkdir -p {{.BUILD_DIR}}
+        {{end}}
+  
+  build-container:
+    deps: [compile-artifacts]
+    cmds:
+      - docker build --build-arg BINARY_NAME={{.SERVICE_NAME}} -t {{.CONTAINER_IMAGE}} .
+      - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
+
+  remove-container:
+    cmds:
+      - |
+        docker images --format "{{'{{.Repository}}:{{.Tag}}'}}" | grep '^{{.SERVICE_NAME}}' | xargs -r docker rmi
+
+  start-container:
+    cmds:
+      - docker compose -f docker-compose.yaml up -d
+
+  stop-container:
+    cmds:
+      - docker compose -f docker-compose.yaml down
