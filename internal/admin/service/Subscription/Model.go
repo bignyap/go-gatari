@@ -4,20 +4,23 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 )
 
 type CreateSubscriptionParams struct {
-	Name               string     `json:"name" form:"name" validate:"required"`
-	Type               string     `json:"type" form:"type" validate:"required"`
-	CreatedAt          time.Time  `json:"created_at" form:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at" form:"updated_at"`
-	StartDate          time.Time  `json:"start_date" form:"start_date"`
-	APILimit           *int       `json:"api_limit" form:"api_limit"`
-	ExpiryDate         *time.Time `json:"expiry_date" form:"expiry_date"`
-	Description        *string    `json:"description" form:"description"`
-	Status             *bool      `json:"status" form:"status"`
-	OrganizationID     int        `json:"organization_id" form:"organization_id" validate:"required"`
-	SubscriptionTierID int        `json:"subscription_tier_id" form:"subscription_tier_id" validate:"required"`
+	Name               string                `json:"name" form:"name" validate:"required"`
+	Type               string                `json:"type" form:"type" validate:"required"`
+	CreatedAt          time.Time             `json:"created_at" form:"created_at"`
+	UpdatedAt          time.Time             `json:"updated_at" form:"updated_at"`
+	StartDate          *converter.TimeOrDate `json:"start_date" form:"-"`
+	StartDateRaw       string                `form:"start_date" json:"-"`
+	APILimit           *int                  `json:"api_limit" form:"api_limit"`
+	ExpiryDate         *converter.TimeOrDate `json:"expiry_date" form:"-"`
+	ExpiryDateRaw      string                `form:"expiry_date" json:"-"`
+	Description        *string               `json:"description" form:"description"`
+	Status             *bool                 `json:"status" form:"status"`
+	OrganizationID     int                   `json:"organization_id" form:"organization_id" validate:"required"`
+	SubscriptionTierID int                   `json:"subscription_tier_id" form:"subscription_tier_id" validate:"required"`
 }
 
 type CreateSubscriptionOutput struct {
@@ -37,6 +40,7 @@ type ListSubscriptionOutputWithCount struct {
 }
 
 func ToListSubscriptionOutput(input sqlcgen.ListSubscriptionRow) ListSubscriptionOutput {
+	startDate := time.Unix(int64(input.SubscriptionStartDate), 0)
 	return ListSubscriptionOutput{
 		ID:       int(input.SubscriptionID),
 		TierName: input.TierName,
@@ -45,9 +49,9 @@ func ToListSubscriptionOutput(input sqlcgen.ListSubscriptionRow) ListSubscriptio
 			Type:               input.SubscriptionType,
 			CreatedAt:          time.Unix(int64(input.SubscriptionCreatedDate), 0),
 			UpdatedAt:          time.Unix(int64(input.SubscriptionUpdatedDate), 0),
-			StartDate:          time.Unix(int64(input.SubscriptionStartDate), 0),
+			StartDate:          toTimeOrDatePtr(&startDate),
 			APILimit:           fromPgInt4Ptr(input.SubscriptionApiLimit),
-			ExpiryDate:         fromPgInt4TimePtr(input.SubscriptionExpiryDate),
+			ExpiryDate:         toTimeOrDatePtr(fromPgInt4TimePtr(input.SubscriptionExpiryDate)),
 			Description:        fromPgText(input.SubscriptionDescription),
 			Status:             fromPgBool(input.SubscriptionStatus),
 			OrganizationID:     int(input.OrganizationID),

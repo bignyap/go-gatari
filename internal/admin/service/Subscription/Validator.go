@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -21,16 +23,35 @@ func (h *SubscriptionService) CreateSubscriptionInBatchValidation(c *gin.Context
 func (h *SubscriptionService) CreateSubscriptionValidation(c *gin.Context) (*CreateSubscriptionParams, error) {
 
 	var input CreateSubscriptionParams
-	if err := c.ShouldBind(&input); err != nil {
-		return nil, fmt.Errorf("invalid input: %w", err)
+
+	if err := c.ShouldBindWith(&input, binding.Form); err != nil {
+		return nil, fmt.Errorf("binding error: %w", err)
+	}
+
+	// Manual parsing
+	if input.StartDateRaw != "" {
+		t := &converter.TimeOrDate{}
+		if err := t.UnmarshalText([]byte(input.StartDateRaw)); err != nil {
+			return nil, fmt.Errorf("invalid start_date: %w", err)
+		}
+		input.StartDate = t
+	}
+
+	if input.ExpiryDateRaw != "" {
+		t := &converter.TimeOrDate{}
+		if err := t.UnmarshalText([]byte(input.ExpiryDateRaw)); err != nil {
+			return nil, fmt.Errorf("invalid expiry_date: %w", err)
+		}
+		input.ExpiryDate = t
 	}
 
 	now := time.Now()
 	input.CreatedAt = now
 	input.UpdatedAt = now
-	if input.StartDate.IsZero() {
-		input.StartDate = now
+	if input.StartDate == nil || input.StartDate.IsZero() {
+		input.StartDate = &converter.TimeOrDate{Time: now}
 	}
+
 	return &input, nil
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -30,7 +31,7 @@ func (s *SubscriptionService) CreateSubscription(ctx context.Context, input *Cre
 		SubscriptionUpdatedDate: int32(input.UpdatedAt.Unix()),
 		SubscriptionStartDate:   int32(input.StartDate.Unix()),
 		SubscriptionApiLimit:    toPgInt4(input.APILimit),
-		SubscriptionExpiryDate:  toPgInt4FromTimePtr(input.ExpiryDate),
+		SubscriptionExpiryDate:  toPgInt4FromTimeOrDate(input.ExpiryDate),
 		SubscriptionDescription: toPgText(input.Description),
 		SubscriptionStatus:      toPgBool(input.Status),
 		OrganizationID:          int32(input.OrganizationID),
@@ -75,7 +76,7 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 			SubscriptionUpdatedDate: currentTime,
 			SubscriptionStartDate:   currentTime,
 			SubscriptionApiLimit:    toPgInt4(input.APILimit),
-			SubscriptionExpiryDate:  toPgInt4FromTimePtr(input.ExpiryDate),
+			SubscriptionExpiryDate:  toPgInt4FromTimeOrDate(input.ExpiryDate),
 			SubscriptionDescription: toPgText(input.Description),
 			SubscriptionStatus:      toPgBool(input.Status),
 			OrganizationID:          int32(input.OrganizationID),
@@ -209,6 +210,16 @@ func toPgInt4FromTimePtr(ptr *time.Time) pgtype.Int4 {
 	return toPgInt4FromTime(*ptr)
 }
 
+func toPgInt4FromTimeOrDate(t *converter.TimeOrDate) pgtype.Int4 {
+	if t == nil {
+		return pgtype.Int4{Valid: false}
+	}
+	return pgtype.Int4{
+		Int32: int32(t.Unix()),
+		Valid: true,
+	}
+}
+
 func toPgText(ptr *string) pgtype.Text {
 	if ptr == nil {
 		return pgtype.Text{Valid: false}
@@ -251,4 +262,11 @@ func fromPgBool(v pgtype.Bool) *bool {
 		return nil
 	}
 	return &v.Bool
+}
+
+func toTimeOrDatePtr(t *time.Time) *converter.TimeOrDate {
+	if t == nil {
+		return nil
+	}
+	return &converter.TimeOrDate{Time: *t}
 }
