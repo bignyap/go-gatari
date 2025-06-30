@@ -36,7 +36,7 @@ clean:
 
 mod-update:
 	go mod tidy
-	go mod vendor
+# go mod vendor
 
 ######################
 # Run Modes

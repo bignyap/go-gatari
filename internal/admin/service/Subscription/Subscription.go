@@ -9,7 +9,6 @@ import (
 	"github.com/bignyap/go-utilities/converter"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jinzhu/copier"
 )
 
@@ -30,10 +29,10 @@ func (s *SubscriptionService) CreateSubscription(ctx context.Context, input *Cre
 		SubscriptionCreatedDate: int32(input.CreatedAt.Unix()),
 		SubscriptionUpdatedDate: int32(input.UpdatedAt.Unix()),
 		SubscriptionStartDate:   int32(input.StartDate.Unix()),
-		SubscriptionApiLimit:    toPgInt4(input.APILimit),
-		SubscriptionExpiryDate:  toPgInt4FromTimeOrDate(input.ExpiryDate),
-		SubscriptionDescription: toPgText(input.Description),
-		SubscriptionStatus:      toPgBool(input.Status),
+		SubscriptionApiLimit:    converter.ToPgInt4(input.APILimit),
+		SubscriptionExpiryDate:  converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
+		SubscriptionDescription: converter.ToPgText(input.Description),
+		SubscriptionStatus:      converter.ToPgBool(input.Status),
 		OrganizationID:          int32(input.OrganizationID),
 		SubscriptionTierID:      int32(input.SubscriptionTierID),
 	}
@@ -75,10 +74,10 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 			SubscriptionCreatedDate: currentTime,
 			SubscriptionUpdatedDate: currentTime,
 			SubscriptionStartDate:   currentTime,
-			SubscriptionApiLimit:    toPgInt4(input.APILimit),
-			SubscriptionExpiryDate:  toPgInt4FromTimeOrDate(input.ExpiryDate),
-			SubscriptionDescription: toPgText(input.Description),
-			SubscriptionStatus:      toPgBool(input.Status),
+			SubscriptionApiLimit:    converter.ToPgInt4(input.APILimit),
+			SubscriptionExpiryDate:  converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
+			SubscriptionDescription: converter.ToPgText(input.Description),
+			SubscriptionStatus:      converter.ToPgBool(input.Status),
 			OrganizationID:          int32(input.OrganizationID),
 			SubscriptionTierID:      int32(input.SubscriptionTierID),
 		})
@@ -177,96 +176,4 @@ func (s *SubscriptionService) ListSubscription(ctx context.Context, limit int, o
 
 	output := ToListSubscriptionOutputWithCount(subscriptions)
 	return output, nil
-}
-
-// -------- pgtype helpers --------
-
-func toPgInt4(ptr *int) pgtype.Int4 {
-	if ptr == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{Int32: int32(*ptr), Valid: true}
-}
-
-// func toPgInt4Ptr(value int) pgtype.Int4 {
-// 	return pgtype.Int4{Int32: int32(value), Valid: true}
-// }
-
-func toPgInt4Ptr(v *int) pgtype.Int4 {
-	if v == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{Int32: int32(*v), Valid: true}
-}
-
-func toPgInt4FromTime(t time.Time) pgtype.Int4 {
-	return pgtype.Int4{Int32: int32(t.Unix()), Valid: true}
-}
-
-func toPgInt4FromTimePtr(ptr *time.Time) pgtype.Int4 {
-	if ptr == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return toPgInt4FromTime(*ptr)
-}
-
-func toPgInt4FromTimeOrDate(t *converter.TimeOrDate) pgtype.Int4 {
-	if t == nil {
-		return pgtype.Int4{Valid: false}
-	}
-	return pgtype.Int4{
-		Int32: int32(t.Unix()),
-		Valid: true,
-	}
-}
-
-func toPgText(ptr *string) pgtype.Text {
-	if ptr == nil {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: *ptr, Valid: true}
-}
-
-func toPgBool(ptr *bool) pgtype.Bool {
-	if ptr == nil {
-		return pgtype.Bool{Valid: false}
-	}
-	return pgtype.Bool{Bool: *ptr, Valid: true}
-}
-
-func fromPgInt4Ptr(v pgtype.Int4) *int {
-	if !v.Valid {
-		return nil
-	}
-	val := int(v.Int32)
-	return &val
-}
-
-func fromPgInt4TimePtr(v pgtype.Int4) *time.Time {
-	if !v.Valid {
-		return nil
-	}
-	t := time.Unix(int64(v.Int32), 0)
-	return &t
-}
-
-func fromPgText(v pgtype.Text) *string {
-	if !v.Valid {
-		return nil
-	}
-	return &v.String
-}
-
-func fromPgBool(v pgtype.Bool) *bool {
-	if !v.Valid {
-		return nil
-	}
-	return &v.Bool
-}
-
-func toTimeOrDatePtr(t *time.Time) *converter.TimeOrDate {
-	if t == nil {
-		return nil
-	}
-	return &converter.TimeOrDate{Time: *t}
 }

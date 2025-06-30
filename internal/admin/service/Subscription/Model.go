@@ -41,6 +41,7 @@ type ListSubscriptionOutputWithCount struct {
 
 func ToListSubscriptionOutput(input sqlcgen.ListSubscriptionRow) ListSubscriptionOutput {
 	startDate := time.Unix(int64(input.SubscriptionStartDate), 0)
+	expiryDate := converter.FromPgInt4TimePtr(input.SubscriptionExpiryDate)
 	return ListSubscriptionOutput{
 		ID:       int(input.SubscriptionID),
 		TierName: input.TierName,
@@ -49,11 +50,11 @@ func ToListSubscriptionOutput(input sqlcgen.ListSubscriptionRow) ListSubscriptio
 			Type:               input.SubscriptionType,
 			CreatedAt:          time.Unix(int64(input.SubscriptionCreatedDate), 0),
 			UpdatedAt:          time.Unix(int64(input.SubscriptionUpdatedDate), 0),
-			StartDate:          toTimeOrDatePtr(&startDate),
-			APILimit:           fromPgInt4Ptr(input.SubscriptionApiLimit),
-			ExpiryDate:         toTimeOrDatePtr(fromPgInt4TimePtr(input.SubscriptionExpiryDate)),
-			Description:        fromPgText(input.SubscriptionDescription),
-			Status:             fromPgBool(input.SubscriptionStatus),
+			StartDate:          converter.ToTimeOrDatePtr(&startDate),
+			APILimit:           converter.FromPgInt4Ptr(input.SubscriptionApiLimit),
+			ExpiryDate:         converter.ToTimeOrDatePtr(expiryDate),
+			Description:        converter.FromPgText(input.SubscriptionDescription),
+			Status:             converter.FromPgBool(input.SubscriptionStatus),
 			OrganizationID:     int(input.OrganizationID),
 			SubscriptionTierID: int(input.SubscriptionTierID),
 		},
