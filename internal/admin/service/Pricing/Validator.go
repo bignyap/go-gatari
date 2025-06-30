@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *PricingService) CreateTierPricingJSONValidation(c *gin.Context) ([]sqlcgen.CreateTierPricingsParams, error) {
@@ -24,7 +24,7 @@ func (h *PricingService) CreateTierPricingJSONValidation(c *gin.Context) ([]sqlc
 
 		output := sqlcgen.CreateTierPricingsParams{
 			BaseCostPerCall:    input.BaseCostPerCall,
-			BaseRateLimit:      toPgInt4(input.BaseRateLimit),
+			BaseRateLimit:      converter.ToPgInt4(input.BaseRateLimit),
 			ApiEndpointID:      int32(input.ApiEndpointId),
 			SubscriptionTierID: int32(input.SubscriptionTierID),
 		}
@@ -34,11 +34,33 @@ func (h *PricingService) CreateTierPricingJSONValidation(c *gin.Context) ([]sqlc
 	return outputs, nil
 }
 
-func toPgInt4(value *int) pgtype.Int4 {
-	if value == nil {
-		return pgtype.Int4{Valid: false}
+type TierPricingForm struct {
+	ApiEndpointID      int32   `form:"api_endpoint_id" binding:"required"`
+	SubscriptionTierID int32   `form:"subscription_tier_id" binding:"required"`
+	BaseRateLimit      int32   `form:"base_rate_limit" binding:"required"`
+	BaseCostPerCall    float64 `form:"base_cost_per_call" binding:"required"`
+}
+
+func (h *PricingService) CreateTierPricingFormValidator(c *gin.Context) (*sqlcgen.CreateTierPricingParams, error) {
+	var form TierPricingForm
+
+	if err := c.ShouldBind(&form); err != nil {
+		return nil, err
 	}
-	return pgtype.Int4{Int32: int32(*value), Valid: true}
+
+	input := sqlcgen.CreateTierPricingParams{
+		BaseCostPerCall:    form.BaseCostPerCall,
+		SubscriptionTierID: form.SubscriptionTierID,
+		BaseRateLimit:      converter.ToPgInt4(ptrInt(form.BaseRateLimit)),
+		ApiEndpointID:      form.ApiEndpointID,
+	}
+
+	return &input, nil
+}
+
+func ptrInt(v int32) *int {
+	i := int(v)
+	return &i
 }
 
 type CustomPricingForm struct {

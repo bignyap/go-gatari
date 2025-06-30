@@ -100,6 +100,10 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 		)
 	}
 
+	if len(apiEndpoints) == 0 {
+		return []RegisterEndpointOutputs{}, nil
+	}
+
 	var output []RegisterEndpointOutputs
 	for _, apiEndpoint := range apiEndpoints {
 		var desc *string

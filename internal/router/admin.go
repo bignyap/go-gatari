@@ -45,6 +45,7 @@ func OrganizationHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 
 func TierPricingHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/tierPricing")
+	routerGrp.POST("", h.CreateTierPricingHandler)
 	routerGrp.POST("/batch", h.CreateTierPricingInBatchandler)
 	routerGrp.DELETE("/tierId/:tier_id", h.DeleteTierPricingHandler)
 	routerGrp.DELETE("/id/:id", h.DeleteTierPricingHandler)

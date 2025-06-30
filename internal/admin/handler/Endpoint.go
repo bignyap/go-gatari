@@ -57,7 +57,7 @@ func (h *AdminHandler) ListEndpointsHandler(c *gin.Context) {
 		return
 	}
 
-	h.ResponseWriter.Created(c, output)
+	h.ResponseWriter.Success(c, output)
 }
 
 func (h *AdminHandler) DeleteEndpointsByIdHandler(c *gin.Context) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -37,6 +38,30 @@ func (s *PricingService) CreateTierPricingInBatch(ctx context.Context, input []s
 	}
 
 	return int(affectedRows), nil
+}
+
+func (s *PricingService) CreateTierPricing(ctx context.Context, input *sqlcgen.CreateTierPricingParams) (CreateTierPricingOutput, error) {
+
+	insertedID, err := s.DB.CreateTierPricing(ctx, *input)
+	if err != nil {
+		return CreateTierPricingOutput{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't create the custom pricing",
+			err,
+		)
+	}
+
+	output := CreateTierPricingOutput{
+		ID: int(insertedID),
+		CreateTierPricingParams: CreateTierPricingParams{
+			BaseCostPerCall:    input.BaseCostPerCall,
+			BaseRateLimit:      converter.FromPgInt4Ptr(input.BaseRateLimit),
+			ApiEndpointId:      int(input.ApiEndpointID),
+			SubscriptionTierID: int(input.SubscriptionTierID),
+		},
+	}
+
+	return output, nil
 }
 
 func (s *PricingService) GetTierPricingByTierId(ctx context.Context, id int, limit int, offset int) (CreateTierPricingOutputWithCount, error) {

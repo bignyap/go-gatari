@@ -7,6 +7,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *AdminHandler) CreateTierPricingHandler(c *gin.Context) {
+
+	input, err := h.PricingService.CreateTierPricingFormValidator(c)
+	if err != nil {
+		h.ResponseWriter.BadRequest(c, err.Error())
+		return
+	}
+
+	outptut, err := h.PricingService.DB.CreateTierPricing(c.Request.Context(), *input)
+	if err != nil {
+		h.ResponseWriter.Error(c, err)
+		return
+	}
+
+	h.ResponseWriter.Success(c, outptut)
+}
+
 func (h *AdminHandler) CreateTierPricingInBatchandler(c *gin.Context) {
 
 	input, err := h.PricingService.CreateTierPricingJSONValidation(c)
@@ -63,7 +80,7 @@ func extractIntPathParam(c *gin.Context, key string) (int, error) {
 func (h *AdminHandler) DeleteTierPricingHandler(c *gin.Context) {
 
 	orgId := c.Param("tier_id")
-	id := c.Param("Id")
+	id := c.Param("id")
 
 	if orgId != "" {
 
