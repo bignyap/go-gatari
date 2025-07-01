@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
@@ -22,10 +21,10 @@ func (apiCfg *OrganizationService) CreateOrganization(ctx context.Context, input
 		OrganizationSupportEmail: input.SupportEmail,
 		OrganizationCreatedAt:    currentTime,
 		OrganizationUpdatedAt:    currentTime,
-		OrganizationCountry:      toText(input.Country),
-		OrganizationConfig:       toText(input.Config),
-		OrganizationActive:       toBool(input.Active),
-		OrganizationReportQ:      toBool(input.ReportQ),
+		OrganizationCountry:      converter.ToPgText(input.Country),
+		OrganizationConfig:       converter.ToPgText(input.Config),
+		OrganizationActive:       converter.ToPgBool(input.Active),
+		OrganizationReportQ:      converter.ToPgBool(input.ReportQ),
 		OrganizationTypeID:       int32(input.TypeID),
 	}
 
@@ -59,10 +58,10 @@ func (apiCfg *OrganizationService) CreateOrganizationInBatch(ctx context.Context
 			OrganizationSupportEmail: input.SupportEmail,
 			OrganizationCreatedAt:    currentTime,
 			OrganizationUpdatedAt:    currentTime,
-			OrganizationCountry:      toText(input.Country),
-			OrganizationConfig:       toText(input.Config),
-			OrganizationActive:       toBool(input.Active),
-			OrganizationReportQ:      toBool(input.ReportQ),
+			OrganizationCountry:      converter.ToPgText(input.Country),
+			OrganizationConfig:       converter.ToPgText(input.Config),
+			OrganizationActive:       converter.ToPgBool(input.Active),
+			OrganizationReportQ:      converter.ToPgBool(input.ReportQ),
 			OrganizationTypeID:       int32(input.TypeID),
 		})
 	}
@@ -154,16 +153,31 @@ func (s *OrganizationService) DeleteOrganizationById(ctx context.Context, id int
 	return nil
 }
 
-func toText(val *string) pgtype.Text {
-	if val == nil {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: *val, Valid: true}
-}
+func (apiCfg *OrganizationService) UpdateOrganization(ctx context.Context, input *UpdateOrganizationParams) error {
 
-func toBool(val *bool) pgtype.Bool {
-	if val == nil {
-		return pgtype.Bool{Valid: false}
+	currentTime := int32(converter.ToUnixTime())
+	org := sqlcgen.UpdateOrganizationParams{
+
+		OrganizationName:         input.Name,
+		OrganizationRealm:        input.Realm,
+		OrganizationSupportEmail: input.SupportEmail,
+		OrganizationUpdatedAt:    currentTime,
+		OrganizationCountry:      converter.ToPgText(input.Country),
+		OrganizationConfig:       converter.ToPgText(input.Config),
+		OrganizationActive:       converter.ToPgBool(input.Active),
+		OrganizationReportQ:      converter.ToPgBool(input.ReportQ),
+		OrganizationTypeID:       int32(input.TypeID),
+		OrganizationID:           int32(input.OrganizationID),
 	}
-	return pgtype.Bool{Bool: *val, Valid: true}
+
+	_, err := apiCfg.DB.UpdateOrganization(ctx, org)
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't update the organization",
+			err,
+		)
+	}
+
+	return nil
 }

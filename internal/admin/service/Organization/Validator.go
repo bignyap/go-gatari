@@ -90,7 +90,7 @@ func (h *OrganizationService) CreateOrgPermissionFormValidator(c *gin.Context) (
 	}, nil
 }
 
-func (h *OrganizationService) ValidateOrgInput(c *gin.Context) (*CreateOrganizationParams, error) {
+func (h *OrganizationService) CreateOrgFormValidation(c *gin.Context) (*CreateOrganizationParams, error) {
 
 	var inputs CreateOrganizationParams
 	if err := c.ShouldBind(&inputs); err != nil {
@@ -102,7 +102,7 @@ func (h *OrganizationService) ValidateOrgInput(c *gin.Context) (*CreateOrganizat
 	return &inputs, nil
 }
 
-func (h *OrganizationService) ValidateOrgBatchInput(c *gin.Context) ([]CreateOrganizationParams, error) {
+func (h *OrganizationService) CreateOrgJSONValidation(c *gin.Context) ([]CreateOrganizationParams, error) {
 	var inputs []CreateOrganizationParams
 	if err := c.ShouldBindJSON(&inputs); err != nil {
 		return nil, fmt.Errorf("invalid JSON: %w", err)
@@ -113,4 +113,16 @@ func (h *OrganizationService) ValidateOrgBatchInput(c *gin.Context) ([]CreateOrg
 		}
 	}
 	return inputs, nil
+}
+
+func (h *OrganizationService) UpdateOrgFormValidation(c *gin.Context) (*UpdateOrganizationParams, error) {
+
+	var inputs UpdateOrganizationParams
+	if err := c.ShouldBind(&inputs); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
+	}
+	if err := h.Validator.Struct(inputs); err != nil {
+		return nil, fmt.Errorf("validation error: %w", err)
+	}
+	return &inputs, nil
 }

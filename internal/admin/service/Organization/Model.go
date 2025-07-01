@@ -95,3 +95,15 @@ func ToListOrganizationOutput(input sqlcgen.ListOrganizationRow) ListOrganizatio
 		},
 	}
 }
+
+type UpdateOrganizationParams struct {
+	Name           string  `json:"name" form:"name" validate:"required"`
+	Realm          string  `json:"realm" form:"realm" validate:"required"`
+	Country        *string `json:"country" form:"country"`
+	SupportEmail   string  `json:"support_email" form:"support_email" validate:"required,email"`
+	Active         *bool   `json:"active" form:"active"`
+	ReportQ        *bool   `json:"report_q" form:"report_q"`
+	Config         *string `json:"config" form:"config"`
+	TypeID         int     `json:"type_id" form:"type_id" validate:"required,min=1"`
+	OrganizationID int     `json:"organization_id" form:"organization_id" validate:"required,min=1"`
+}

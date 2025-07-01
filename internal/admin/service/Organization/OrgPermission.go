@@ -75,6 +75,10 @@ func (s *OrganizationService) GetOrgPermission(ctx context.Context, orgId int, l
 		)
 	}
 
+	if len(orgPermissions) == 0 {
+		return []CreateOrgPermissionOutput{}, nil
+	}
+
 	var output []CreateOrgPermissionOutput
 	for _, orgPermission := range orgPermissions {
 		output = append(output, CreateOrgPermissionOutput{

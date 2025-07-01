@@ -8,7 +8,7 @@ import (
 
 func (h *AdminHandler) CreateOrganizationandler(c *gin.Context) {
 
-	input, err := h.OrganizationService.ValidateOrgInput(c)
+	input, err := h.OrganizationService.CreateOrgFormValidation(c)
 	if err != nil {
 		h.ResponseWriter.BadRequest(c, err.Error())
 		return
@@ -25,7 +25,7 @@ func (h *AdminHandler) CreateOrganizationandler(c *gin.Context) {
 
 func (h *AdminHandler) CreateOrganizationInBatchandler(c *gin.Context) {
 
-	input, err := h.OrganizationService.ValidateOrgBatchInput(c)
+	input, err := h.OrganizationService.CreateOrgJSONValidation(c)
 	if err != nil {
 		h.ResponseWriter.BadRequest(c, err.Error())
 		return
@@ -89,4 +89,21 @@ func (h *AdminHandler) DeleteOrganizationByIdHandler(c *gin.Context) {
 	}
 
 	h.ResponseWriter.Success(c, "deleted successfully")
+}
+
+func (h *AdminHandler) UpdateOrganizationandler(c *gin.Context) {
+
+	input, err := h.OrganizationService.UpdateOrgFormValidation(c)
+	if err != nil {
+		h.ResponseWriter.BadRequest(c, err.Error())
+		return
+	}
+
+	err = h.OrganizationService.UpdateOrganization(c, input)
+	if err != nil {
+		h.ResponseWriter.Error(c, err)
+		return
+	}
+
+	h.ResponseWriter.Success(c, "organization updated successfully")
 }

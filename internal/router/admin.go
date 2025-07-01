@@ -41,6 +41,7 @@ func OrganizationHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp.GET("", h.ListOrganizationsHandler)
 	routerGrp.DELETE("/:Id", h.DeleteOrganizationByIdHandler)
 	routerGrp.GET("/:Id", h.GetOrganizationByIdHandler)
+	routerGrp.PUT("", h.UpdateOrganizationandler)
 }
 
 func TierPricingHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
