@@ -87,6 +87,7 @@ func OrgPermissionHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp.POST("/batch", h.CreateOrgPermissionInBatchHandler)
 	routerGrp.DELETE("/:organization_id", h.DeleteOrgPermissionHandler)
 	routerGrp.GET("/:organization_id", h.GetOrgPermissionHandler)
+	routerGrp.PUT("/:id", h.UpdateOrgPermissionInBatchHandler)
 }
 
 func BillingHistoryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {

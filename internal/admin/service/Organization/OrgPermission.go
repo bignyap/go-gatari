@@ -118,3 +118,31 @@ func (s *OrganizationService) DeleteOrgPermission(ctx context.Context, idType st
 
 	return nil
 }
+
+func (s *OrganizationService) UpsertOrgPermissions(ctx context.Context, orgID int, input []sqlcgen.CreateOrgPermissionsParams) (int, error) {
+
+	existing, err := s.GetOrgPermission(ctx, orgID, 1000, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	existingMap := make(map[string]bool)
+	for _, p := range existing {
+		key := fmt.Sprintf("%d|%s", p.ResourceTypeID, p.PermissionCode)
+		existingMap[key] = true
+	}
+
+	var toInsert []sqlcgen.CreateOrgPermissionsParams
+	for _, p := range input {
+		key := fmt.Sprintf("%d|%s", p.ResourceTypeID, p.PermissionCode)
+		if !existingMap[key] {
+			toInsert = append(toInsert, p)
+		}
+	}
+
+	if len(toInsert) == 0 {
+		return 0, nil
+	}
+
+	return s.CreateOrgPermissionInBatch(ctx, toInsert)
+}

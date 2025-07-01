@@ -31,6 +31,11 @@ type CreateOrgPermissionOutput struct {
 	CreateOrgPermissionParams
 }
 
+type UpdateOrgPermissionParams struct {
+	ResourceTypeID int    `json:"resource_type_id" form:"resource_type_id" validate:"required"`
+	PermissionCode string `json:"permission_code" form:"permission_code" validate:"required"`
+}
+
 type CreateOrganizationParams struct {
 	Name         string    `json:"name" form:"name" validate:"required"`
 	CreatedAt    time.Time `json:"created_at" form:"created_at"`

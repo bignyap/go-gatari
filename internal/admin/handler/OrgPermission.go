@@ -107,3 +107,20 @@ func (h *AdminHandler) DeleteOrgPermissionHandler(c *gin.Context) {
 
 	h.ResponseWriter.BadRequest(c, "invalid request")
 }
+
+func (h *AdminHandler) UpdateOrgPermissionInBatchHandler(c *gin.Context) {
+
+	input, err := h.OrganizationService.UpdateOrgPermissionJSONValidation(c)
+	if err != nil {
+		h.ResponseWriter.BadRequest(c, err.Error())
+		return
+	}
+
+	output, err := h.OrganizationService.UpsertOrgPermissions(c.Request.Context(), int(input[1].OrganizationID), input)
+	if err != nil {
+		h.ResponseWriter.Error(c, err)
+		return
+	}
+
+	h.ResponseWriter.Success(c, map[string]int{"affected_rows": output})
+}

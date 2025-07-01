@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,6 +58,33 @@ func (h *OrganizationService) CreateOrgPermissionJSONValidation(c *gin.Context) 
 		}
 		outputs = append(outputs, sqlcgen.CreateOrgPermissionsParams{
 			OrganizationID: int32(input.OrganizationID),
+			ResourceTypeID: int32(input.ResourceTypeID),
+			PermissionCode: input.PermissionCode,
+		})
+	}
+
+	return outputs, nil
+}
+
+func (h *OrganizationService) UpdateOrgPermissionJSONValidation(c *gin.Context) ([]sqlcgen.CreateOrgPermissionsParams, error) {
+
+	orgId, err := converter.StrToInt(c.Param("id"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid id format")
+	}
+
+	var inputs []UpdateOrgPermissionParams
+	if err := c.ShouldBindJSON(&inputs); err != nil {
+		return nil, fmt.Errorf("invalid JSON: %w", err)
+	}
+
+	var outputs []sqlcgen.CreateOrgPermissionsParams
+	for _, input := range inputs {
+		if err := h.Validator.Struct(input); err != nil {
+			return nil, fmt.Errorf("validation failed: %w", err)
+		}
+		outputs = append(outputs, sqlcgen.CreateOrgPermissionsParams{
+			OrganizationID: int32(orgId),
 			ResourceTypeID: int32(input.ResourceTypeID),
 			PermissionCode: input.PermissionCode,
 		})
