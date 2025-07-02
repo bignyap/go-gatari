@@ -17,6 +17,9 @@ services:
       DB_NAME: ${DB_NAME}
       APPLICATION_PORT: 8080
       ENVIRONMENT: "dev"
+      PUBSUB_ENABLED: ${PUBSUB_ENABLED}
+      PUBSUB_TYPE: ${PUBSUB_TYPE}
+      PUBSUB_NAMESPACE: ${PUBSUB_NAMESPACE}
     ports:
       - '8081:8080'
     expose:
@@ -51,6 +54,9 @@ services:
       REDIS_DB: ${REDIS_DB}
       APPLICATION_PORT: ${APPLICATION_PORT}
       ENVIRONMENT: "dev"
+      PUBSUB_ENABLED: ${PUBSUB_ENABLED}
+      PUBSUB_TYPE: ${PUBSUB_TYPE}
+      PUBSUB_NAMESPACE: ${PUBSUB_NAMESPACE}
     ports:
       - '8082:8080'
     expose:
