@@ -4,6 +4,7 @@ import (
 	adminHandler "github.com/bignyap/go-admin/internal/admin/handler"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/logger/api"
+	"github.com/bignyap/go-utilities/pubsub"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -114,13 +115,14 @@ func RegisterAdminHandlers(
 	db *sqlcgen.Queries,
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
+	pubSubClient pubsub.PubSubClient,
 ) {
 
 	regRouterLogger := logger.WithComponent("router.RegisterHandlers")
 	regRouterLogger.Info("Starting")
 
 	adminGrpRouter := router.Group("/admin")
-	handler := adminHandler.NewAdminHandler(logger, rw, db, conn, validator)
+	handler := adminHandler.NewAdminHandler(logger, rw, db, conn, validator, pubSubClient)
 
 	adminGrpRouter.GET("", handler.RootHandler)
 

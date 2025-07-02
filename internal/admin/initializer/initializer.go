@@ -50,7 +50,12 @@ func (s *AdminService) Setup(server server.Server) error {
 
 	router.RegisterAdminHandlers(
 		server.Router(),
-		s.Logger, s.ResponseWriter, s.DB, s.Conn, s.Validator,
+		s.Logger,
+		s.ResponseWriter,
+		s.DB,
+		s.Conn,
+		s.Validator,
+		s.PubSubClient,
 	)
 
 	setupLogger.Info("Completed")

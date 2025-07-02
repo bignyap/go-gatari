@@ -10,6 +10,7 @@ import (
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/logger/api"
+	"github.com/bignyap/go-utilities/pubsub"
 	server "github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,6 +26,7 @@ type AdminHandler struct {
 	ResponseWriter      *server.ResponseWriter
 	Logger              api.Logger
 	Validator           *validator.Validate
+	PubSubClient        pubsub.PubSubClient
 }
 
 func NewAdminHandler(
@@ -33,6 +35,7 @@ func NewAdminHandler(
 	db *sqlcgen.Queries,
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
+	pubSubClient pubsub.PubSubClient,
 ) *AdminHandler {
 
 	return &AdminHandler{
@@ -40,6 +43,7 @@ func NewAdminHandler(
 		ResponseWriter: server.NewResponseWriter(logger),
 		Logger:         logger,
 		Validator:      validator,
+		PubSubClient:   pubSubClient,
 
 		BillingService: service.BillingService{
 			Logger:    logger,
@@ -60,10 +64,11 @@ func NewAdminHandler(
 			Conn:      conn,
 		},
 		ResourceService: resource.ResourceService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
+			Logger:       logger,
+			Validator:    validator,
+			DB:           db,
+			Conn:         conn,
+			PubSubClient: pubSubClient,
 		},
 		SubscriptionService: subscription.SubscriptionService{
 			Logger:    logger,
