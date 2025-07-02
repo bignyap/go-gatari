@@ -199,28 +199,43 @@ func InitializeGateKeeperServer() {
 	}
 	logger, _ := factory.NewLogger(logConfig)
 
-	// Database connection
-	conn, err := initialize.LoadDBConn()
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+	// Wrapper for logging start and completion
+	logWithComponent := func(component string, fn func() error) {
+		logger.WithComponent(component).Info("Started")
+		if err := fn(); err != nil {
+			log.Fatalf("Failed in %s: %v", component, err)
+		}
+		logger.WithComponent(component).Info("Completed")
 	}
+
+	// Database connection
+	var conn *pgxpool.Pool
+	logWithComponent("LoadDBConn", func() error {
+		var err error
+		conn, err = initialize.LoadDBConn()
+		return err
+	})
 	defer conn.Close()
 
 	// Pubsub client
-	pubSubClient, err := initialize.LoadPubSub()
-	if err != nil {
-		log.Fatalf("Failed to start the pubsub connection: %v", err)
-	}
+	var pubSubClient pubsub.PubSubClient
+	logWithComponent("LoadPubSub", func() error {
+		var err error
+		pubSubClient, err = initialize.LoadPubSub()
+		return err
+	})
 	defer pubSubClient.Close()
 
 	// Validator
 	validator := validator.New()
 
 	// Redis cache controller from env
-	cacheController, err := initialize.LoadRedisController()
-	if err != nil {
-		log.Fatalf("Failed to initialize Redis: %v", err)
-	}
+	var cacheController *caching.CacheController
+	logWithComponent("LoadRedisController", func() error {
+		var err error
+		cacheController, err = initialize.LoadRedisController()
+		return err
+	})
 
 	// Main service
 	gkService := NewGateKeeperService(
@@ -229,13 +244,19 @@ func InitializeGateKeeperServer() {
 	)
 
 	// Initialize the endpoint matcher service
-	gkService.InitializeEPMatcher()
+	logWithComponent("InitializeEPMatcher", func() error {
+		gkService.InitializeEPMatcher()
+		return nil
+	})
 
 	// Initialize the pubsub listener
-	gkService.InitializePubSubListener()
+	logWithComponent("InitializePubSubListener", func() error {
+		gkService.InitializePubSubListener()
+		return nil
+	})
 
 	// Start web server
-	if err := initialize.InitializeWebServer(logger, gkService); err != nil {
-		log.Fatalf("Failed to start web server: %v", err)
-	}
+	logWithComponent("InitializeWebServer", func() error {
+		return initialize.InitializeWebServer(logger, gkService)
+	})
 }

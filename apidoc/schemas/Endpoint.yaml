@@ -6,8 +6,21 @@ RegisterEndpointInput:
     description:
       type: string
       nullable: true
+    http_method:
+      type: string
+      enum: [GET, POST, PUT, DELETE, PATCH]
+      default: GET
+    path_template:
+      type: string
+      example: /users/:id
+    resource_type_id:
+      type: integer
   required:
     - name
+    - http_method
+    - path_template
+    - resource_type_id
+
 
 RegisterEndpointOutput:
   type: object
@@ -19,6 +32,15 @@ RegisterEndpointOutput:
     description:
       type: string
       nullable: true
+    http_method:
+      type: string
+    path_template:
+      type: string
+    resource_type_id:
+      type: integer
   required:
     - id
     - name
+    - http_method
+    - path_template
+    - resource_type_id
