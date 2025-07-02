@@ -14,4 +14,5 @@ type GateKeepingService struct {
 	Logger    api.Logger
 	Validator *validator.Validate
 	Cache     *caching.CacheController
+	Match     *Matcher
 }

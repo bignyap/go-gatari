@@ -9,11 +9,14 @@ import (
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	cachemanagement "github.com/bignyap/go-admin/internal/gatekeeper/service/CacheManagement"
+	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
+	pubsublistener "github.com/bignyap/go-admin/internal/gatekeeper/service/PubSubListener"
 	"github.com/bignyap/go-admin/internal/initialize"
 	"github.com/bignyap/go-admin/internal/router"
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/logger/config"
 	"github.com/bignyap/go-utilities/logger/factory"
+	"github.com/bignyap/go-utilities/pubsub"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,6 +30,8 @@ type GateKeeperService struct {
 	Validator      *validator.Validate
 	CacheContoller *caching.CacheController
 	CacheManager   *cachemanagement.CacheManagementService
+	Matcher        *gatekeeping.Matcher
+	PubSubClient   pubsub.PubSubClient
 	Mode           string
 	Target         string
 	stopFlush      chan struct{}
@@ -36,11 +41,20 @@ func NewGateKeeperService(
 	logger api.Logger,
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
+	pubSubClient pubsub.PubSubClient,
 	cacheController *caching.CacheController,
 	mode string,
 	target string,
-	cacheManager *cachemanagement.CacheManagementService,
 ) *GateKeeperService {
+
+	cacheManager := &cachemanagement.CacheManagementService{
+		Logger:    logger,
+		Cache:     cacheController,
+		DB:        sqlcgen.New(conn),
+		Conn:      conn,
+		Validator: validator,
+	}
+
 	return &GateKeeperService{
 		Logger:         logger,
 		Validator:      validator,
@@ -48,6 +62,7 @@ func NewGateKeeperService(
 		Conn:           conn,
 		CacheContoller: cacheController,
 		CacheManager:   cacheManager,
+		PubSubClient:   pubSubClient,
 		Mode:           mode,
 		Target:         target,
 		stopFlush:      make(chan struct{}),
@@ -67,6 +82,7 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 		s.DB,
 		s.Conn,
 		s.Validator,
+		s.Matcher,
 		s.CacheContoller,
 		s.Mode,
 		s.Target,
@@ -113,6 +129,42 @@ func (s *GateKeeperService) Shutdown() error {
 	return nil
 }
 
+func (s *GateKeeperService) InitializeEPMatcher() {
+
+	// We should iterate as long as there are entries >= to the requested.
+	// For now let's go with it
+	listEndpoints, err := s.DB.ListApiEndpoint(context.Background(), sqlcgen.ListApiEndpointParams{
+		Limit:  10000,
+		Offset: 1,
+	})
+	if err != nil {
+		s.Logger.Fatal("couldn't retrieve endpoints", err)
+	}
+
+	var endpoints []gatekeeping.Endpoint
+	for _, endpoint := range listEndpoints {
+		endpoints = append(endpoints, gatekeeping.Endpoint{
+			Path:   endpoint.EndpointName,
+			Method: endpoint.EndpointName,
+			Code:   endpoint.EndpointName,
+		})
+	}
+
+	s.Matcher = gatekeeping.NewMatcher()
+	s.Matcher.Load(endpoints)
+}
+
+func (s *GateKeeperService) InitializePubSubListener() {
+
+	pubSubListener := pubsublistener.NewPubSubListener(
+		s.Logger, s.CacheContoller, s.Matcher, s.PubSubClient,
+	)
+
+	if err := pubSubListener.UpdateEPMatcher(); err != nil {
+		s.Logger.Fatal("Failed to load pubsub listener", err)
+	}
+}
+
 func InitializeGateKeeperServer() {
 	if err := initialize.GetEnvVals(); err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
@@ -145,6 +197,13 @@ func InitializeGateKeeperServer() {
 	}
 	defer conn.Close()
 
+	// Pubsub client
+	pubSubClient, err := initialize.LoadPubSub()
+	if err != nil {
+		log.Fatalf("Failed to start the pubsub connection: %v", err)
+	}
+	defer pubSubClient.Close()
+
 	// Validator
 	validator := validator.New()
 
@@ -154,20 +213,17 @@ func InitializeGateKeeperServer() {
 		log.Fatalf("Failed to initialize Redis: %v", err)
 	}
 
-	// Cache manager
-	cacheManager := &cachemanagement.CacheManagementService{
-		Logger:    logger,
-		Cache:     cacheController,
-		DB:        sqlcgen.New(conn),
-		Conn:      conn,
-		Validator: validator,
-	}
-
 	// Main service
 	gkService := NewGateKeeperService(
-		logger, conn, validator, cacheController,
-		mode, target, cacheManager,
+		logger, conn, validator, pubSubClient,
+		cacheController, mode, target,
 	)
+
+	// Initialize the endpoint matcher service
+	gkService.InitializeEPMatcher()
+
+	// Initialize the pubsub listener
+	gkService.InitializePubSubListener()
 
 	// Start web server
 	if err := initialize.InitializeWebServer(logger, gkService); err != nil {

@@ -16,6 +16,7 @@ type GateKeeperHandler struct {
 	Logger             api.Logger
 	Validator          *validator.Validate
 	Cache              *caching.CacheController
+	Matcher            *gatekeeping.Matcher
 }
 
 func NewGateKeeperHandler(
@@ -25,6 +26,7 @@ func NewGateKeeperHandler(
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
 	cacheContoller *caching.CacheController,
+	matcher *gatekeeping.Matcher,
 ) *GateKeeperHandler {
 
 	return &GateKeeperHandler{
@@ -33,6 +35,7 @@ func NewGateKeeperHandler(
 		Logger:         logger,
 		Validator:      validator,
 		Cache:          cacheContoller,
+		Matcher:        matcher,
 
 		GateKeepingService: &gatekeeping.GateKeepingService{
 			Logger:    logger,
@@ -40,6 +43,7 @@ func NewGateKeeperHandler(
 			DB:        db,
 			Conn:      conn,
 			Cache:     cacheContoller,
+			Match:     matcher,
 		},
 	}
 }

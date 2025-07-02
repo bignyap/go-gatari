@@ -7,9 +7,9 @@ import (
 )
 
 func (s *GateKeepingService) ValidateRequestHeader(c *gin.Context) (*ValidateRequestInput, error) {
-
 	org := c.GetHeader("X-Org-Name")
-	path := c.GetHeader(":path")
+	method := c.Request.Method
+	path := c.Request.URL.Path
 
 	if org == "" || path == "" {
 		return nil, errors.New("missing required headers")
@@ -17,14 +17,15 @@ func (s *GateKeepingService) ValidateRequestHeader(c *gin.Context) (*ValidateReq
 
 	return &ValidateRequestInput{
 		OrganizationName: org,
-		EndpointName:     path,
+		Method:           method,
+		Path:             path,
 	}, nil
 }
 
 func (s *GateKeepingService) RecordUsageValidator(c *gin.Context) (*RecordUsageInput, error) {
-
 	org := c.GetHeader("X-Org-Name")
-	path := c.GetHeader(":path")
+	method := c.Request.Method
+	path := c.Request.URL.Path
 
 	if org == "" || path == "" {
 		return nil, errors.New("missing required headers")
@@ -32,6 +33,7 @@ func (s *GateKeepingService) RecordUsageValidator(c *gin.Context) (*RecordUsageI
 
 	return &RecordUsageInput{
 		OrganizationName: org,
-		EndpointName:     path,
+		Method:           method,
+		Path:             path,
 	}, nil
 }

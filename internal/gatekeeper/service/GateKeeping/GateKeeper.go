@@ -10,6 +10,12 @@ import (
 )
 
 func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) error {
+
+	endpointCode, found := s.Match.Match(input.Method, input.Path)
+	if !found {
+		return errors.New("no matching endpoint")
+	}
+
 	orgAny, err := s.Cache.Get(ctx, "org:"+input.OrganizationName, func() (interface{}, error) {
 		return s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	})
@@ -17,8 +23,8 @@ func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *Validat
 		return errors.New("organization not found")
 	}
 
-	endpointAny, err := s.Cache.Get(ctx, "endpoint:"+input.EndpointName, func() (interface{}, error) {
-		return s.DB.GetEndpointByName(ctx, input.EndpointName)
+	endpointAny, err := s.Cache.Get(ctx, "endpoint:"+endpointCode, func() (interface{}, error) {
+		return s.DB.GetEndpointByName(ctx, endpointCode)
 	})
 	if err != nil {
 		return errors.New("endpoint not found")
@@ -26,6 +32,7 @@ func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *Validat
 
 	org := orgAny.(Organization)
 	endpoint := endpointAny.(ApiEndpoint)
+
 	sub, err := s.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
 		OrganizationID: org.ID,
 		ApiEndpointID:  endpoint.ID,
@@ -49,12 +56,17 @@ func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *Validat
 }
 
 func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsageInput) (float64, error) {
+	endpointCode, found := s.Match.Match(input.Method, input.Path)
+	if !found {
+		return 0, errors.New("no matching endpoint")
+	}
+
 	org, err := s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	if err != nil {
 		return 0, errors.New("organization not found")
 	}
 
-	endpoint, err := s.DB.GetEndpointByName(ctx, input.EndpointName)
+	endpoint, err := s.DB.GetEndpointByName(ctx, endpointCode)
 	if err != nil {
 		return 0, errors.New("endpoint not found")
 	}
@@ -75,10 +87,7 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		return 0, errors.New("pricing error")
 	}
 
-	// Use new incremental tracking
-	key := usageKey(org.ID, endpoint.ID)
-	s.Cache.IncrementLocalValue("usage", key, 1)
-
+	s.Cache.IncrementLocalValue("usage", usageKey(org.ID, endpoint.ID), 1)
 	return pricing, nil
 }
 

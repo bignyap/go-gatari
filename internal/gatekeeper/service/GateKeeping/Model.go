@@ -1,5 +1,12 @@
 package gatekeeping
 
+import (
+	"net/http"
+	"sync"
+
+	"github.com/julienschmidt/httprouter"
+)
+
 type Organization struct {
 	ID   int32
 	Name string
@@ -22,12 +29,31 @@ type Pricing struct {
 	CostPerCall float64
 }
 
+type Endpoint struct {
+	Code   string
+	Method string
+	Path   string
+}
+
+type Matcher struct {
+	router *httprouter.Router
+	lock   sync.RWMutex
+}
+
+type capture struct {
+	header http.Header
+	code   string
+	found  bool
+}
+
 type ValidateRequestInput struct {
+	Method           string `json:"method"`
+	Path             string `json:"path"`
 	OrganizationName string `json:"organization_name"`
-	EndpointName     string `json:"endpoint_name"`
 }
 
 type RecordUsageInput struct {
+	Method           string `json:"method"`
+	Path             string `json:"path"`
 	OrganizationName string `json:"organization_name"`
-	EndpointName     string `json:"endpoint_name"`
 }
