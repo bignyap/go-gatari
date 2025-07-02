@@ -32,7 +32,7 @@ MIGRATIONS_DIR = ./internal/database/sqlc/schema
 ######################
 clean:
 	go clean
-	go clean -modcache
+# go clean -modcache
 
 mod-update:
 	go mod tidy

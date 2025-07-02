@@ -396,6 +396,9 @@ func (r iteratorForRegisterApiEndpoints) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].EndpointName,
 		r.rows[0].EndpointDescription,
+		r.rows[0].HttpMethod,
+		r.rows[0].PathTemplate,
+		r.rows[0].ResourceTypeID,
 	}, nil
 }
 
@@ -404,5 +407,5 @@ func (r iteratorForRegisterApiEndpoints) Err() error {
 }
 
 func (q *Queries) RegisterApiEndpoints(ctx context.Context, arg []RegisterApiEndpointsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"api_endpoint"}, []string{"endpoint_name", "endpoint_description"}, &iteratorForRegisterApiEndpoints{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"api_endpoint"}, []string{"endpoint_name", "endpoint_description", "http_method", "path_template", "resource_type_id"}, &iteratorForRegisterApiEndpoints{rows: arg})
 }

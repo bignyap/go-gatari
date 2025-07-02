@@ -12,6 +12,9 @@ type ApiEndpoint struct {
 	ApiEndpointID       int32
 	EndpointName        string
 	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
 }
 
 type ApiUsageSummary struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/logger/config"
 	"github.com/bignyap/go-utilities/logger/factory"
+	"github.com/bignyap/go-utilities/pubsub"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,18 +22,21 @@ type AdminService struct {
 	DB             *sqlcgen.Queries
 	Conn           *pgxpool.Pool
 	Validator      *validator.Validate
+	PubSubClient   pubsub.PubSubClient
 }
 
 func NewAdminService(
 	logger api.Logger,
 	conn *pgxpool.Pool,
 	validator *validator.Validate,
+	pubSubClient pubsub.PubSubClient,
 ) *AdminService {
 	return &AdminService{
-		Logger:    logger,
-		Validator: validator,
-		DB:        sqlcgen.New(conn),
-		Conn:      conn,
+		Logger:       logger,
+		Validator:    validator,
+		DB:           sqlcgen.New(conn),
+		Conn:         conn,
+		PubSubClient: pubSubClient,
 	}
 }
 
@@ -97,10 +101,16 @@ func InitializeAdminServer() {
 	}
 	defer conn.Close()
 
+	pubSubClient, err := initialize.LoadPubSub()
+	if err != nil {
+		log.Fatalf("Failed to start the pubsub connection: %v", err)
+	}
+	defer pubSubClient.Close()
+
 	validator := validator.New()
 
 	adminSrvc := NewAdminService(
-		logger, conn, validator,
+		logger, conn, validator, pubSubClient,
 	)
 
 	if err := initialize.InitializeWebServer(logger, adminSrvc); err != nil {

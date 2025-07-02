@@ -4,15 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/bignyap/go-admin/internal/common"
 	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
 	"github.com/bignyap/go-utilities/logger/api"
 )
-
-type EndpointCreatedEvent struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
-	Code   string `json:"code"`
-}
 
 func (s *PubsubListener) UpdateEPMatcher() error {
 
@@ -21,8 +16,8 @@ func (s *PubsubListener) UpdateEPMatcher() error {
 	}
 
 	go func() {
-		_ = s.PubSub.Subscribe(context.Background(), "endpoint:created", func(ctx context.Context, payload []byte) error {
-			var evt EndpointCreatedEvent
+		_ = s.PubSub.Subscribe(context.Background(), string(common.EndpointCreated), func(ctx context.Context, payload []byte) error {
+			var evt common.EndpointCreatedEvent
 			if err := json.Unmarshal(payload, &evt); err != nil {
 				s.Logger.Error("failed to unmarshal endpoint event", err)
 				return err

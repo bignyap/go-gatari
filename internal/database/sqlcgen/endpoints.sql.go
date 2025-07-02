@@ -21,8 +21,28 @@ func (q *Queries) DeleteApiEndpointById(ctx context.Context, apiEndpointID int32
 	return err
 }
 
+const getApiEndpointByName = `-- name: GetApiEndpointByName :one
+SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id
+FROM api_endpoint
+WHERE endpoint_name = $1
+`
+
+func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string) (ApiEndpoint, error) {
+	row := q.db.QueryRow(ctx, getApiEndpointByName, endpointName)
+	var i ApiEndpoint
+	err := row.Scan(
+		&i.ApiEndpointID,
+		&i.EndpointName,
+		&i.EndpointDescription,
+		&i.HttpMethod,
+		&i.PathTemplate,
+		&i.ResourceTypeID,
+	)
+	return i, err
+}
+
 const listApiEndpoint = `-- name: ListApiEndpoint :many
-SELECT api_endpoint_id, endpoint_name, endpoint_description FROM api_endpoint
+SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id FROM api_endpoint
 ORDER BY endpoint_name
 LIMIT $1 OFFSET $2
 `
@@ -41,7 +61,48 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 	items := []ApiEndpoint{}
 	for rows.Next() {
 		var i ApiEndpoint
-		if err := rows.Scan(&i.ApiEndpointID, &i.EndpointName, &i.EndpointDescription); err != nil {
+		if err := rows.Scan(
+			&i.ApiEndpointID,
+			&i.EndpointName,
+			&i.EndpointDescription,
+			&i.HttpMethod,
+			&i.PathTemplate,
+			&i.ResourceTypeID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listApiEndpointsByResourceType = `-- name: ListApiEndpointsByResourceType :many
+SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id
+FROM api_endpoint
+WHERE resource_type_id = $1
+ORDER BY endpoint_name
+`
+
+func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ApiEndpoint, error) {
+	rows, err := q.db.Query(ctx, listApiEndpointsByResourceType, resourceTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ApiEndpoint{}
+	for rows.Next() {
+		var i ApiEndpoint
+		if err := rows.Scan(
+			&i.ApiEndpointID,
+			&i.EndpointName,
+			&i.EndpointDescription,
+			&i.HttpMethod,
+			&i.PathTemplate,
+			&i.ResourceTypeID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -53,18 +114,33 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 }
 
 const registerApiEndpoint = `-- name: RegisterApiEndpoint :one
-INSERT INTO api_endpoint (endpoint_name, endpoint_description) 
-VALUES ($1, $2)
+INSERT INTO api_endpoint (
+  endpoint_name,
+  endpoint_description,
+  http_method,
+  path_template,
+  resource_type_id
+)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING api_endpoint_id
 `
 
 type RegisterApiEndpointParams struct {
 	EndpointName        string
 	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
 }
 
 func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpointParams) (int32, error) {
-	row := q.db.QueryRow(ctx, registerApiEndpoint, arg.EndpointName, arg.EndpointDescription)
+	row := q.db.QueryRow(ctx, registerApiEndpoint,
+		arg.EndpointName,
+		arg.EndpointDescription,
+		arg.HttpMethod,
+		arg.PathTemplate,
+		arg.ResourceTypeID,
+	)
 	var api_endpoint_id int32
 	err := row.Scan(&api_endpoint_id)
 	return api_endpoint_id, err
@@ -73,4 +149,78 @@ func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpoi
 type RegisterApiEndpointsParams struct {
 	EndpointName        string
 	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+}
+
+const updateApiEndpointById = `-- name: UpdateApiEndpointById :exec
+UPDATE api_endpoint
+SET
+  endpoint_name = $2,
+  endpoint_description = $3,
+  http_method = $4,
+  path_template = $5,
+  resource_type_id = $6
+WHERE api_endpoint_id = $1
+`
+
+type UpdateApiEndpointByIdParams struct {
+	ApiEndpointID       int32
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+}
+
+func (q *Queries) UpdateApiEndpointById(ctx context.Context, arg UpdateApiEndpointByIdParams) error {
+	_, err := q.db.Exec(ctx, updateApiEndpointById,
+		arg.ApiEndpointID,
+		arg.EndpointName,
+		arg.EndpointDescription,
+		arg.HttpMethod,
+		arg.PathTemplate,
+		arg.ResourceTypeID,
+	)
+	return err
+}
+
+const upsertApiEndpointByName = `-- name: UpsertApiEndpointByName :one
+INSERT INTO api_endpoint (
+  endpoint_name,
+  endpoint_description,
+  http_method,
+  path_template,
+  resource_type_id
+)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (endpoint_name) DO UPDATE
+SET
+  endpoint_description = EXCLUDED.endpoint_description,
+  http_method = EXCLUDED.http_method,
+  path_template = EXCLUDED.path_template,
+  resource_type_id = EXCLUDED.resource_type_id
+RETURNING api_endpoint_id
+`
+
+type UpsertApiEndpointByNameParams struct {
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+}
+
+func (q *Queries) UpsertApiEndpointByName(ctx context.Context, arg UpsertApiEndpointByNameParams) (int32, error) {
+	row := q.db.QueryRow(ctx, upsertApiEndpointByName,
+		arg.EndpointName,
+		arg.EndpointDescription,
+		arg.HttpMethod,
+		arg.PathTemplate,
+		arg.ResourceTypeID,
+	)
+	var api_endpoint_id int32
+	err := row.Scan(&api_endpoint_id)
+	return api_endpoint_id, err
 }
