@@ -1,7 +1,22 @@
 -- name: ListApiEndpoint :many
-SELECT * FROM api_endpoint
-ORDER BY endpoint_name
+SELECT api_endpoint.*, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+ORDER BY api_endpoint_id DESC
 LIMIT $1 OFFSET $2;
+
+-- name: GetApiEndpointByName :one
+SELECT api_endpoint.*, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+WHERE endpoint_name = $1;
+
+-- name: ListApiEndpointsByResourceType :many
+SELECT api_endpoint.*, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+WHERE api_endpoint.resource_type_id = $1
+ORDER BY api_endpoint_id DESC;
 
 -- name: RegisterApiEndpoint :one 
 INSERT INTO api_endpoint (
@@ -28,11 +43,6 @@ VALUES ($1, $2, $3, $4, $5);
 DELETE FROM api_endpoint
 WHERE api_endpoint_id = $1;
 
--- name: GetApiEndpointByName :one
-SELECT *
-FROM api_endpoint
-WHERE endpoint_name = $1;
-
 -- name: UpdateApiEndpointById :exec
 UPDATE api_endpoint
 SET
@@ -42,12 +52,6 @@ SET
   path_template = $5,
   resource_type_id = $6
 WHERE api_endpoint_id = $1;
-
--- name: ListApiEndpointsByResourceType :many
-SELECT *
-FROM api_endpoint
-WHERE resource_type_id = $1
-ORDER BY endpoint_name;
 
 -- name: UpsertApiEndpointByName :one
 INSERT INTO api_endpoint (

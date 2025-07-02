@@ -13,6 +13,12 @@ type RegisterEndpointOutputs struct {
 	RegisterEndpointParams
 }
 
+type ListEndpointOutputs struct {
+	ID               int    `json:"id"`
+	ResourceTypeName string `json:"resource_type_name"`
+	RegisterEndpointParams
+}
+
 type CreateResourceTypeParams struct {
 	Name        string  `form:"name" json:"name" validate:"required,min=1"`
 	Code        string  `form:"code" json:"code" validate:"required,min=1"`

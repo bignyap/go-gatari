@@ -22,14 +22,25 @@ func (q *Queries) DeleteApiEndpointById(ctx context.Context, apiEndpointID int32
 }
 
 const getApiEndpointByName = `-- name: GetApiEndpointByName :one
-SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
 FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
 WHERE endpoint_name = $1
 `
 
-func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string) (ApiEndpoint, error) {
+type GetApiEndpointByNameRow struct {
+	ApiEndpointID       int32
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+	ResourceTypeName    string
+}
+
+func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string) (GetApiEndpointByNameRow, error) {
 	row := q.db.QueryRow(ctx, getApiEndpointByName, endpointName)
-	var i ApiEndpoint
+	var i GetApiEndpointByNameRow
 	err := row.Scan(
 		&i.ApiEndpointID,
 		&i.EndpointName,
@@ -37,13 +48,16 @@ func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string)
 		&i.HttpMethod,
 		&i.PathTemplate,
 		&i.ResourceTypeID,
+		&i.ResourceTypeName,
 	)
 	return i, err
 }
 
 const listApiEndpoint = `-- name: ListApiEndpoint :many
-SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id FROM api_endpoint
-ORDER BY endpoint_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+ORDER BY api_endpoint_id DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -52,15 +66,25 @@ type ListApiEndpointParams struct {
 	Offset int32
 }
 
-func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams) ([]ApiEndpoint, error) {
+type ListApiEndpointRow struct {
+	ApiEndpointID       int32
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+	ResourceTypeName    string
+}
+
+func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams) ([]ListApiEndpointRow, error) {
 	rows, err := q.db.Query(ctx, listApiEndpoint, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ApiEndpoint{}
+	items := []ListApiEndpointRow{}
 	for rows.Next() {
-		var i ApiEndpoint
+		var i ListApiEndpointRow
 		if err := rows.Scan(
 			&i.ApiEndpointID,
 			&i.EndpointName,
@@ -68,6 +92,7 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 			&i.HttpMethod,
 			&i.PathTemplate,
 			&i.ResourceTypeID,
+			&i.ResourceTypeName,
 		); err != nil {
 			return nil, err
 		}
@@ -80,21 +105,32 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 }
 
 const listApiEndpointsByResourceType = `-- name: ListApiEndpointsByResourceType :many
-SELECT api_endpoint_id, endpoint_name, endpoint_description, http_method, path_template, resource_type_id
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
 FROM api_endpoint
-WHERE resource_type_id = $1
-ORDER BY endpoint_name
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+WHERE api_endpoint.resource_type_id = $1
+ORDER BY api_endpoint_id DESC
 `
 
-func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ApiEndpoint, error) {
+type ListApiEndpointsByResourceTypeRow struct {
+	ApiEndpointID       int32
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+	ResourceTypeName    string
+}
+
+func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ListApiEndpointsByResourceTypeRow, error) {
 	rows, err := q.db.Query(ctx, listApiEndpointsByResourceType, resourceTypeID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ApiEndpoint{}
+	items := []ListApiEndpointsByResourceTypeRow{}
 	for rows.Next() {
-		var i ApiEndpoint
+		var i ListApiEndpointsByResourceTypeRow
 		if err := rows.Scan(
 			&i.ApiEndpointID,
 			&i.EndpointName,
@@ -102,6 +138,7 @@ func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTy
 			&i.HttpMethod,
 			&i.PathTemplate,
 			&i.ResourceTypeID,
+			&i.ResourceTypeName,
 		); err != nil {
 			return nil, err
 		}

@@ -122,7 +122,7 @@ func (s *ResourceService) RegisterApiEndpointInBatch(ctx context.Context, inputs
 	return int(affectedRows), nil
 }
 
-func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offset int) ([]RegisterEndpointOutputs, error) {
+func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offset int) ([]ListEndpointOutputs, error) {
 
 	input := sqlcgen.ListApiEndpointParams{
 		Limit:  int32(limit),
@@ -131,7 +131,7 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 
 	apiEndpoints, err := s.DB.ListApiEndpoint(ctx, input)
 	if err != nil {
-		return []RegisterEndpointOutputs{}, server.NewError(
+		return []ListEndpointOutputs{}, server.NewError(
 			server.ErrorInternal,
 			"couldn't retrieve endpoints",
 			err,
@@ -139,18 +139,19 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 	}
 
 	if len(apiEndpoints) == 0 {
-		return []RegisterEndpointOutputs{}, nil
+		return []ListEndpointOutputs{}, nil
 	}
 
-	var output []RegisterEndpointOutputs
+	var output []ListEndpointOutputs
 	for _, apiEndpoint := range apiEndpoints {
 		var desc *string
 		if apiEndpoint.EndpointDescription.Valid {
 			desc = &apiEndpoint.EndpointDescription.String
 		}
 
-		output = append(output, RegisterEndpointOutputs{
-			ID: int(apiEndpoint.ApiEndpointID),
+		output = append(output, ListEndpointOutputs{
+			ID:               int(apiEndpoint.ApiEndpointID),
+			ResourceTypeName: apiEndpoint.ResourceTypeName,
 			RegisterEndpointParams: RegisterEndpointParams{
 				Name:           apiEndpoint.EndpointName,
 				Description:    desc,
