@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bignyap/go-admin/internal/caching"
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	cachemanagement "github.com/bignyap/go-admin/internal/gatekeeper/service/CacheManagement"
 	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
@@ -131,12 +132,20 @@ func (s *GateKeeperService) Shutdown() error {
 
 func (s *GateKeeperService) InitializeEPMatcher() {
 
-	// We should iterate as long as there are entries >= to the requested.
-	// For now let's go with it
-	listEndpoints, err := s.DB.ListApiEndpoint(context.Background(), sqlcgen.ListApiEndpointParams{
-		Limit:  10000,
-		Offset: 1,
-	})
+	limit := int32(10000)
+
+	listEndpoints, err := common.FetchAll(
+		func(offset, limit int32) ([]sqlcgen.ListApiEndpointRow, error) {
+			endpoints, err := s.DB.ListApiEndpoint(context.Background(), sqlcgen.ListApiEndpointParams{
+				Limit:  limit,
+				Offset: offset,
+			})
+			if err != nil {
+				s.Logger.Fatal("couldn't retrieve endpoints", err)
+			}
+			return endpoints, nil
+		}, limit,
+	)
 	if err != nil {
 		s.Logger.Fatal("couldn't retrieve endpoints", err)
 	}
@@ -144,8 +153,8 @@ func (s *GateKeeperService) InitializeEPMatcher() {
 	var endpoints []gatekeeping.Endpoint
 	for _, endpoint := range listEndpoints {
 		endpoints = append(endpoints, gatekeeping.Endpoint{
-			Path:   endpoint.EndpointName,
-			Method: endpoint.EndpointName,
+			Path:   endpoint.PathTemplate,
+			Method: endpoint.HttpMethod,
 			Code:   endpoint.EndpointName,
 		})
 	}

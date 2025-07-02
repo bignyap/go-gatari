@@ -21,6 +21,38 @@ func (q *Queries) DeleteApiEndpointById(ctx context.Context, apiEndpointID int32
 	return err
 }
 
+const getApiEndpointById = `-- name: GetApiEndpointById :one
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+WHERE api_endpoint_id = $1
+`
+
+type GetApiEndpointByIdRow struct {
+	ApiEndpointID       int32
+	EndpointName        string
+	EndpointDescription pgtype.Text
+	HttpMethod          string
+	PathTemplate        string
+	ResourceTypeID      int32
+	ResourceTypeName    string
+}
+
+func (q *Queries) GetApiEndpointById(ctx context.Context, apiEndpointID int32) (GetApiEndpointByIdRow, error) {
+	row := q.db.QueryRow(ctx, getApiEndpointById, apiEndpointID)
+	var i GetApiEndpointByIdRow
+	err := row.Scan(
+		&i.ApiEndpointID,
+		&i.EndpointName,
+		&i.EndpointDescription,
+		&i.HttpMethod,
+		&i.PathTemplate,
+		&i.ResourceTypeID,
+		&i.ResourceTypeName,
+	)
+	return i, err
+}
+
 const getApiEndpointByName = `-- name: GetApiEndpointByName :one
 SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
 FROM api_endpoint

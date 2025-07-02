@@ -36,8 +36,9 @@ type Endpoint struct {
 }
 
 type Matcher struct {
-	router *httprouter.Router
-	lock   sync.RWMutex
+	router    *httprouter.Router
+	lock      sync.RWMutex
+	endpoints map[string]Endpoint
 }
 
 type capture struct {

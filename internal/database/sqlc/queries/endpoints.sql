@@ -11,6 +11,12 @@ FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
 WHERE endpoint_name = $1;
 
+-- name: GetApiEndpointById :one
+SELECT api_endpoint.*, resource_type.resource_type_name
+FROM api_endpoint
+INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+WHERE api_endpoint_id = $1;
+
 -- name: ListApiEndpointsByResourceType :many
 SELECT api_endpoint.*, resource_type.resource_type_name
 FROM api_endpoint

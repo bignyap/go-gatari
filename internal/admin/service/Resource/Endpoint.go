@@ -167,7 +167,27 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 
 func (s *ResourceService) DeleteApiEndpointsById(ctx context.Context, id int) error {
 
-	err := s.DB.DeleteApiEndpointById(ctx, int32(id))
+	input, err := s.DB.GetApiEndpointById(ctx, int32(id))
+	if err != nil || input.EndpointName != "" {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't find the endpoint",
+			err,
+		)
+	}
+
+	err = s.PubSubClient.Publish(ctx, string(common.EndpointDeleted), common.EndpointDeletedEvent{
+		Code: input.EndpointName,
+	})
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
+			err,
+		)
+	}
+
+	err = s.DB.DeleteApiEndpointById(ctx, int32(id))
 	if err != nil {
 		return server.NewError(
 			server.ErrorInternal,
