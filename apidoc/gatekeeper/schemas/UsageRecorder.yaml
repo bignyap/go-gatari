@@ -1,0 +1,77 @@
+UsageRecorderInput:
+  type: object
+  properties:
+    organization_name:
+      type: string
+    method:
+      type: string
+    path:
+      type: string
+  required:
+    - organization_name
+    - method
+    - path
+
+UsageRecorderOutput:
+  type: object
+  properties:
+    organization:
+      type: object
+      properties:
+        ID:
+          type: integer
+          example: 2
+        Name:
+          type: string
+          example: Movius
+        Realm:
+          type: string
+          example: movius
+      required:
+        - ID
+        - Name
+        - Realm
+    endpoint:
+      type: object
+      properties:
+        ID:
+          type: integer
+          example: 1
+        Name:
+          type: string
+          example: GetQuestion
+      required:
+        - ID
+        - Name
+    subscription:
+      type: object
+      properties:
+        ID:
+          type: integer
+          example: 1
+        OrganizationID:
+          type: integer
+          example: 2
+        ApiLimit:
+          type: integer
+          example: 3000
+        ExpiryTimestamp:
+          type: integer
+          example: 1766707200
+        Active:
+          type: boolean
+          example: true
+      required:
+        - ID
+        - OrganizationID
+        - ApiLimit
+        - ExpiryTimestamp
+        - Active
+    remaining:
+      type: integer
+      example: 3000
+  required:
+    - organization
+    - endpoint
+    - subscription
+    - remaining

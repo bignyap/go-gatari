@@ -4,12 +4,14 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/julienschmidt/httprouter"
 )
 
 type Organization struct {
-	ID   int32
-	Name string
+	ID    int32
+	Name  string
+	Realm string
 }
 
 type ApiEndpoint struct {
@@ -30,9 +32,9 @@ type Pricing struct {
 }
 
 type Endpoint struct {
-	Code   string
-	Method string
-	Path   string
+	Code   string `json:"code" form:"code"`
+	Method string `json:"method" form:"method"`
+	Path   string `json:"path" form:"path"`
 }
 
 type Matcher struct {
@@ -48,13 +50,20 @@ type capture struct {
 }
 
 type ValidateRequestInput struct {
-	Method           string `json:"method"`
-	Path             string `json:"path"`
-	OrganizationName string `json:"organization_name"`
+	Method           string `json:"method" form:"method"`
+	Path             string `json:"path" form:"path"`
+	OrganizationName string `json:"organization_name" form:"organization_name"`
+}
+
+type ValidationRequestOutput struct {
+	Organization sqlcgen.GetOrganizationByNameRow `json:"organization"`
+	Endpoint     sqlcgen.GetEndpointByNameRow     `json:"endpoint"`
+	Subscription sqlcgen.GetActiveSubscriptionRow `json:"subscription"`
+	Remaining    *int32                           `json:"remaining"` // nil if unlimited
 }
 
 type RecordUsageInput struct {
-	Method           string `json:"method"`
-	Path             string `json:"path"`
-	OrganizationName string `json:"organization_name"`
+	Method           string `json:"method" form:"method"`
+	Path             string `json:"path" form:"path"`
+	OrganizationName string `json:"organization_name" form:"organization_name"`
 }

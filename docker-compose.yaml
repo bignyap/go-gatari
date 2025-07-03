@@ -15,8 +15,10 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      APPLICATION_PORT: 8080
       ENVIRONMENT: "dev"
+      REDIS_ADDR: ${REDIS_ADDR}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: ${REDIS_DB}
       PUBSUB_ENABLED: ${PUBSUB_ENABLED}
       PUBSUB_TYPE: ${PUBSUB_TYPE}
       PUBSUB_NAMESPACE: ${PUBSUB_NAMESPACE}
@@ -52,7 +54,6 @@ services:
       REDIS_ADDR: ${REDIS_ADDR}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DB: ${REDIS_DB}
-      APPLICATION_PORT: ${APPLICATION_PORT}
       ENVIRONMENT: "dev"
       PUBSUB_ENABLED: ${PUBSUB_ENABLED}
       PUBSUB_TYPE: ${PUBSUB_TYPE}
@@ -89,7 +90,7 @@ services:
       timeout: 5s
       retries: 10
 
-  apidoc:
+  go-admin-apidoc:
     image: styled-swagger-ui:latest
     restart: always
     ports:
@@ -99,7 +100,19 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./apidoc:/usr/share/nginx/html/apidoc
+      - ./apidoc/go-admin:/usr/share/nginx/html/apidoc
+
+  gatekeeper-apidoc:
+    image: styled-swagger-ui:latest
+    restart: always
+    ports:
+      - '8084:80'
+    expose:
+      - '8084'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apidoc/gatekeeper:/usr/share/nginx/html/apidoc
 
   redis:
     image: redis

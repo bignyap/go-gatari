@@ -18,7 +18,7 @@ func LoadPubSub() (pubsub.PubSubClient, error) {
 	switch pubCfg.Type {
 	case "redis":
 		pubCfg.Redis = &pubsub.RedisConfig{
-			URL:      os.Getenv("REDIS_URL"),
+			URL:      os.Getenv("REDIS_ADDR"),
 			Password: os.Getenv("REDIS_PASSWORD"),
 		}
 	case "kafka":

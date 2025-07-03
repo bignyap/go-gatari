@@ -21,7 +21,7 @@ type CacheController struct {
 	deserialize func(string) (interface{}, error)
 
 	mu     sync.Mutex
-	counts map[string]map[string]int // prefix -> key -> count
+	counts map[string]map[string]int
 }
 
 type CacheControllerConfig struct {
@@ -34,14 +34,13 @@ type CacheControllerConfig struct {
 }
 
 func NewCacheController(ctx context.Context, cfg CacheControllerConfig) (*CacheController, error) {
-	memCfg := cfg.MemcacheCfg
-	if memCfg == nil {
-		memCfg = &memcache.Config{
+	if cfg.MemcacheCfg == nil {
+		cfg.MemcacheCfg = &memcache.Config{
 			DefaultTTL:      cfg.LocalTTL,
 			CleanupInterval: 5 * time.Minute,
 		}
 	}
-	memClient := memcache.New(*memCfg)
+	memClient := memcache.New(*cfg.MemcacheCfg)
 
 	var redisClient redis.UniversalClient
 	var err error
@@ -67,6 +66,7 @@ func (cc *CacheController) Get(ctx context.Context, key string, fetch func() (in
 	if val, ok := cc.local.Get(key); ok {
 		return val, nil
 	}
+
 	if cc.redis != nil {
 		if strVal, err := cc.redis.Get(ctx, key).Result(); err == nil {
 			val, err := cc.deserialize(strVal)
@@ -76,21 +76,26 @@ func (cc *CacheController) Get(ctx context.Context, key string, fetch func() (in
 			}
 		}
 	}
+
 	val, err := fetch()
 	if err != nil {
 		return nil, err
 	}
+
 	cc.local.Set(key, val, cc.localTTL)
+
 	if cc.redis != nil {
 		if strVal, err := cc.serialize(val); err == nil {
 			cc.redis.Set(ctx, key, strVal, cc.redisTTL)
 		}
 	}
+
 	return val, nil
 }
 
 func (cc *CacheController) Set(ctx context.Context, key string, val interface{}) error {
 	cc.local.Set(key, val, cc.localTTL)
+
 	if cc.redis != nil {
 		strVal, err := cc.serialize(val)
 		if err != nil {
@@ -98,6 +103,7 @@ func (cc *CacheController) Set(ctx context.Context, key string, val interface{})
 		}
 		return cc.redis.Set(ctx, key, strVal, cc.redisTTL).Err()
 	}
+
 	return nil
 }
 
@@ -108,11 +114,12 @@ func (cc *CacheController) Invalidate(ctx context.Context, key string) {
 	}
 }
 
-// ---- Incremental Counter Extensions ----
+// ---- Count tracking ----
 
 func (cc *CacheController) IncrementLocalValue(prefix, key string, delta int) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
+
 	if _, ok := cc.counts[prefix]; !ok {
 		cc.counts[prefix] = make(map[string]int)
 	}
@@ -122,11 +129,12 @@ func (cc *CacheController) IncrementLocalValue(prefix, key string, delta int) {
 func (cc *CacheController) GetAllLocalValues(prefix string) map[string]int {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	copy := make(map[string]int)
+
+	result := make(map[string]int)
 	for k, v := range cc.counts[prefix] {
-		copy[k] = v
+		result[k] = v
 	}
-	return copy
+	return result
 }
 
 func (cc *CacheController) ResetLocalValues(prefix string) {
@@ -142,6 +150,8 @@ func (cc *CacheController) DeleteLocalValue(prefix, key string) {
 		delete(cc.counts[prefix], key)
 	}
 }
+
+// ---- Redis counters ----
 
 func (cc *CacheController) IncrementRedisValue(ctx context.Context, key string, delta int) error {
 	if cc.redis == nil {
@@ -169,8 +179,7 @@ func (cc *CacheController) GetRedisSnapshot(ctx context.Context, prefix string) 
 			if err == nil {
 				var val int
 				fmt.Sscanf(valStr, "%d", &val)
-				trimmedKey := strings.TrimPrefix(key, prefix+":")
-				result[trimmedKey] = val
+				result[strings.TrimPrefix(key, prefix+":")] = val
 			}
 		}
 		if nextCursor == 0 {
@@ -206,13 +215,12 @@ func (cc *CacheController) ResetRedisValues(ctx context.Context, prefix string) 
 
 func (cc *CacheController) DeleteRedisValue(ctx context.Context, prefix, key string) {
 	if cc.redis != nil {
-		fullKey := prefix + ":" + key
-		cc.redis.Del(ctx, fullKey)
+		cc.redis.Del(ctx, prefix+":"+key)
 	}
 }
 
-func (c *CacheController) Close() error {
-	if closer, ok := c.redis.(interface{ Close() error }); ok {
+func (cc *CacheController) Close() error {
+	if closer, ok := cc.redis.(interface{ Close() error }); ok {
 		return closer.Close()
 	}
 	return nil

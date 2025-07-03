@@ -1,9 +1,10 @@
 -- name: GetOrganizationByName :one
 SELECT
   organization_id AS id,
-  organization_name AS name
+  organization_name AS name,
+  organization_realm AS realm
 FROM organization
-WHERE organization_name = $1 AND organization_active = TRUE;
+WHERE organization_realm = $1 AND organization_active = TRUE;
 
 -- name: GetEndpointByName :one
 SELECT

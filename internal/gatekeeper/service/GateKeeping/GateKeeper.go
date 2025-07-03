@@ -2,73 +2,102 @@ package gatekeeping
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 )
 
-func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) error {
-
+func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) (*ValidationRequestOutput, error) {
 	endpointCode, found := s.Match.Match(input.Method, input.Path)
 	if !found {
-		return errors.New("no matching endpoint")
+		return nil, server.NewError(
+			server.ErrorNotFound, "no matching endpoint", nil,
+		)
 	}
 
-	orgAny, err := s.Cache.Get(ctx, "org:"+input.OrganizationName, func() (interface{}, error) {
+	org, err := caching.GetFromCache(ctx, s.Cache, "org:"+input.OrganizationName, func() (sqlcgen.GetOrganizationByNameRow, error) {
 		return s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	})
 	if err != nil {
-		return errors.New("organization not found")
+		return nil, server.NewError(
+			server.ErrorNotFound, "organization not found", err,
+		)
 	}
 
-	endpointAny, err := s.Cache.Get(ctx, "endpoint:"+endpointCode, func() (interface{}, error) {
+	endpoint, err := caching.GetFromCache(ctx, s.Cache, "endpoint:"+endpointCode, func() (sqlcgen.GetEndpointByNameRow, error) {
 		return s.DB.GetEndpointByName(ctx, endpointCode)
 	})
 	if err != nil {
-		return errors.New("endpoint not found")
+		return nil, server.NewError(
+			server.ErrorNotFound, "endpoint not found", err,
+		)
 	}
 
-	org := orgAny.(Organization)
-	endpoint := endpointAny.(ApiEndpoint)
-
-	sub, err := s.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
-		OrganizationID: org.ID,
-		ApiEndpointID:  endpoint.ID,
+	cacheKey := "subscription:" + strconv.Itoa(int(org.ID)) + ":" + strconv.Itoa(int(endpoint.ID))
+	sub, err := caching.GetFromCache(ctx, s.Cache, cacheKey, func() (sqlcgen.GetActiveSubscriptionRow, error) {
+		return s.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
+			OrganizationID: org.ID,
+			ApiEndpointID:  endpoint.ID,
+		})
 	})
 	if err != nil || !sub.Active.Bool {
-		return errors.New("no active subscription")
+		return nil, server.NewError(
+			server.ErrorUnauthorized, "no active subscription", nil,
+		)
 	}
 	if sub.ExpiryTimestamp.Int32 > 0 && time.Now().Unix() > int64(sub.ExpiryTimestamp.Int32) {
-		return errors.New("subscription expired")
+		return nil, server.NewError(
+			server.ErrorUnauthorized, "subscription expired", nil,
+		)
 	}
 
+	var remaining *int32
 	if sub.ApiLimit.Int32 > 0 {
 		key := usageKey(org.ID, endpoint.ID)
 		snapshot := s.Cache.GetAllLocalValues("usage")
-		if count := snapshot[key]; int32(count) >= sub.ApiLimit.Int32 {
-			return errors.New("quota exceeded")
+		count := int32(snapshot[key])
+		if count >= sub.ApiLimit.Int32 {
+			return nil, server.NewError(
+				server.ErrorUnauthorized, "quota exceeded", nil,
+			)
 		}
+		left := sub.ApiLimit.Int32 - count
+		remaining = &left
 	}
 
-	return nil
+	return &ValidationRequestOutput{
+		Organization: org,
+		Endpoint:     endpoint,
+		Subscription: sub,
+		Remaining:    remaining,
+	}, nil
 }
 
 func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsageInput) (float64, error) {
+
 	endpointCode, found := s.Match.Match(input.Method, input.Path)
 	if !found {
-		return 0, errors.New("no matching endpoint")
+		return 0, server.NewError(
+			server.ErrorInternal, "no matching endpoint", nil,
+		)
 	}
 
 	org, err := s.DB.GetOrganizationByName(ctx, input.OrganizationName)
 	if err != nil {
-		return 0, errors.New("organization not found")
+		return 0, server.NewError(
+			server.ErrorInternal, "organization not found", err,
+		)
 	}
 
 	endpoint, err := s.DB.GetEndpointByName(ctx, endpointCode)
 	if err != nil {
-		return 0, errors.New("endpoint not found")
+		return 0, server.NewError(
+			server.ErrorInternal, "endpoint not found", err,
+		)
 	}
 
 	sub, err := s.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
@@ -76,7 +105,9 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		ApiEndpointID:  endpoint.ID,
 	})
 	if err != nil {
-		return 0, errors.New("subscription not found")
+		return 0, server.NewError(
+			server.ErrorInternal, "subscription not found", err,
+		)
 	}
 
 	pricing, err := s.DB.GetPricing(ctx, sqlcgen.GetPricingParams{
@@ -84,7 +115,9 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		ApiEndpointID:  endpoint.ID,
 	})
 	if err != nil {
-		return 0, errors.New("pricing error")
+		return 0, server.NewError(
+			server.ErrorInternal, "pricing error", err,
+		)
 	}
 
 	s.Cache.IncrementLocalValue("usage", usageKey(org.ID, endpoint.ID), 1)

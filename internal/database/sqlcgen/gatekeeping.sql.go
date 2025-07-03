@@ -77,20 +77,22 @@ func (q *Queries) GetEndpointByName(ctx context.Context, endpointName string) (G
 const getOrganizationByName = `-- name: GetOrganizationByName :one
 SELECT
   organization_id AS id,
-  organization_name AS name
+  organization_name AS name,
+  organization_realm AS realm
 FROM organization
-WHERE organization_name = $1 AND organization_active = TRUE
+WHERE organization_realm = $1 AND organization_active = TRUE
 `
 
 type GetOrganizationByNameRow struct {
-	ID   int32
-	Name string
+	ID    int32
+	Name  string
+	Realm string
 }
 
-func (q *Queries) GetOrganizationByName(ctx context.Context, organizationName string) (GetOrganizationByNameRow, error) {
-	row := q.db.QueryRow(ctx, getOrganizationByName, organizationName)
+func (q *Queries) GetOrganizationByName(ctx context.Context, organizationRealm string) (GetOrganizationByNameRow, error) {
+	row := q.db.QueryRow(ctx, getOrganizationByName, organizationRealm)
 	var i GetOrganizationByNameRow
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(&i.ID, &i.Name, &i.Realm)
 	return i, err
 }
 

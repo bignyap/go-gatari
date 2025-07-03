@@ -6,21 +6,22 @@ import (
 )
 
 func (h *GateKeeperHandler) ValidateRequestHandler(c *gin.Context) {
-	if _, err := h.ValidateRequestCore(c); err != nil {
+	output, err := h.ValidateRequestCore(c)
+	if err != nil {
 		h.ResponseWriter.Error(c, err)
 		return
 	}
-	h.ResponseWriter.Success(c, nil)
+	h.ResponseWriter.Success(c, output)
 }
 
-func (h *GateKeeperHandler) ValidateRequestCore(c *gin.Context) (*gatekeeping.ValidateRequestInput, error) {
+func (h *GateKeeperHandler) ValidateRequestCore(c *gin.Context) (*gatekeeping.ValidationRequestOutput, error) {
 	input, err := h.GateKeepingService.ValidateRequestHeader(c)
 	if err != nil {
 		return nil, err
 	}
-	err = h.GateKeepingService.ValidateRequest(c.Request.Context(), input)
+	output, err := h.GateKeepingService.ValidateRequest(c.Request.Context(), input)
 	if err != nil {
 		return nil, err
 	}
-	return input, nil
+	return output, nil
 }

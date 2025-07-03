@@ -1,39 +1,43 @@
 package gatekeeping
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (s *GateKeepingService) ValidateRequestHeader(c *gin.Context) (*ValidateRequestInput, error) {
-	org := c.GetHeader("X-Org-Name")
-	method := c.Request.Method
-	path := c.Request.URL.Path
 
-	if org == "" || path == "" {
-		return nil, errors.New("missing required headers")
+	var input ValidateRequestInput
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("input validation failed %s", err)
 	}
 
-	return &ValidateRequestInput{
-		OrganizationName: org,
-		Method:           method,
-		Path:             path,
-	}, nil
+	// org := c.GetHeader("X-Org-Name")
+	// method := c.Request.Method
+	// path := c.Request.URL.Path
+
+	if input.OrganizationName == "" || input.Path == "" {
+		return nil, fmt.Errorf("missing required headers")
+	}
+
+	return &input, nil
 }
 
 func (s *GateKeepingService) RecordUsageValidator(c *gin.Context) (*RecordUsageInput, error) {
-	org := c.GetHeader("X-Org-Name")
-	method := c.Request.Method
-	path := c.Request.URL.Path
 
-	if org == "" || path == "" {
-		return nil, errors.New("missing required headers")
+	var input RecordUsageInput
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("input validation failed %s", err)
 	}
 
-	return &RecordUsageInput{
-		OrganizationName: org,
-		Method:           method,
-		Path:             path,
-	}, nil
+	// org := c.GetHeader("X-Org-Name")
+	// method := c.Request.Method
+	// path := c.Request.URL.Path
+
+	if input.OrganizationName == "" || input.Path == "" {
+		return nil, fmt.Errorf("missing required headers")
+	}
+
+	return &input, nil
 }

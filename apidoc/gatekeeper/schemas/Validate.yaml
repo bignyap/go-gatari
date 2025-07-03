@@ -1,0 +1,24 @@
+ValidateRequestInput:
+  type: object
+  properties:
+    organization_name:
+      type: string
+    method:
+      type: string
+    path:
+      type: string
+  required:
+    - organization_name
+    - method
+    - path
+
+ValidateRequestOutput:
+  type: object
+  properties:
+    allowed:
+      type: boolean
+    reason:
+      type: string
+  required:
+    - allowed
+    

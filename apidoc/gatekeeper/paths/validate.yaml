@@ -1,0 +1,28 @@
+paths:
+  /validate:
+    post:
+      summary: Validate request
+      operationId: validateRequest
+      tags:
+        - Validate Request
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '../schemas/Validate.yaml#/ValidateRequestInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/Validate.yaml#/ValidateRequestOutput'
+        '400':
+          description: Missing required headers
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/Error.yaml#/ErrorResponse'

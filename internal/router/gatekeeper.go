@@ -24,7 +24,7 @@ func RegisterAuthMiddlewareRoutes(rg *gin.RouterGroup, h *gateKeeperHandler.Gate
 }
 
 func ValidateRequestHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {
-	rg.GET("/validate", h.ValidateRequestHandler)
+	rg.POST("/validate", h.ValidateRequestHandler)
 }
 
 func UsageRecorderHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {

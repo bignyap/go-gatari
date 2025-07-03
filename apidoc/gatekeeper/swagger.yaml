@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: Go Gatari APIs
+  version: 1.0.0
+
+servers:
+  - url: 'http://localhost:8082/gatekeeper/'
+    description: "localhost"
+
+paths:
+  /validate:
+    $ref: './paths/validate.yaml#/paths/~1validate'
+
+  /recordUsage:
+    $ref: './paths/usageRecorder.yaml#/paths/~1recordUsage'
+
+components:
+  schemas:
+    Error:
+      $ref: './schemas/Error.yaml#/ErrorResponse'
+    ValidateRequestInput:
+      $ref: './schemas/Validate.yaml#/ValidateRequestInput'
+    ValidateRequestOutput:
+      $ref: './schemas/Validate.yaml#/ValidateRequestOutput'
+    UsageRecorderInput:
+      $ref: './schemas/UsageRecorder.yaml#/UsageRecorderInput'
+    UsageRecorderOutput:
+      $ref: './schemas/UsageRecorder.yaml#/UsageRecorderOutput'
