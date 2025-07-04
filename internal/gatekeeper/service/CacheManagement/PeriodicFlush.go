@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/bignyap/go-admin/internal/common"
 )
 
 func StartPeriodicFlush(cm *CacheManagementService, interval time.Duration, stopCh <-chan struct{}) {
@@ -18,10 +20,9 @@ func StartPeriodicFlush(cm *CacheManagementService, interval time.Duration, stop
 			case <-ticker.C:
 				ctx := context.Background()
 
-				cm.SyncIncrementalToRedis(ctx, "usage")
-
-				cm.SyncAggregatedToDB(ctx, "usage", func(key string, count int) error {
-					return cm.IncrementUsageFromCacheKey(ctx, key, count)
+				// Only this node flushes Redis -> DB
+				cm.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+					return cm.IncrementUsageFromCacheKey(ctx, key, val)
 				})
 
 			case <-stopCh:
@@ -33,18 +34,14 @@ func StartPeriodicFlush(cm *CacheManagementService, interval time.Duration, stop
 }
 
 func HandleShutdown(cm *CacheManagementService, stopFlush chan struct{}) {
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	close(stopFlush)
 
 	ctx := context.Background()
-
-	cm.SyncIncrementalToRedis(ctx, "usage")
-
-	cm.SyncAggregatedToDB(ctx, "usage", func(key string, count int) error {
-		return cm.IncrementUsageFromCacheKey(ctx, key, count)
+	cm.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+		return cm.IncrementUsageFromCacheKey(ctx, key, val)
 	})
 
 	log.Println("Gatekeeper shutdown complete")

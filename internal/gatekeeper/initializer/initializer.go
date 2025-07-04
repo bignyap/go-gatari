@@ -14,6 +14,7 @@ import (
 	pubsublistener "github.com/bignyap/go-admin/internal/gatekeeper/service/PubSubListener"
 	"github.com/bignyap/go-admin/internal/initialize"
 	"github.com/bignyap/go-admin/internal/router"
+	"github.com/bignyap/go-utilities/counter"
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/logger/config"
 	"github.com/bignyap/go-utilities/logger/factory"
@@ -21,6 +22,7 @@ import (
 	"github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type GateKeeperService struct {
@@ -31,11 +33,12 @@ type GateKeeperService struct {
 	Validator      *validator.Validate
 	CacheContoller *caching.CacheController
 	CacheManager   *cachemanagement.CacheManagementService
-	Matcher        *gatekeeping.Matcher
-	PubSubClient   pubsub.PubSubClient
-	Mode           string
-	Target         string
-	stopFlush      chan struct{}
+	// CounterWorker  *counter.CounterWorker
+	Matcher      *gatekeeping.Matcher
+	PubSubClient pubsub.PubSubClient
+	Mode         string
+	Target       string
+	stopFlush    chan struct{}
 }
 
 func NewGateKeeperService(
@@ -44,22 +47,28 @@ func NewGateKeeperService(
 	validator *validator.Validate,
 	pubSubClient pubsub.PubSubClient,
 	cacheController *caching.CacheController,
+	redisClient redis.UniversalClient,
+	counterWorker *counter.CounterWorker,
 	mode string,
 	target string,
 ) *GateKeeperService {
 
-	cacheManager := &cachemanagement.CacheManagementService{
-		Logger:    logger,
-		Cache:     cacheController,
-		DB:        sqlcgen.New(conn),
-		Conn:      conn,
-		Validator: validator,
-	}
+	db := sqlcgen.New(conn)
+
+	cacheManager := cachemanagement.NewCacheManagementService(
+		db,
+		conn,
+		logger,
+		validator,
+		cacheController,
+		redisClient,
+		counterWorker,
+	)
 
 	return &GateKeeperService{
 		Logger:         logger,
 		Validator:      validator,
-		DB:             sqlcgen.New(conn),
+		DB:             db,
 		Conn:           conn,
 		CacheContoller: cacheController,
 		CacheManager:   cacheManager,
@@ -89,7 +98,7 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 		s.Target,
 	)
 
-	// Start periodic cache sync
+	// Start periodic DB flush (Redis -> DB only)
 	cachemanagement.StartPeriodicFlush(s.CacheManager, 30*time.Second, s.stopFlush)
 
 	setupLogger.Info("Completed")
@@ -97,30 +106,32 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 }
 
 func (s *GateKeeperService) Shutdown() error {
-
 	shtLogger := s.Logger.WithComponent("server.Shutdown")
 	shtLogger.Info("Starting")
 
-	// Stop periodic flushing
+	// Stop periodic DB flush
 	close(s.stopFlush)
 
 	ctx := context.Background()
 
-	// Flush caches to Redis/DB
-	s.CacheManager.SyncIncrementalToRedis(ctx, "usage")
-	s.CacheManager.SyncAggregatedToDB(ctx, "usage", func(key string, count int) error {
-		return s.CacheManager.IncrementUsageFromCacheKey(ctx, key, count)
+	// Flush local counters to Redis
+	if err := s.CacheManager.CounterWorker.FlushNow(string(common.Usageprefix), ctx); err != nil {
+		shtLogger.Error("Flush to Redis failed", err)
+	}
+
+	// Flush Redis -> DB
+	s.CacheManager.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+		return s.CacheManager.IncrementUsageFromCacheKey(ctx, key, val)
 	})
 	shtLogger.Info("Cache flushed")
 
-	// Close Redis connection if possible
+	// Close Redis
 	if err := s.CacheContoller.Close(); err != nil {
 		shtLogger.Error("Error closing Redis", err)
 	} else {
 		shtLogger.Info("Redis connection closed")
 	}
 
-	// Close DB
 	if s.Conn != nil {
 		s.Conn.Close()
 		shtLogger.Info("Database connection pool closed")
@@ -131,7 +142,6 @@ func (s *GateKeeperService) Shutdown() error {
 }
 
 func (s *GateKeeperService) InitializeEPMatcher() {
-
 	limit := int32(10000)
 
 	listEndpoints, err := common.FetchAll(
@@ -164,11 +174,9 @@ func (s *GateKeeperService) InitializeEPMatcher() {
 }
 
 func (s *GateKeeperService) InitializePubSubListener() {
-
 	pubSubListener := pubsublistener.NewPubSubListener(
 		s.Logger, s.CacheContoller, s.Matcher, s.PubSubClient,
 	)
-
 	if err := pubSubListener.UpdateEPMatcher(); err != nil {
 		s.Logger.Fatal("Failed to load pubsub listener", err)
 	}
@@ -183,14 +191,14 @@ func InitializeGateKeeperServer() {
 	if environment == "" {
 		environment = "dev"
 	}
-	mode := os.Getenv("GATEKEEPER_MODE") // "proxy", "middleware", or "auth-middleware"
-	target := os.Getenv("PROXY_TARGET")  // required if mode is "proxy"
+	mode := os.Getenv("GATEKEEPER_MODE")
+	target := os.Getenv("PROXY_TARGET")
 
 	if mode == "proxy" && target == "" {
 		log.Fatal("PROXY_TARGET must be set in proxy mode")
 	}
 
-	// Logger setup
+	// Logger
 	var logConfig config.LogConfig
 	if environment == "prod" {
 		logConfig = config.ProductionConfig()
@@ -199,7 +207,6 @@ func InitializeGateKeeperServer() {
 	}
 	logger, _ := factory.NewLogger(logConfig)
 
-	// Wrapper for logging start and completion
 	logWithComponent := func(component string, fn func() error) {
 		logger.WithComponent(component).Info("Started")
 		if err := fn(); err != nil {
@@ -208,7 +215,6 @@ func InitializeGateKeeperServer() {
 		logger.WithComponent(component).Info("Completed")
 	}
 
-	// Database connection
 	var conn *pgxpool.Pool
 	logWithComponent("LoadDBConn", func() error {
 		var err error
@@ -217,7 +223,6 @@ func InitializeGateKeeperServer() {
 	})
 	defer conn.Close()
 
-	// Pubsub client
 	var pubSubClient pubsub.PubSubClient
 	logWithComponent("LoadPubSub", func() error {
 		var err error
@@ -226,10 +231,8 @@ func InitializeGateKeeperServer() {
 	})
 	defer pubSubClient.Close()
 
-	// Validator
 	validator := validator.New()
 
-	// Redis cache controller from env
 	var cacheController *caching.CacheController
 	logWithComponent("LoadRedisController", func() error {
 		var err error
@@ -237,25 +240,29 @@ func InitializeGateKeeperServer() {
 		return err
 	})
 
-	// Main service
+	// Redis client wrapper
+	redisClient := cacheController.Redis()
+
+	// Create counter worker
+	counterWorker := counter.NewCounterWorker(redisClient, 5*time.Second, 100, 10000)
+	go counterWorker.Start(context.Background())
+
 	gkService := NewGateKeeperService(
 		logger, conn, validator, pubSubClient,
-		cacheController, mode, target,
+		cacheController, redisClient, counterWorker,
+		mode, target,
 	)
 
-	// Initialize the endpoint matcher service
 	logWithComponent("InitializeEPMatcher", func() error {
 		gkService.InitializeEPMatcher()
 		return nil
 	})
 
-	// Initialize the pubsub listener
 	logWithComponent("InitializePubSubListener", func() error {
 		gkService.InitializePubSubListener()
 		return nil
 	})
 
-	// Start web server
 	logWithComponent("InitializeWebServer", func() error {
 		return initialize.InitializeWebServer(logger, gkService)
 	})

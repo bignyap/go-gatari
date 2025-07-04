@@ -3,65 +3,52 @@ package cachemanagement
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/server"
 )
 
-// Push local incremental values to Redis
-func (srvc *CacheManagementService) SyncIncrementalToRedis(ctx context.Context, prefix string) {
-	data := srvc.Cache.GetAllLocalValues(prefix) // map[string]int
-	for key, val := range data {
-		err := srvc.Cache.IncrementRedisValue(ctx, key, val)
-		if err != nil {
-			srvc.Logger.Error(
-				fmt.Sprintf("failed to increment redis for key %s", key), err,
-			)
-		}
-	}
-	srvc.Cache.ResetLocalValues(prefix)
-}
+func (srvc *CacheManagementService) SyncAggregatedToDB(ctx context.Context, prefix string, handler func(key string, val map[string]float64) error) {
 
-// Push aggregated Redis values to DB
-func (srvc *CacheManagementService) SyncAggregatedToDB(ctx context.Context, prefix string, handler func(key string, count int) error) {
-	data := srvc.Cache.GetRedisSnapshot(ctx, prefix) // map[string]int
+	data := srvc.RedisSnapshotFunc(ctx, prefix, []string{"Count", "Cost"})
+
 	for key, val := range data {
 		if err := handler(key, val); err != nil {
-			srvc.Logger.Error(
-				fmt.Sprintf("failed handling redis data for key %s", key), err,
-			)
+			srvc.Logger.Error(fmt.Sprintf("failed handling redis data for key %s", key), err)
 		}
 	}
-	srvc.Cache.ResetRedisValues(ctx, prefix)
+
+	if srvc.RedisResetFunc != nil {
+		srvc.RedisResetFunc(ctx, prefix)
+	}
 }
 
-func (srvc *CacheManagementService) InvalidateLocal(prefix, key string) {
-	srvc.Logger.Info(fmt.Sprintf("Invalidating local cache for key: %s", key))
-	srvc.Cache.DeleteLocalValue(prefix, key)
-}
+func (srvc *CacheManagementService) IncrementUsageFromCacheKey(ctx context.Context, key string, val map[string]float64) error {
 
-func (srvc *CacheManagementService) InvalidateRedis(ctx context.Context, prefix, key string) {
-	srvc.Logger.Info(fmt.Sprintf("Invalidating redis cache for key: %s", key))
-	srvc.Cache.DeleteRedisValue(ctx, prefix, key)
-}
-
-func (srvc *CacheManagementService) IncrementUsageFromCacheKey(ctx context.Context, key string, count int) error {
-
-	orgID, endpointID, err := ParseUsageKey(key)
+	orgID, subID, endpointID, err := common.ParseUsageKey(key)
 	if err != nil {
 		return err
 	}
 
-	sub, err := srvc.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
-		OrganizationID: orgID,
+	_, err = srvc.DB.CreateApiUsageSummary(ctx, sqlcgen.CreateApiUsageSummaryParams{
+		UsageStartDate: int32(time.Now().Unix()),
+		UsageEndDate:   int32(time.Now().Unix()),
+		TotalCalls:     int32(common.SafeGet(val, "Count", 0)),
+		TotalCost:      common.SafeGet(val, "Cost", 0.0),
+		SubscriptionID: subID,
 		ApiEndpointID:  endpointID,
+		OrganizationID: orgID,
 	})
-	if err != nil || !sub.Active.Bool {
-		return fmt.Errorf("no active subscription for org=%d endpoint=%d", orgID, endpointID)
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			fmt.Sprintf("failed to increment usage for org=%d sub=%d endpoint=%d", orgID, subID, endpointID),
+			err,
+		)
 	}
 
-	return srvc.DB.IncrementUsage(ctx, sqlcgen.IncrementUsageParams{
-		OrganizationID: orgID,
-		SubscriptionID: sub.ID,
-		ApiEndpointID:  endpointID,
-	})
+	return nil
+
 }

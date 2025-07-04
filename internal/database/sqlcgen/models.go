@@ -82,18 +82,21 @@ type ResourceType struct {
 }
 
 type Subscription struct {
-	SubscriptionID          int32
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
+	SubscriptionID                 int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionBillingInterval    pgtype.Text
 }
 
 type SubscriptionTier struct {
@@ -111,4 +114,16 @@ type TierBasePricing struct {
 	BaseRateLimit      pgtype.Int4
 	ApiEndpointID      int32
 	SubscriptionTierID int32
+}
+
+type VSubscriptionQuotaUsage struct {
+	SubscriptionID                 int32
+	SubscriptionName               string
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionBillingInterval    pgtype.Text
+	CallsUsed                      int64
+	CallsRemaining                 int32
+	QuotaExceeded                  bool
 }

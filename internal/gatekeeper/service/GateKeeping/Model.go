@@ -67,3 +67,9 @@ type RecordUsageInput struct {
 	Path             string `json:"path" form:"path"`
 	OrganizationName string `json:"organization_name" form:"organization_name"`
 }
+
+type GetOrgSubDetailsOutput struct {
+	ValidationRequestOutput
+	EndpointCode string `json:"endpoint_code"`
+	Remaining    *int32 `json:"remaining"` // nil if unlimited
+}

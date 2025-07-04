@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bignyap/go-utilities/memcache"
@@ -19,9 +18,6 @@ type CacheController struct {
 	redisTTL    time.Duration
 	serialize   func(interface{}) (string, error)
 	deserialize func(string) (interface{}, error)
-
-	mu     sync.Mutex
-	counts map[string]map[string]int
 }
 
 type CacheControllerConfig struct {
@@ -58,8 +54,11 @@ func NewCacheController(ctx context.Context, cfg CacheControllerConfig) (*CacheC
 		redisTTL:    cfg.RedisTTL,
 		serialize:   cfg.Serializer,
 		deserialize: cfg.Deserializer,
-		counts:      make(map[string]map[string]int),
 	}, nil
+}
+
+func (cc *CacheController) Redis() redis.UniversalClient {
+	return cc.redis
 }
 
 func (cc *CacheController) Get(ctx context.Context, key string, fetch func() (interface{}, error)) (interface{}, error) {
@@ -114,56 +113,38 @@ func (cc *CacheController) Invalidate(ctx context.Context, key string) {
 	}
 }
 
-// ---- Count tracking ----
+// Output looks like:
+//
+//	map[string]map[string]float64{
+//	  "<orgId>:<subId>:<endpointId>": {
+//	    "Suffix1": 10.0,
+//	    "Suffix2": 0.0,
+//	    "Suffix3": 5.0,
+//	  },
+//	  "<orgId>:<subId>:<endpointId>": {
+//	    "Suffix1": 10.0,
+//	    "Suffix2": 0.0,
+//	    "Suffix3": 5.0,
+//	  },
+//	}
+//
+// If the input suffixes are ["Suffix1", "Suffix2", "Suffix3"],
+// the output will always contain these keys for each ID, even if no data was found in Redis.
+func (cc *CacheController) GetRedisGroupedSnapshot(
+	ctx context.Context,
+	prefix string,
+	suffixes []string,
+) map[string]map[string]float64 {
 
-func (cc *CacheController) IncrementLocalValue(prefix, key string, delta int) {
-	cc.mu.Lock()
-	defer cc.mu.Unlock()
+	result := make(map[string]map[string]float64)
 
-	if _, ok := cc.counts[prefix]; !ok {
-		cc.counts[prefix] = make(map[string]int)
-	}
-	cc.counts[prefix][key] += delta
-}
-
-func (cc *CacheController) GetAllLocalValues(prefix string) map[string]int {
-	cc.mu.Lock()
-	defer cc.mu.Unlock()
-
-	result := make(map[string]int)
-	for k, v := range cc.counts[prefix] {
-		result[k] = v
-	}
-	return result
-}
-
-func (cc *CacheController) ResetLocalValues(prefix string) {
-	cc.mu.Lock()
-	defer cc.mu.Unlock()
-	cc.counts[prefix] = make(map[string]int)
-}
-
-func (cc *CacheController) DeleteLocalValue(prefix, key string) {
-	cc.mu.Lock()
-	defer cc.mu.Unlock()
-	if _, ok := cc.counts[prefix]; ok {
-		delete(cc.counts[prefix], key)
-	}
-}
-
-// ---- Redis counters ----
-
-func (cc *CacheController) IncrementRedisValue(ctx context.Context, key string, delta int) error {
-	if cc.redis == nil {
-		return nil
-	}
-	return cc.redis.IncrBy(ctx, key, int64(delta)).Err()
-}
-
-func (cc *CacheController) GetRedisSnapshot(ctx context.Context, prefix string) map[string]int {
-	result := make(map[string]int)
 	if cc.redis == nil {
 		return result
+	}
+
+	suffixSet := make(map[string]struct{})
+	for _, s := range suffixes {
+		suffixSet[s] = struct{}{}
 	}
 
 	var cursor uint64
@@ -174,19 +155,56 @@ func (cc *CacheController) GetRedisSnapshot(ctx context.Context, prefix string) 
 		if err != nil {
 			break
 		}
+
 		for _, key := range keys {
 			valStr, err := cc.redis.Get(ctx, key).Result()
-			if err == nil {
-				var val int
-				fmt.Sscanf(valStr, "%d", &val)
-				result[strings.TrimPrefix(key, prefix+":")] = val
+			if err != nil {
+				continue
 			}
+
+			// key = prefix:<logical_id>:<suffix>
+			keySuffix := strings.TrimPrefix(key, prefix+":")
+			parts := strings.Split(keySuffix, ":")
+			if len(parts) < 2 {
+				continue
+			}
+
+			suffix := parts[len(parts)-1]
+			if _, ok := suffixSet[suffix]; !ok {
+				continue
+			}
+
+			id := strings.Join(parts[:len(parts)-1], ":")
+
+			if _, ok := result[id]; !ok {
+				// Initialize all suffixes with 0
+				result[id] = make(map[string]float64)
+				for _, sfx := range suffixes {
+					result[id][sfx] = 0.0
+				}
+			}
+
+			// Parse float and assign
+			var val float64
+			fmt.Sscanf(valStr, "%f", &val)
+			result[id][suffix] = val
 		}
+
 		if nextCursor == 0 {
 			break
 		}
 		cursor = nextCursor
 	}
+
+	// Ensure all suffixes exist per ID (even if no key was found)
+	for id := range result {
+		for _, sfx := range suffixes {
+			if _, ok := result[id][sfx]; !ok {
+				result[id][sfx] = 0.0
+			}
+		}
+	}
+
 	return result
 }
 

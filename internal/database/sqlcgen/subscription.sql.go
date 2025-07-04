@@ -92,26 +92,29 @@ func (q *Queries) DeleteSubscriptionByOrgId(ctx context.Context, organizationID 
 
 const getSubscriptionById = `-- name: GetSubscriptionById :one
 SELECT 
-    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription_tier.tier_name  
+    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription.subscription_quota_reset_interval, subscription.subscription_billing_model, subscription.subscription_billing_interval, subscription_tier.tier_name  
 FROM subscription
 INNER JOIN subscription_tier ON subscription.subscription_tier_id = subscription_tier.subscription_tier_id
 WHERE subscription.subscription_id = $1
 `
 
 type GetSubscriptionByIdRow struct {
-	SubscriptionID          int32
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
-	TierName                string
+	SubscriptionID                 int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionBillingInterval    pgtype.Text
+	TierName                       string
 }
 
 func (q *Queries) GetSubscriptionById(ctx context.Context, subscriptionID int32) (GetSubscriptionByIdRow, error) {
@@ -130,6 +133,9 @@ func (q *Queries) GetSubscriptionById(ctx context.Context, subscriptionID int32)
 		&i.SubscriptionStatus,
 		&i.OrganizationID,
 		&i.SubscriptionTierID,
+		&i.SubscriptionQuotaResetInterval,
+		&i.SubscriptionBillingModel,
+		&i.SubscriptionBillingInterval,
 		&i.TierName,
 	)
 	return i, err
@@ -137,7 +143,7 @@ func (q *Queries) GetSubscriptionById(ctx context.Context, subscriptionID int32)
 
 const getSubscriptionByOrgId = `-- name: GetSubscriptionByOrgId :many
 SELECT 
-    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription_tier.tier_name,
+    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription.subscription_quota_reset_interval, subscription.subscription_billing_model, subscription.subscription_billing_interval, subscription_tier.tier_name,
     COUNT(subscription.subscription_tier_id) OVER() AS total_items  
 FROM subscription
 INNER JOIN subscription_tier ON subscription.subscription_tier_id = subscription_tier.subscription_tier_id
@@ -152,20 +158,23 @@ type GetSubscriptionByOrgIdParams struct {
 }
 
 type GetSubscriptionByOrgIdRow struct {
-	SubscriptionID          int32
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
-	TierName                string
-	TotalItems              int64
+	SubscriptionID                 int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionBillingInterval    pgtype.Text
+	TierName                       string
+	TotalItems                     int64
 }
 
 func (q *Queries) GetSubscriptionByOrgId(ctx context.Context, arg GetSubscriptionByOrgIdParams) ([]GetSubscriptionByOrgIdRow, error) {
@@ -190,6 +199,9 @@ func (q *Queries) GetSubscriptionByOrgId(ctx context.Context, arg GetSubscriptio
 			&i.SubscriptionStatus,
 			&i.OrganizationID,
 			&i.SubscriptionTierID,
+			&i.SubscriptionQuotaResetInterval,
+			&i.SubscriptionBillingModel,
+			&i.SubscriptionBillingInterval,
 			&i.TierName,
 			&i.TotalItems,
 		); err != nil {
@@ -205,7 +217,7 @@ func (q *Queries) GetSubscriptionByOrgId(ctx context.Context, arg GetSubscriptio
 
 const listSubscription = `-- name: ListSubscription :many
 SELECT 
-    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription_tier.tier_name, 
+    subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription.subscription_quota_reset_interval, subscription.subscription_billing_model, subscription.subscription_billing_interval, subscription_tier.tier_name, 
     COUNT(subscription.subscription_tier_id) OVER() AS total_items  
 FROM subscription
 INNER JOIN subscription_tier ON subscription.subscription_tier_id = subscription_tier.subscription_tier_id
@@ -219,20 +231,23 @@ type ListSubscriptionParams struct {
 }
 
 type ListSubscriptionRow struct {
-	SubscriptionID          int32
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
-	TierName                string
-	TotalItems              int64
+	SubscriptionID                 int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionBillingInterval    pgtype.Text
+	TierName                       string
+	TotalItems                     int64
 }
 
 func (q *Queries) ListSubscription(ctx context.Context, arg ListSubscriptionParams) ([]ListSubscriptionRow, error) {
@@ -257,6 +272,9 @@ func (q *Queries) ListSubscription(ctx context.Context, arg ListSubscriptionPara
 			&i.SubscriptionStatus,
 			&i.OrganizationID,
 			&i.SubscriptionTierID,
+			&i.SubscriptionQuotaResetInterval,
+			&i.SubscriptionBillingModel,
+			&i.SubscriptionBillingInterval,
 			&i.TierName,
 			&i.TotalItems,
 		); err != nil {
