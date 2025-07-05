@@ -2,10 +2,12 @@ package caching
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-utilities/memcache"
 	"github.com/bignyap/go-utilities/redisclient"
 	"github.com/redis/go-redis/v9"
@@ -104,6 +106,17 @@ func (cc *CacheController) Set(ctx context.Context, key string, val interface{})
 	}
 
 	return nil
+}
+
+func (cc *CacheController) SetWithTTL(ctx context.Context, key common.RedisPrefix, val interface{}) error {
+	ttl := common.TTLFor(key)
+
+	b, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+
+	return cc.redis.Set(ctx, string(key), b, ttl).Err()
 }
 
 func (cc *CacheController) Invalidate(ctx context.Context, key string) {
@@ -242,4 +255,8 @@ func (cc *CacheController) Close() error {
 		return closer.Close()
 	}
 	return nil
+}
+
+type PrimitiveWrapper[T any] struct {
+	Value T `json:"value"`
 }

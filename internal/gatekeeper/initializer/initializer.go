@@ -94,12 +94,13 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 		s.Validator,
 		s.Matcher,
 		s.CacheContoller,
+		s.CacheManager.CounterWorker,
 		s.Mode,
 		s.Target,
 	)
 
 	// Start periodic DB flush (Redis -> DB only)
-	cachemanagement.StartPeriodicFlush(s.CacheManager, 30*time.Second, s.stopFlush)
+	cachemanagement.StartPeriodicFlush(s.CacheManager, 10*time.Second, s.stopFlush)
 
 	setupLogger.Info("Completed")
 	return nil
@@ -115,12 +116,12 @@ func (s *GateKeeperService) Shutdown() error {
 	ctx := context.Background()
 
 	// Flush local counters to Redis
-	if err := s.CacheManager.CounterWorker.FlushNow(string(common.Usageprefix), ctx); err != nil {
+	if err := s.CacheManager.CounterWorker.FlushNow(string(common.UsagePrefix), ctx); err != nil {
 		shtLogger.Error("Flush to Redis failed", err)
 	}
 
 	// Flush Redis -> DB
-	s.CacheManager.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+	s.CacheManager.SyncAggregatedToDB(ctx, string(common.UsagePrefix), func(key string, val map[string]float64) error {
 		return s.CacheManager.IncrementUsageFromCacheKey(ctx, key, val)
 	})
 	shtLogger.Info("Cache flushed")

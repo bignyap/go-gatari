@@ -59,7 +59,7 @@ type ValidationRequestOutput struct {
 	Organization sqlcgen.GetOrganizationByNameRow `json:"organization"`
 	Endpoint     sqlcgen.GetEndpointByNameRow     `json:"endpoint"`
 	Subscription sqlcgen.GetActiveSubscriptionRow `json:"subscription"`
-	Remaining    *int32                           `json:"remaining"` // nil if unlimited
+	Remaining    int32                            `json:"remaining"` // nil if unlimited
 }
 
 type RecordUsageInput struct {
@@ -71,5 +71,4 @@ type RecordUsageInput struct {
 type GetOrgSubDetailsOutput struct {
 	ValidationRequestOutput
 	EndpointCode string `json:"endpoint_code"`
-	Remaining    *int32 `json:"remaining"` // nil if unlimited
 }

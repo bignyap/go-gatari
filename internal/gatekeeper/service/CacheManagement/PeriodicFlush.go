@@ -21,7 +21,7 @@ func StartPeriodicFlush(cm *CacheManagementService, interval time.Duration, stop
 				ctx := context.Background()
 
 				// Only this node flushes Redis -> DB
-				cm.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+				cm.SyncAggregatedToDB(ctx, string(common.UsagePrefix), func(key string, val map[string]float64) error {
 					return cm.IncrementUsageFromCacheKey(ctx, key, val)
 				})
 
@@ -40,7 +40,7 @@ func HandleShutdown(cm *CacheManagementService, stopFlush chan struct{}) {
 	close(stopFlush)
 
 	ctx := context.Background()
-	cm.SyncAggregatedToDB(ctx, string(common.Usageprefix), func(key string, val map[string]float64) error {
+	cm.SyncAggregatedToDB(ctx, string(common.UsagePrefix), func(key string, val map[string]float64) error {
 		return cm.IncrementUsageFromCacheKey(ctx, key, val)
 	})
 

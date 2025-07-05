@@ -4,6 +4,7 @@ import (
 	"github.com/bignyap/go-admin/internal/caching"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
+	conuter "github.com/bignyap/go-utilities/counter"
 	"github.com/bignyap/go-utilities/logger/api"
 	server "github.com/bignyap/go-utilities/server"
 	"github.com/go-playground/validator"
@@ -17,6 +18,7 @@ type GateKeeperHandler struct {
 	Validator          *validator.Validate
 	Cache              *caching.CacheController
 	Matcher            *gatekeeping.Matcher
+	CounterWorker      *conuter.CounterWorker
 }
 
 func NewGateKeeperHandler(
@@ -27,6 +29,7 @@ func NewGateKeeperHandler(
 	validator *validator.Validate,
 	cacheContoller *caching.CacheController,
 	matcher *gatekeeping.Matcher,
+	conuter *conuter.CounterWorker,
 ) *GateKeeperHandler {
 
 	return &GateKeeperHandler{
@@ -38,12 +41,13 @@ func NewGateKeeperHandler(
 		Matcher:        matcher,
 
 		GateKeepingService: &gatekeeping.GateKeepingService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
-			Cache:     cacheContoller,
-			Match:     matcher,
+			Logger:        logger,
+			Validator:     validator,
+			DB:            db,
+			Conn:          conn,
+			Cache:         cacheContoller,
+			Match:         matcher,
+			CounterWorker: conuter,
 		},
 	}
 }

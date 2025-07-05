@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type PubSubChannel string
@@ -19,38 +20,51 @@ const (
 type RedisPrefix string
 
 const (
-	Usageprefix RedisPrefix = "usage"
+	UsagePrefix        RedisPrefix = "usage"
+	CountPrefix        RedisPrefix = "count"
+	CostPrefix         RedisPrefix = "cost"
+	TotalCostPrefix    RedisPrefix = "totalcost"
+	TotalCountPrefix   RedisPrefix = "totalcount"
+	PricingPrefix      RedisPrefix = "pricing"
+	OrganizationPrefix RedisPrefix = "organization"
+	EndpointPrefix     RedisPrefix = "endpoint"
+	SubscriptionPrefix RedisPrefix = "subscription"
 )
 
-type RedisKeyPrefix string
+var keyTypeTTLs = map[RedisPrefix]time.Duration{
+	CountPrefix:        5 * time.Minute,
+	CostPrefix:         5 * time.Minute,
+	TotalCostPrefix:    60 * time.Minute,
+	TotalCountPrefix:   60 * time.Minute,
+	UsagePrefix:        24 * time.Hour,
+	PricingPrefix:      24 * time.Hour,
+	OrganizationPrefix: 24 * time.Hour,
+	EndpointPrefix:     24 * time.Hour,
+	SubscriptionPrefix: 24 * time.Hour,
+}
 
-const (
-	Countprefix           RedisKeyPrefix = "Count"
-	Costprefix            RedisKeyPrefix = "Cost"
-	TotalCostKeyPrefix    RedisKeyPrefix = "TotalCost"
-	TotalCountKeyPrefix   RedisKeyPrefix = "TotalCount"
-	UsageKeyPrefix        RedisKeyPrefix = "Usage"
-	PricingKeyPrefix      RedisKeyPrefix = "Pricing"
-	OrganizationKeyPrefix RedisKeyPrefix = "Organization"
-	EndpointKeyPrefix     RedisKeyPrefix = "Endpoint"
-	SubscriptionKeyPrefix RedisKeyPrefix = "Subscription"
-)
+func TTLFor(keyType RedisPrefix) time.Duration {
+	if ttl, ok := keyTypeTTLs[keyType]; ok {
+		return ttl
+	}
+	return time.Hour
+}
 
 func ParseUsageKey(key string) (orgID, subID, endpointID int32, err error) {
 
 	parts := strings.Split(key, ":")
-	if len(parts) != 4 {
+	if len(parts) != 3 {
 		return 0, 0, 0, fmt.Errorf("invalid key format")
 	}
-	org64, err := strconv.ParseInt(parts[1], 10, 32)
+	org64, err := strconv.ParseInt(parts[0], 10, 32)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("invalid orgID")
 	}
-	sub64, err := strconv.ParseInt(parts[2], 10, 32)
+	sub64, err := strconv.ParseInt(parts[1], 10, 32)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("invalid subscriptionID")
 	}
-	endpoint64, err := strconv.ParseInt(parts[3], 10, 32)
+	endpoint64, err := strconv.ParseInt(parts[2], 10, 32)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("invalid endpointID")
 	}

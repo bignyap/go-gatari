@@ -10,6 +10,7 @@ import (
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	gateKeeperHandler "github.com/bignyap/go-admin/internal/gatekeeper/handler"
 	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
+	"github.com/bignyap/go-utilities/counter"
 	"github.com/bignyap/go-utilities/logger/api"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/gin-gonic/gin"
@@ -85,6 +86,7 @@ func RegisterGateKeeperHandlers(
 	validator *validator.Validate,
 	matcher *gatekeeping.Matcher,
 	cacheContoller *caching.CacheController,
+	counter *counter.CounterWorker,
 	mode string,
 	target string,
 ) {
@@ -93,7 +95,7 @@ func RegisterGateKeeperHandlers(
 	regRouterLogger.Info("Starting")
 
 	h := gateKeeperHandler.NewGateKeeperHandler(
-		logger, rw, db, conn, validator, cacheContoller, matcher,
+		logger, rw, db, conn, validator, cacheContoller, matcher, counter,
 	)
 
 	rg := router.Group("/gatekeeper")

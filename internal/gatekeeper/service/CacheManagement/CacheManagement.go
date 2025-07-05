@@ -12,7 +12,7 @@ import (
 
 func (srvc *CacheManagementService) SyncAggregatedToDB(ctx context.Context, prefix string, handler func(key string, val map[string]float64) error) {
 
-	data := srvc.RedisSnapshotFunc(ctx, prefix, []string{"Count", "Cost"})
+	data := srvc.RedisSnapshotFunc(ctx, prefix, []string{"count", "cost"})
 
 	for key, val := range data {
 		if err := handler(key, val); err != nil {
@@ -35,8 +35,8 @@ func (srvc *CacheManagementService) IncrementUsageFromCacheKey(ctx context.Conte
 	_, err = srvc.DB.CreateApiUsageSummary(ctx, sqlcgen.CreateApiUsageSummaryParams{
 		UsageStartDate: int32(time.Now().Unix()),
 		UsageEndDate:   int32(time.Now().Unix()),
-		TotalCalls:     int32(common.SafeGet(val, "Count", 0)),
-		TotalCost:      common.SafeGet(val, "Cost", 0.0),
+		TotalCalls:     int32(common.SafeGet(val, "count", 0)),
+		TotalCost:      common.SafeGet(val, "cost", 0.0),
 		SubscriptionID: subID,
 		ApiEndpointID:  endpointID,
 		OrganizationID: orgID,

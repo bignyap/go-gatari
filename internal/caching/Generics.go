@@ -3,40 +3,74 @@ package caching
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 )
 
-func GetFromCache[T any](ctx context.Context, cache *CacheController, key string, fallback func() (T, error)) (T, error) {
+func GetFromCache[T any](
+	ctx context.Context,
+	cache *CacheController,
+	key string,
+	fallback func() (T, error),
+) (T, error) {
+
 	var zero T
 
-	// First try cache
 	val, err := cache.Get(ctx, key, func() (interface{}, error) {
 		v, err := fallback()
 		if err != nil {
 			return nil, err
 		}
+
+		// Wrap primitives before serializing
+		if isPrimitiveType[T]() {
+			return PrimitiveWrapper[T]{Value: v}, nil
+		}
+
 		return v, nil
 	})
 	if err != nil {
 		return zero, err
 	}
 
-	// Now handle conversion
-	switch v := val.(type) {
-	case T:
-		return v, nil
-	case map[string]interface{}:
-		// Marshal back to JSON, then unmarshal into T
-		b, err := json.Marshal(v)
+	// Handle primitives
+	if isPrimitiveType[T]() {
+		// Marshal/unmarshal back to wrapper
+		b, err := json.Marshal(val)
 		if err != nil {
-			return zero, fmt.Errorf("marshal map failed: %w", err)
+			return zero, err
 		}
-		var result T
-		if err := json.Unmarshal(b, &result); err != nil {
-			return zero, fmt.Errorf("unmarshal to %T failed: %w", result, err)
+		var wrapper PrimitiveWrapper[T]
+		if err := json.Unmarshal(b, &wrapper); err != nil {
+			return zero, err
 		}
+		return wrapper.Value, nil
+	}
+
+	// Handle structs
+	if result, ok := val.(T); ok {
 		return result, nil
+	}
+
+	// Try converting via JSON
+	b, err := json.Marshal(val)
+	if err != nil {
+		return zero, err
+	}
+	var typed T
+	if err := json.Unmarshal(b, &typed); err != nil {
+		return zero, err
+	}
+	return typed, nil
+}
+
+func isPrimitiveType[T any]() bool {
+	var t T
+	switch any(t).(type) {
+	case string, bool,
+		int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64:
+		return true
 	default:
-		return zero, fmt.Errorf("type assertion to %T failed, got %T", zero, val)
+		return false
 	}
 }

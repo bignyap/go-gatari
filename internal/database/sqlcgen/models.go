@@ -123,7 +123,7 @@ type VSubscriptionQuotaUsage struct {
 	SubscriptionQuotaResetInterval pgtype.Text
 	SubscriptionBillingModel       pgtype.Text
 	SubscriptionBillingInterval    pgtype.Text
-	CallsUsed                      int64
+	CallsUsed                      int32
 	CallsRemaining                 int32
 	QuotaExceeded                  bool
 }

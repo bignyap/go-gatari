@@ -13,19 +13,16 @@ import (
 )
 
 func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) (*ValidationRequestOutput, error) {
-
 	orgSubDetails, err := s.GetOrgSubDetailsFromCache(ctx, input.Method, input.Path, input.OrganizationName)
 	if err != nil {
 		return nil, server.NewError(
 			server.ErrorUnauthorized, "failed to validate request", err,
 		)
 	}
-
 	return &orgSubDetails.ValidationRequestOutput, nil
 }
 
 func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsageInput) (float64, error) {
-
 	orgSubDetails, err := s.GetOrgSubDetailsFromCache(ctx, input.Method, input.Path, input.OrganizationName)
 	if err != nil {
 		return 0.0, server.NewError(
@@ -34,18 +31,18 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 	}
 
 	pricingcacheKey := common.RedisKeyFormatter(
-		string(common.PricingKeyPrefix), orgSubDetails.Organization.Name, orgSubDetails.EndpointCode,
+		string(common.PricingPrefix), orgSubDetails.Organization.Name, orgSubDetails.EndpointCode,
 	)
+
 	pricing, err := caching.GetFromCache(ctx, s.Cache, pricingcacheKey, func() (float64, error) {
-		return s.DB.GetPricing(ctx, sqlcgen.GetPricingParams{
+		val, err := s.DB.GetPricing(ctx, sqlcgen.GetPricingParams{
 			SubscriptionID: orgSubDetails.Subscription.ID,
 			ApiEndpointID:  orgSubDetails.Endpoint.ID,
 		})
+		return val, err
 	})
 	if err != nil {
-		return 0, server.NewError(
-			server.ErrorInternal, "pricing error", err,
-		)
+		return 0, server.NewError(server.ErrorInternal, "pricing error", err)
 	}
 
 	updateUsageCounters(s.CounterWorker, orgSubDetails, pricing)
@@ -61,63 +58,55 @@ func updateUsageCounters(countWorker *counter.CounterWorker, orgSubDetails *GetO
 		orgSubDetails.Endpoint.ID,
 	)
 	countWorker.Increment(
-		string(common.Usageprefix),
-		common.RedisKeyFormatter(usageKey, string(common.Costprefix)),
+		string(common.UsagePrefix),
+		common.RedisKeyFormatter(usageKey, string(common.CostPrefix)),
 		pricing,
 	)
 	countWorker.Increment(
-		string(common.Usageprefix),
-		common.RedisKeyFormatter(usageKey, string(common.Countprefix)),
+		string(common.UsagePrefix),
+		common.RedisKeyFormatter(usageKey, string(common.CountPrefix)),
 		1,
 	)
-
 	totalUsageKey := common.RedisKeyFormatter(
 		orgSubDetails.Organization.ID,
 		orgSubDetails.Subscription.ID,
 	)
 	countWorker.Increment(
-		string(common.Usageprefix),
-		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCostKeyPrefix)),
+		string(common.UsagePrefix),
+		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCostPrefix)),
 		pricing,
 	)
 	countWorker.Increment(
-		string(common.Usageprefix),
-		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCountKeyPrefix)),
+		string(common.UsagePrefix),
+		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCountPrefix)),
 		1,
 	)
 }
 
 func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, method, path, orgName string) (*GetOrgSubDetailsOutput, error) {
-
 	endpointCode, found := s.Match.Match(method, path)
 	if !found {
-		return nil, server.NewError(
-			server.ErrorNotFound, "no matching endpoint", nil,
-		)
+		return nil, server.NewError(server.ErrorNotFound, "no matching endpoint", nil)
 	}
 
-	orgKey := common.RedisKeyFormatter(string(common.OrganizationKeyPrefix), orgName)
+	orgKey := common.RedisKeyFormatter(string(common.OrganizationPrefix), orgName)
 	org, err := caching.GetFromCache(ctx, s.Cache, orgKey, func() (sqlcgen.GetOrganizationByNameRow, error) {
 		return s.DB.GetOrganizationByName(ctx, orgName)
 	})
 	if err != nil {
-		return nil, server.NewError(
-			server.ErrorNotFound, "organization not found", err,
-		)
+		return nil, server.NewError(server.ErrorNotFound, "organization not found", err)
 	}
 
-	epKey := common.RedisKeyFormatter(string(common.EndpointKeyPrefix), endpointCode)
+	epKey := common.RedisKeyFormatter(string(common.EndpointPrefix), endpointCode)
 	endpoint, err := caching.GetFromCache(ctx, s.Cache, epKey, func() (sqlcgen.GetEndpointByNameRow, error) {
 		return s.DB.GetEndpointByName(ctx, endpointCode)
 	})
 	if err != nil {
-		return nil, server.NewError(
-			server.ErrorNotFound, "endpoint not found", err,
-		)
+		return nil, server.NewError(server.ErrorNotFound, "endpoint not found", err)
 	}
 
 	subKey := common.RedisKeyFormatter(
-		string(common.SubscriptionKeyPrefix),
+		string(common.SubscriptionPrefix),
 		strconv.Itoa(int(org.ID)),
 		strconv.Itoa(int(endpoint.ID)),
 	)
@@ -128,32 +117,22 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		})
 	})
 	if err != nil || !sub.Active.Bool {
-		return nil, server.NewError(
-			server.ErrorUnauthorized, "no active subscription", nil,
-		)
+		return nil, server.NewError(server.ErrorUnauthorized, "no active subscription", nil)
 	}
 	if sub.ExpiryTimestamp.Int32 > 0 && time.Now().Unix() > int64(sub.ExpiryTimestamp.Int32) {
-		return nil, server.NewError(
-			server.ErrorUnauthorized, "subscription expired", nil,
-		)
+		return nil, server.NewError(server.ErrorUnauthorized, "subscription expired", nil)
 	}
 
-	var remaining *int32
+	var remaining int32 = -1
 	if sub.ApiLimit.Int32 > 0 {
-
 		usage, err := s.GetUsageDetailFromCache(ctx, org.ID, sub.ID, endpoint.ID)
 		if err != nil {
-			return nil, server.NewError(
-				server.ErrorInternal, "error fetching the total usage", err,
-			)
+			return nil, server.NewError(server.ErrorInternal, "error fetching the total usage", err)
 		}
 		if usage >= sub.ApiLimit.Int32 {
-			return nil, server.NewError(
-				server.ErrorUnauthorized, "quota exceeded", nil,
-			)
+			return nil, server.NewError(server.ErrorUnauthorized, "quota exceeded", nil)
 		}
-		left := sub.ApiLimit.Int32 - usage
-		remaining = &left
+		remaining = sub.ApiLimit.Int32 - usage
 	}
 
 	return &GetOrgSubDetailsOutput{
@@ -168,35 +147,20 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 }
 
 func (s *GateKeepingService) GetUsageDetailFromCache(ctx context.Context, orgId, subId, endpointId int32) (int32, error) {
-
 	usageRedisKey := common.RedisKeyFormatter(
-		string(common.Usageprefix), string(common.TotalCostKeyPrefix),
+		string(common.UsagePrefix), string(common.TotalCostPrefix),
 		common.UsageKey(orgId, subId, endpointId),
 	)
-	value, err := s.Cache.Get(ctx, usageRedisKey, func() (interface{}, error) {
-		// Fetch from DB if not found in cache
+
+	usage, err := caching.GetFromCache(ctx, s.Cache, usageRedisKey, func() (int32, error) {
 		orgUsageDetails, err := s.DB.GetQuotaUsageBySubscriptionID(ctx, subId)
 		if err != nil {
-			return 0, server.NewError(
-				server.ErrorInternal, "error fetching usage details", err,
-			)
+			return 0, server.NewError(server.ErrorInternal, "error fetching usage details", err)
 		}
-
-		if orgUsageDetails.CallsUsed == 0 {
-			return 0, nil // No usage found
-		}
-		return int32(orgUsageDetails.CallsUsed), nil
+		return orgUsageDetails.CallsUsed, nil
 	})
 	if err != nil {
 		return 0, err
 	}
-
-	// Ensure the value is cast to int32
-	if usage, ok := value.(int32); ok {
-		return usage, nil
-	}
-
-	return 0, server.NewError(
-		server.ErrorInternal, "unexpected value type in cache", nil,
-	)
+	return usage, nil
 }

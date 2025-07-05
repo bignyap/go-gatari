@@ -98,7 +98,7 @@ func (q *Queries) GetOrganizationByName(ctx context.Context, organizationRealm s
 
 const getPricing = `-- name: GetPricing :one
 SELECT
-  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call) AS cost_per_call
+  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call, 0)::double precision AS cost_per_call
 FROM subscription
 JOIN tier_base_pricing tbp
   ON subscription.subscription_tier_id = tbp.subscription_tier_id
