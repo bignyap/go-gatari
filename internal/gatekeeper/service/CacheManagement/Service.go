@@ -14,6 +14,8 @@ import (
 )
 
 type CacheManagementService struct {
+	FlushInterval int64
+
 	DB        *sqlcgen.Queries
 	Conn      *pgxpool.Pool
 	Logger    api.Logger
@@ -28,6 +30,7 @@ type CacheManagementService struct {
 
 // Helper to safely inject Redis functions
 func NewCacheManagementService(
+	flushInterval int64,
 	db *sqlcgen.Queries,
 	conn *pgxpool.Pool,
 	logger api.Logger,
@@ -37,6 +40,7 @@ func NewCacheManagementService(
 	counterWorker *counter.CounterWorker,
 ) *CacheManagementService {
 	return &CacheManagementService{
+		FlushInterval:     flushInterval,
 		DB:                db,
 		Conn:              conn,
 		Logger:            logger,

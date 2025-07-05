@@ -1,0 +1,10 @@
+paths:
+  /flushAllCache:
+    delete:
+      summary: Flush all cache (Redis and In-memory)
+      operationId: flushAllCache
+      tags:
+        - Flush All Cache 
+      responses:
+        '200':
+          description: OK

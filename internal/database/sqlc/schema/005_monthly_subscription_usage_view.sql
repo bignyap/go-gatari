@@ -7,11 +7,12 @@ SELECT
   s.subscription_quota_reset_interval,
   s.subscription_billing_model,
   s.subscription_billing_interval,
-  COALESCE(SUM(a.total_calls), 0)::INT AS calls_used,
-  (s.subscription_api_limit - COALESCE(SUM(a.total_calls), 0)::INT) AS calls_remaining,
+  COALESCE(SUM(a.total_cost), 0)::INT AS costs_used,
+  COALESCE(SUM(a.total_calls), 0)::INT AS counts_used,
+  (s.subscription_api_limit - COALESCE(SUM(a.total_cost), 0)::INT) AS calls_remaining,
   CASE
     WHEN s.subscription_api_limit IS NULL THEN NULL
-    WHEN COALESCE(SUM(a.total_calls), 0)::INT >= s.subscription_api_limit THEN true
+    WHEN COALESCE(SUM(a.total_cost), 0)::INT >= s.subscription_api_limit THEN true
     ELSE false
   END AS quota_exceeded
 FROM

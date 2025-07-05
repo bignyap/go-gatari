@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bignyap/go-admin/internal/caching"
@@ -51,18 +52,14 @@ func NewGateKeeperService(
 	counterWorker *counter.CounterWorker,
 	mode string,
 	target string,
+	flushInterval int64,
 ) *GateKeeperService {
 
 	db := sqlcgen.New(conn)
 
 	cacheManager := cachemanagement.NewCacheManagementService(
-		db,
-		conn,
-		logger,
-		validator,
-		cacheController,
-		redisClient,
-		counterWorker,
+		flushInterval, db, conn, logger, validator,
+		cacheController, redisClient, counterWorker,
 	)
 
 	return &GateKeeperService{
@@ -97,10 +94,12 @@ func (s *GateKeeperService) Setup(server server.Server) error {
 		s.CacheManager.CounterWorker,
 		s.Mode,
 		s.Target,
+		s.CacheManager.FlushInterval,
 	)
 
 	// Start periodic DB flush (Redis -> DB only)
-	cachemanagement.StartPeriodicFlush(s.CacheManager, 10*time.Second, s.stopFlush)
+	rediscacheFlushInterval := time.Duration(s.CacheManager.FlushInterval) * time.Second
+	cachemanagement.StartPeriodicFlush(s.CacheManager, rediscacheFlushInterval, s.stopFlush)
 
 	setupLogger.Info("Completed")
 	return nil
@@ -181,9 +180,13 @@ func (s *GateKeeperService) InitializePubSubListener() {
 	if err := pubSubListener.UpdateEPMatcher(); err != nil {
 		s.Logger.Fatal("Failed to load pubsub listener", err)
 	}
+	if err := pubSubListener.ResetGoAdminCache(); err != nil {
+		s.Logger.Fatal("Failed to load pubsub listener", err)
+	}
 }
 
 func InitializeGateKeeperServer() {
+
 	if err := initialize.GetEnvVals(); err != nil {
 		log.Fatalf("Failed to load environment variables: %v", err)
 	}
@@ -245,13 +248,22 @@ func InitializeGateKeeperServer() {
 	redisClient := cacheController.Redis()
 
 	// Create counter worker
-	counterWorker := counter.NewCounterWorker(redisClient, 5*time.Second, 100, 10000)
+	memcacheFlushInterval, err := strconv.ParseInt(os.Getenv("MEMCACHE_FLUSH_INTERVAL"), 10, 32)
+	if err != nil {
+		memcacheFlushInterval = int64(common.DefaultMemcacheFlushInterval)
+	}
+	counterWorker := counter.NewCounterWorker(redisClient, time.Duration(memcacheFlushInterval)*time.Second, 100, 10000)
 	go counterWorker.Start(context.Background())
+
+	rediscacheFlushInterval, err := strconv.ParseInt(os.Getenv("REDIS_FLUSH_INTERVAL"), 10, 32)
+	if err != nil {
+		rediscacheFlushInterval = int64(common.DefaultRedisFlushInterval)
+	}
 
 	gkService := NewGateKeeperService(
 		logger, conn, validator, pubSubClient,
 		cacheController, redisClient, counterWorker,
-		mode, target,
+		mode, target, rediscacheFlushInterval,
 	)
 
 	logWithComponent("InitializeEPMatcher", func() error {

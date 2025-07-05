@@ -30,6 +30,7 @@ func NewGateKeeperHandler(
 	cacheContoller *caching.CacheController,
 	matcher *gatekeeping.Matcher,
 	conuter *conuter.CounterWorker,
+	flushInterval int64,
 ) *GateKeeperHandler {
 
 	return &GateKeeperHandler{
@@ -48,6 +49,7 @@ func NewGateKeeperHandler(
 			Cache:         cacheContoller,
 			Match:         matcher,
 			CounterWorker: conuter,
+			FlushInterval: flushInterval,
 		},
 	}
 }

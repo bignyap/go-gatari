@@ -3,6 +3,7 @@ package caching
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 func GetFromCache[T any](
@@ -19,6 +20,8 @@ func GetFromCache[T any](
 		if err != nil {
 			return nil, err
 		}
+
+		fmt.Println("value: ", v)
 
 		// Wrap primitives before serializing
 		if isPrimitiveType[T]() {

@@ -66,7 +66,7 @@ func (q *Queries) EndpointUsagePerOrganization(ctx context.Context) ([]EndpointU
 }
 
 const getQuotaUsageBySubscriptionID = `-- name: GetQuotaUsageBySubscriptionID :one
-SELECT subscription_id, subscription_name, subscription_api_limit, subscription_quota_reset_interval, subscription_billing_model, subscription_billing_interval, calls_used, calls_remaining, quota_exceeded
+SELECT subscription_id, subscription_name, subscription_api_limit, subscription_quota_reset_interval, subscription_billing_model, subscription_billing_interval, costs_used, counts_used, calls_remaining, quota_exceeded
 FROM v_subscription_quota_usage
 WHERE subscription_id = $1
 `
@@ -81,7 +81,8 @@ func (q *Queries) GetQuotaUsageBySubscriptionID(ctx context.Context, subscriptio
 		&i.SubscriptionQuotaResetInterval,
 		&i.SubscriptionBillingModel,
 		&i.SubscriptionBillingInterval,
-		&i.CallsUsed,
+		&i.CostsUsed,
+		&i.CountsUsed,
 		&i.CallsRemaining,
 		&i.QuotaExceeded,
 	)
@@ -89,7 +90,7 @@ func (q *Queries) GetQuotaUsageBySubscriptionID(ctx context.Context, subscriptio
 }
 
 const getSubscriptionQuotaUsage = `-- name: GetSubscriptionQuotaUsage :many
-SELECT subscription_id, subscription_name, subscription_api_limit, subscription_quota_reset_interval, subscription_billing_model, subscription_billing_interval, calls_used, calls_remaining, quota_exceeded FROM v_subscription_quota_usage WHERE quota_exceeded = true
+SELECT subscription_id, subscription_name, subscription_api_limit, subscription_quota_reset_interval, subscription_billing_model, subscription_billing_interval, costs_used, counts_used, calls_remaining, quota_exceeded FROM v_subscription_quota_usage WHERE quota_exceeded = true
 `
 
 func (q *Queries) GetSubscriptionQuotaUsage(ctx context.Context) ([]VSubscriptionQuotaUsage, error) {
@@ -108,7 +109,8 @@ func (q *Queries) GetSubscriptionQuotaUsage(ctx context.Context) ([]VSubscriptio
 			&i.SubscriptionQuotaResetInterval,
 			&i.SubscriptionBillingModel,
 			&i.SubscriptionBillingInterval,
-			&i.CallsUsed,
+			&i.CostsUsed,
+			&i.CountsUsed,
 			&i.CallsRemaining,
 			&i.QuotaExceeded,
 		); err != nil {

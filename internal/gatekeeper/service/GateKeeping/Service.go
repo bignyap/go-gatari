@@ -10,6 +10,7 @@ import (
 )
 
 type GateKeepingService struct {
+	FlushInterval int64
 	DB            *sqlcgen.Queries
 	Conn          *pgxpool.Pool
 	Logger        api.Logger

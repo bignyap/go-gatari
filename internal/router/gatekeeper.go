@@ -22,6 +22,7 @@ func RegisterAuthMiddlewareRoutes(rg *gin.RouterGroup, h *gateKeeperHandler.Gate
 
 	ValidateRequestHandler(rg, h)
 	UsageRecorderHandler(rg, h)
+	FlushCacheHandler(rg, h)
 }
 
 func ValidateRequestHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {
@@ -30,6 +31,10 @@ func ValidateRequestHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeper
 
 func UsageRecorderHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {
 	rg.POST("/recordUsage", h.UsageRecorderHandler)
+}
+
+func FlushCacheHandler(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {
+	rg.DELETE("/flushAllCache", h.FlushAllCacheHandler)
 }
 
 func RegisterMiddlewareRoutes(rg *gin.RouterGroup, h *gateKeeperHandler.GateKeeperHandler) {
@@ -89,13 +94,14 @@ func RegisterGateKeeperHandlers(
 	counter *counter.CounterWorker,
 	mode string,
 	target string,
+	flushInterval int64,
 ) {
 
 	regRouterLogger := logger.WithComponent("router.RegisterGateKeeperHandlers")
 	regRouterLogger.Info("Starting")
 
 	h := gateKeeperHandler.NewGateKeeperHandler(
-		logger, rw, db, conn, validator, cacheContoller, matcher, counter,
+		logger, rw, db, conn, validator, cacheContoller, matcher, counter, flushInterval,
 	)
 
 	rg := router.Group("/gatekeeper")

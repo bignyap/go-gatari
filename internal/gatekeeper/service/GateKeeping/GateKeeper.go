@@ -12,6 +12,11 @@ import (
 	"github.com/bignyap/go-utilities/server"
 )
 
+func (s *GateKeepingService) FlushAllCache(ctx context.Context) {
+	s.CounterWorker.FlushNow("*", ctx)
+	s.Cache.ResetRedisValues(ctx, "*")
+}
+
 func (s *GateKeepingService) ValidateRequest(ctx context.Context, input *ValidateRequestInput) (*ValidationRequestOutput, error) {
 	orgSubDetails, err := s.GetOrgSubDetailsFromCache(ctx, input.Method, input.Path, input.OrganizationName)
 	if err != nil {
@@ -45,40 +50,53 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		return 0, server.NewError(server.ErrorInternal, "pricing error", err)
 	}
 
-	updateUsageCounters(s.CounterWorker, orgSubDetails, pricing)
+	updateUsageCounters(s.CounterWorker, orgSubDetails, s.FlushInterval, pricing)
 
 	return pricing, nil
 }
 
-func updateUsageCounters(countWorker *counter.CounterWorker, orgSubDetails *GetOrgSubDetailsOutput, pricing float64) {
+func updateUsageCounters(
+	countWorker *counter.CounterWorker,
+	orgSubDetails *GetOrgSubDetailsOutput,
+	interval int64,
+	pricing float64,
+) {
+
+	timestamp := common.NextIntervalUnix(time.Now(), time.Duration(interval)*time.Second)
+	timestampStr := strconv.FormatInt(timestamp, 10)
 
 	usageKey := common.UsageKey(
 		orgSubDetails.Organization.ID,
 		orgSubDetails.Subscription.ID,
 		orgSubDetails.Endpoint.ID,
 	)
+
 	countWorker.Increment(
 		string(common.UsagePrefix),
-		common.RedisKeyFormatter(usageKey, string(common.CostPrefix)),
+		common.RedisKeyFormatter(usageKey, timestampStr, string(common.CostPrefix)),
 		pricing,
 	)
+
 	countWorker.Increment(
 		string(common.UsagePrefix),
-		common.RedisKeyFormatter(usageKey, string(common.CountPrefix)),
+		common.RedisKeyFormatter(usageKey, timestampStr, string(common.CountPrefix)),
 		1,
 	)
+
 	totalUsageKey := common.RedisKeyFormatter(
 		orgSubDetails.Organization.ID,
 		orgSubDetails.Subscription.ID,
 	)
+
 	countWorker.Increment(
 		string(common.UsagePrefix),
-		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCostPrefix)),
+		common.RedisKeyFormatter(totalUsageKey, timestampStr, string(common.TotalCostPrefix)),
 		pricing,
 	)
+
 	countWorker.Increment(
 		string(common.UsagePrefix),
-		common.RedisKeyFormatter(totalUsageKey, string(common.TotalCountPrefix)),
+		common.RedisKeyFormatter(totalUsageKey, timestampStr, string(common.TotalCountPrefix)),
 		1,
 	)
 }
@@ -132,7 +150,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		if usage >= sub.ApiLimit.Int32 {
 			return nil, server.NewError(server.ErrorUnauthorized, "quota exceeded", nil)
 		}
-		remaining = sub.ApiLimit.Int32 - usage
+		remaining = max(sub.ApiLimit.Int32-usage, 0)
 	}
 
 	return &GetOrgSubDetailsOutput{
@@ -147,9 +165,13 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 }
 
 func (s *GateKeepingService) GetUsageDetailFromCache(ctx context.Context, orgId, subId, endpointId int32) (int32, error) {
+
+	timestamp := common.NextIntervalUnix(time.Now(), time.Duration(s.FlushInterval)*time.Second)
+	timestampStr := strconv.FormatInt(timestamp, 10)
+
 	usageRedisKey := common.RedisKeyFormatter(
-		string(common.UsagePrefix), string(common.TotalCostPrefix),
-		common.UsageKey(orgId, subId, endpointId),
+		string(common.UsagePrefix), string(orgId), string(subId),
+		timestampStr, string(common.TotalCostPrefix),
 	)
 
 	usage, err := caching.GetFromCache(ctx, s.Cache, usageRedisKey, func() (int32, error) {
@@ -157,7 +179,7 @@ func (s *GateKeepingService) GetUsageDetailFromCache(ctx context.Context, orgId,
 		if err != nil {
 			return 0, server.NewError(server.ErrorInternal, "error fetching usage details", err)
 		}
-		return orgUsageDetails.CallsUsed, nil
+		return orgUsageDetails.CostsUsed, nil
 	})
 	if err != nil {
 		return 0, err

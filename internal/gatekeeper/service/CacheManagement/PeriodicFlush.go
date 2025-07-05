@@ -2,7 +2,6 @@ package cachemanagement
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,21 +11,26 @@ import (
 )
 
 func StartPeriodicFlush(cm *CacheManagementService, interval time.Duration, stopCh <-chan struct{}) {
-	ticker := time.NewTicker(interval)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				ctx := context.Background()
 
-				// Only this node flushes Redis -> DB
+	cm.Logger.WithComponent("StartPeriodicFlush").Info("Started")
+
+	go func() {
+		for {
+			now := time.Now()
+			next := now.Truncate(interval).Add(interval)
+			wait := time.Until(next)
+
+			timer := time.NewTimer(wait)
+
+			select {
+			case <-timer.C:
+				ctx := context.Background()
 				cm.SyncAggregatedToDB(ctx, string(common.UsagePrefix), func(key string, val map[string]float64) error {
 					return cm.IncrementUsageFromCacheKey(ctx, key, val)
 				})
 
 			case <-stopCh:
-				log.Println("Stopping cache flush ticker")
+				cm.Logger.WithComponent("StartPeriodicFlush").Info("Stopped")
 				return
 			}
 		}
@@ -44,6 +48,7 @@ func HandleShutdown(cm *CacheManagementService, stopFlush chan struct{}) {
 		return cm.IncrementUsageFromCacheKey(ctx, key, val)
 	})
 
-	log.Println("Gatekeeper shutdown complete")
+	cm.Logger.WithComponent("HandleShutdown").Info("Gatekeeper shutdown complete")
+
 	os.Exit(0)
 }

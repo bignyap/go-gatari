@@ -14,6 +14,9 @@ paths:
   /recordUsage:
     $ref: './paths/usageRecorder.yaml#/paths/~1recordUsage'
 
+  /flushAllCache:
+    $ref: './paths/flushCache.yaml#/paths/~1flushAllCache'
+
 components:
   schemas:
     Error:
