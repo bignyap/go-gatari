@@ -17,24 +17,28 @@ INSERT INTO subscription (
     subscription_name, subscription_type, subscription_created_date,
     subscription_updated_date, subscription_start_date, subscription_api_limit, 
     subscription_expiry_date, subscription_description, subscription_status, 
-    organization_id, subscription_tier_id
+    organization_id, subscription_tier_id, 
+    subscription_billing_interval, subscription_billing_model, subscription_quota_reset_interval
 ) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 RETURNING subscription_id
 `
 
 type CreateSubscriptionParams struct {
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionBillingInterval    pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionQuotaResetInterval pgtype.Text
 }
 
 func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int32, error) {
@@ -50,6 +54,9 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		arg.SubscriptionStatus,
 		arg.OrganizationID,
 		arg.SubscriptionTierID,
+		arg.SubscriptionBillingInterval,
+		arg.SubscriptionBillingModel,
+		arg.SubscriptionQuotaResetInterval,
 	)
 	var subscription_id int32
 	err := row.Scan(&subscription_id)
@@ -57,17 +64,20 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 }
 
 type CreateSubscriptionsParams struct {
-	SubscriptionName        string
-	SubscriptionType        string
-	SubscriptionCreatedDate int32
-	SubscriptionUpdatedDate int32
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
+	SubscriptionName               string
+	SubscriptionType               string
+	SubscriptionCreatedDate        int32
+	SubscriptionUpdatedDate        int32
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionBillingInterval    pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionQuotaResetInterval pgtype.Text
 }
 
 const deleteSubscriptionById = `-- name: DeleteSubscriptionById :exec
@@ -298,20 +308,26 @@ SET
     subscription_description = $5,
     subscription_status = $6,
     organization_id = $7,
-    subscription_tier_id = $8
-WHERE subscription_id = $9
+    subscription_tier_id = $8,
+    subscription_billing_interval = $9, 
+    subscription_billing_model = $10, 
+    subscription_quota_reset_interval = $11
+WHERE subscription_id = $12
 `
 
 type UpdateSubscriptionParams struct {
-	SubscriptionName        string
-	SubscriptionStartDate   int32
-	SubscriptionApiLimit    pgtype.Int4
-	SubscriptionExpiryDate  pgtype.Int4
-	SubscriptionDescription pgtype.Text
-	SubscriptionStatus      pgtype.Bool
-	OrganizationID          int32
-	SubscriptionTierID      int32
-	SubscriptionID          int32
+	SubscriptionName               string
+	SubscriptionStartDate          int32
+	SubscriptionApiLimit           pgtype.Int4
+	SubscriptionExpiryDate         pgtype.Int4
+	SubscriptionDescription        pgtype.Text
+	SubscriptionStatus             pgtype.Bool
+	OrganizationID                 int32
+	SubscriptionTierID             int32
+	SubscriptionBillingInterval    pgtype.Text
+	SubscriptionBillingModel       pgtype.Text
+	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionID                 int32
 }
 
 func (q *Queries) UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (pgconn.CommandTag, error) {
@@ -324,6 +340,9 @@ func (q *Queries) UpdateSubscription(ctx context.Context, arg UpdateSubscription
 		arg.SubscriptionStatus,
 		arg.OrganizationID,
 		arg.SubscriptionTierID,
+		arg.SubscriptionBillingInterval,
+		arg.SubscriptionBillingModel,
+		arg.SubscriptionQuotaResetInterval,
 		arg.SubscriptionID,
 	)
 }

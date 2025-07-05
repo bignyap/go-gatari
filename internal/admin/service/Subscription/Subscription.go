@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/converter"
@@ -24,17 +25,20 @@ func (input BulkSubscriptionInserter) InsertRows(ctx context.Context, tx pgx.Tx)
 func (s *SubscriptionService) CreateSubscription(ctx context.Context, input *CreateSubscriptionParams) (CreateSubscriptionOutput, error) {
 
 	params := sqlcgen.CreateSubscriptionParams{
-		SubscriptionName:        input.Name,
-		SubscriptionType:        input.Type,
-		SubscriptionCreatedDate: int32(input.CreatedAt.Unix()),
-		SubscriptionUpdatedDate: int32(input.UpdatedAt.Unix()),
-		SubscriptionStartDate:   int32(input.StartDate.Unix()),
-		SubscriptionApiLimit:    converter.ToPgInt4(input.APILimit),
-		SubscriptionExpiryDate:  converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
-		SubscriptionDescription: converter.ToPgText(input.Description),
-		SubscriptionStatus:      converter.ToPgBool(input.Status),
-		OrganizationID:          int32(input.OrganizationID),
-		SubscriptionTierID:      int32(input.SubscriptionTierID),
+		SubscriptionName:               input.Name,
+		SubscriptionType:               input.Type,
+		SubscriptionCreatedDate:        int32(input.CreatedAt.Unix()),
+		SubscriptionUpdatedDate:        int32(input.UpdatedAt.Unix()),
+		SubscriptionStartDate:          int32(input.StartDate.Unix()),
+		SubscriptionApiLimit:           converter.ToPgInt4(input.APILimit),
+		SubscriptionExpiryDate:         converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
+		SubscriptionDescription:        converter.ToPgText(input.Description),
+		SubscriptionStatus:             converter.ToPgBool(input.Status),
+		OrganizationID:                 int32(input.OrganizationID),
+		SubscriptionTierID:             int32(input.SubscriptionTierID),
+		SubscriptionBillingInterval:    converter.ToPgText(input.BillingInterval),
+		SubscriptionBillingModel:       converter.ToPgText(input.BillingModel),
+		SubscriptionQuotaResetInterval: converter.ToPgText(input.QuotaResetInterval),
 	}
 
 	insertedID, err := s.DB.CreateSubscription(ctx, params)
@@ -69,17 +73,20 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 		}
 
 		params = append(params, sqlcgen.CreateSubscriptionsParams{
-			SubscriptionName:        input.Name,
-			SubscriptionType:        input.Type,
-			SubscriptionCreatedDate: currentTime,
-			SubscriptionUpdatedDate: currentTime,
-			SubscriptionStartDate:   currentTime,
-			SubscriptionApiLimit:    converter.ToPgInt4(input.APILimit),
-			SubscriptionExpiryDate:  converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
-			SubscriptionDescription: converter.ToPgText(input.Description),
-			SubscriptionStatus:      converter.ToPgBool(input.Status),
-			OrganizationID:          int32(input.OrganizationID),
-			SubscriptionTierID:      int32(input.SubscriptionTierID),
+			SubscriptionName:               input.Name,
+			SubscriptionType:               input.Type,
+			SubscriptionCreatedDate:        currentTime,
+			SubscriptionUpdatedDate:        currentTime,
+			SubscriptionStartDate:          currentTime,
+			SubscriptionApiLimit:           converter.ToPgInt4(input.APILimit),
+			SubscriptionExpiryDate:         converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
+			SubscriptionDescription:        converter.ToPgText(input.Description),
+			SubscriptionStatus:             converter.ToPgBool(input.Status),
+			OrganizationID:                 int32(input.OrganizationID),
+			SubscriptionTierID:             int32(input.SubscriptionTierID),
+			SubscriptionBillingInterval:    converter.ToPgText(input.BillingInterval),
+			SubscriptionBillingModel:       converter.ToPgText(input.BillingModel),
+			SubscriptionQuotaResetInterval: converter.ToPgText(input.QuotaResetInterval),
 		})
 	}
 
@@ -176,4 +183,44 @@ func (s *SubscriptionService) ListSubscription(ctx context.Context, limit int, o
 
 	output := ToListSubscriptionOutputWithCount(subscriptions)
 	return output, nil
+}
+
+func (s *SubscriptionService) UpdateOrganization(ctx context.Context, input *UpdateSubscriptionParams) error {
+
+	params := sqlcgen.UpdateSubscriptionParams{
+		SubscriptionName:               input.Name,
+		SubscriptionStartDate:          int32(input.StartDate.Unix()),
+		SubscriptionApiLimit:           converter.ToPgInt4(input.APILimit),
+		SubscriptionExpiryDate:         converter.ToPgInt4FromTimeOrDate(input.ExpiryDate),
+		SubscriptionDescription:        converter.ToPgText(input.Description),
+		SubscriptionStatus:             converter.ToPgBool(input.Status),
+		OrganizationID:                 int32(input.OrganizationID),
+		SubscriptionTierID:             int32(input.SubscriptionTierID),
+		SubscriptionBillingInterval:    converter.ToPgText(input.BillingInterval),
+		SubscriptionBillingModel:       converter.ToPgText(input.BillingModel),
+		SubscriptionQuotaResetInterval: converter.ToPgText(input.QuotaResetInterval),
+		SubscriptionID:                 int32(input.SubscriptionID),
+	}
+
+	_, err := s.DB.UpdateSubscription(ctx, params)
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't update the organization",
+			err,
+		)
+	}
+
+	err = s.PubSubClient.Publish(ctx, string(common.SubscriptionModified), common.SubscriptionModifiedEvent{
+		ID: int32(input.OrganizationID),
+	})
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
+			err,
+		)
+	}
+
+	return nil
 }

@@ -28,9 +28,10 @@ INSERT INTO subscription (
     subscription_name, subscription_type, subscription_created_date,
     subscription_updated_date, subscription_start_date, subscription_api_limit, 
     subscription_expiry_date, subscription_description, subscription_status, 
-    organization_id, subscription_tier_id
+    organization_id, subscription_tier_id, 
+    subscription_billing_interval, subscription_billing_model, subscription_quota_reset_interval
 ) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 RETURNING subscription_id;
 
 -- name: CreateSubscriptions :copyfrom
@@ -38,9 +39,10 @@ INSERT INTO subscription (
     subscription_name, subscription_type, subscription_created_date,
     subscription_updated_date, subscription_start_date, subscription_api_limit, 
     subscription_expiry_date, subscription_description, subscription_status, 
-    organization_id, subscription_tier_id
+    organization_id, subscription_tier_id,
+    subscription_billing_interval, subscription_billing_model, subscription_quota_reset_interval
 ) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: UpdateSubscription :execresult
 UPDATE subscription
@@ -52,8 +54,11 @@ SET
     subscription_description = $5,
     subscription_status = $6,
     organization_id = $7,
-    subscription_tier_id = $8
-WHERE subscription_id = $9;
+    subscription_tier_id = $8,
+    subscription_billing_interval = $9, 
+    subscription_billing_model = $10, 
+    subscription_quota_reset_interval = $11
+WHERE subscription_id = $12;
 
 -- name: DeleteSubscriptionByOrgId :exec
 DELETE FROM subscription

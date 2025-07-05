@@ -46,10 +46,11 @@ func NewAdminHandler(
 		PubSubClient:   pubSubClient,
 
 		BillingService: service.BillingService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
+			Logger:       logger,
+			Validator:    validator,
+			DB:           db,
+			Conn:         conn,
+			PubSubClient: pubSubClient,
 		},
 		OrganizationService: organization.OrganizationService{
 			Logger:       logger,
@@ -59,10 +60,11 @@ func NewAdminHandler(
 			PubSubClient: pubSubClient,
 		},
 		PricingService: pricing.PricingService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
+			Logger:       logger,
+			Validator:    validator,
+			DB:           db,
+			Conn:         conn,
+			PubSubClient: pubSubClient,
 		},
 		ResourceService: resource.ResourceService{
 			Logger:       logger,
@@ -72,10 +74,11 @@ func NewAdminHandler(
 			PubSubClient: pubSubClient,
 		},
 		SubscriptionService: subscription.SubscriptionService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
+			Logger:       logger,
+			Validator:    validator,
+			DB:           db,
+			Conn:         conn,
+			PubSubClient: pubSubClient,
 		},
 		UsageService: usage.UsageSummaryService{
 			Logger:    logger,

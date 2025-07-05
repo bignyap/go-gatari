@@ -7,6 +7,20 @@ import (
 	"github.com/bignyap/go-utilities/converter"
 )
 
+const (
+	BillingIntervalMonthly = "monthly"
+	BillingIntervalYearly  = "yearly"
+	BillingIntervalOnce    = "once"
+
+	BillingModelFlat   = "flat"
+	BillingModelUsage  = "usage"
+	BillingModelHybrid = "hybrid"
+
+	QuotaResetMonthly = "monthly"
+	QuotaResetYearly  = "yearly"
+	QuotaResetTotal   = "total"
+)
+
 type CreateSubscriptionParams struct {
 	Name               string                `json:"name" form:"name" validate:"required"`
 	Type               string                `json:"type" form:"type" validate:"required"`
@@ -21,11 +35,31 @@ type CreateSubscriptionParams struct {
 	Status             *bool                 `json:"status" form:"status"`
 	OrganizationID     int                   `json:"organization_id" form:"organization_id" validate:"required"`
 	SubscriptionTierID int                   `json:"subscription_tier_id" form:"subscription_tier_id" validate:"required"`
+	BillingInterval    *string               `json:"billing_interval" form:"billing_interval" validate:"required,oneof=monthly yearly once"`
+	BillingModel       *string               `json:"billing_model" form:"billing_model" validate:"required,oneof=flat usage hybrid"`
+	QuotaResetInterval *string               `json:"quota_reset_interval" form:"quota_reset_interval" validate:"required,oneof=monthly yearly total"`
 }
 
 type CreateSubscriptionOutput struct {
 	ID int `json:"id"`
 	CreateSubscriptionParams
+}
+
+type UpdateSubscriptionParams struct {
+	Name               string                `json:"name" form:"name" validate:"required"`
+	StartDate          *converter.TimeOrDate `json:"start_date" form:"-"`
+	StartDateRaw       string                `form:"start_date" json:"-"`
+	APILimit           *int                  `json:"api_limit" form:"api_limit"`
+	ExpiryDate         *converter.TimeOrDate `json:"expiry_date" form:"-"`
+	ExpiryDateRaw      string                `form:"expiry_date" json:"-"`
+	Description        *string               `json:"description" form:"description"`
+	Status             *bool                 `json:"status" form:"status"`
+	OrganizationID     int                   `json:"organization_id" form:"organization_id" validate:"required"`
+	SubscriptionTierID int                   `json:"subscription_tier_id" form:"subscription_tier_id" validate:"required"`
+	BillingInterval    *string               `json:"billing_interval" form:"billing_interval" validate:"required,oneof=monthly yearly once"`
+	BillingModel       *string               `json:"billing_model" form:"billing_model" validate:"required,oneof=flat usage hybrid"`
+	QuotaResetInterval *string               `json:"quota_reset_interval" form:"quota_reset_interval" validate:"required,oneof=monthly yearly total"`
+	SubscriptionID     int                   `json:"subscription_id" form:"subscription_id" validate:"required"`
 }
 
 type ListSubscriptionOutput struct {
@@ -57,6 +91,9 @@ func ToListSubscriptionOutput(input sqlcgen.ListSubscriptionRow) ListSubscriptio
 			Status:             converter.FromPgBool(input.SubscriptionStatus),
 			OrganizationID:     int(input.OrganizationID),
 			SubscriptionTierID: int(input.SubscriptionTierID),
+			BillingInterval:    converter.FromPgText(input.SubscriptionBillingInterval),
+			BillingModel:       converter.FromPgText(input.SubscriptionBillingModel),
+			QuotaResetInterval: converter.FromPgText(input.SubscriptionQuotaResetInterval),
 		},
 	}
 }

@@ -328,6 +328,9 @@ func (r iteratorForCreateSubscriptions) Values() ([]interface{}, error) {
 		r.rows[0].SubscriptionStatus,
 		r.rows[0].OrganizationID,
 		r.rows[0].SubscriptionTierID,
+		r.rows[0].SubscriptionBillingInterval,
+		r.rows[0].SubscriptionBillingModel,
+		r.rows[0].SubscriptionQuotaResetInterval,
 	}, nil
 }
 
@@ -336,7 +339,7 @@ func (r iteratorForCreateSubscriptions) Err() error {
 }
 
 func (q *Queries) CreateSubscriptions(ctx context.Context, arg []CreateSubscriptionsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"subscription"}, []string{"subscription_name", "subscription_type", "subscription_created_date", "subscription_updated_date", "subscription_start_date", "subscription_api_limit", "subscription_expiry_date", "subscription_description", "subscription_status", "organization_id", "subscription_tier_id"}, &iteratorForCreateSubscriptions{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"subscription"}, []string{"subscription_name", "subscription_type", "subscription_created_date", "subscription_updated_date", "subscription_start_date", "subscription_api_limit", "subscription_expiry_date", "subscription_description", "subscription_status", "organization_id", "subscription_tier_id", "subscription_billing_interval", "subscription_billing_model", "subscription_quota_reset_interval"}, &iteratorForCreateSubscriptions{rows: arg})
 }
 
 // iteratorForCreateTierPricings implements pgx.CopyFromSource.

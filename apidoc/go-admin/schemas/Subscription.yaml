@@ -6,6 +6,9 @@ CreateSubscriptionInput:
     - organization_id
     - subscription_tier_id
     - start_date
+    - billing_interval
+    - billing_model
+    - quota_reset_interval
   properties:
     name:
       type: string
@@ -31,6 +34,15 @@ CreateSubscriptionInput:
       type: integer
     subscription_tier_id:
       type: integer
+    billing_interval:
+      type: string
+      enum: [monthly, yearly, once]
+    billing_model:
+      type: string
+      enum: [flat, usage, hybrid]
+    quota_reset_interval:
+      type: string
+      enum: [monthly, yearly, total]
 
 CreateSubscriptionOutput:
   type: object
@@ -67,3 +79,12 @@ CreateSubscriptionOutput:
       type: integer
     subscription_tier_id:
       type: integer
+    billing_interval:
+      type: string
+      enum: [monthly, yearly, once]
+    billing_model:
+      type: string
+      enum: [flat, usage, hybrid]
+    quota_reset_interval:
+      type: string
+      enum: [monthly, yearly, total]
