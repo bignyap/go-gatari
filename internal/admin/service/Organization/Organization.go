@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/converter"
@@ -175,6 +176,17 @@ func (apiCfg *OrganizationService) UpdateOrganization(ctx context.Context, input
 		return server.NewError(
 			server.ErrorInternal,
 			"couldn't update the organization",
+			err,
+		)
+	}
+
+	err = apiCfg.PubSubClient.Publish(ctx, string(common.OrganizationModified), common.OrganizationModifiedEvent{
+		ID: int32(input.OrganizationID),
+	})
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
 			err,
 		)
 	}

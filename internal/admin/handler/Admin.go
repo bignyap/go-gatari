@@ -52,10 +52,11 @@ func NewAdminHandler(
 			Conn:      conn,
 		},
 		OrganizationService: organization.OrganizationService{
-			Logger:    logger,
-			Validator: validator,
-			DB:        db,
-			Conn:      conn,
+			Logger:       logger,
+			Validator:    validator,
+			DB:           db,
+			Conn:         conn,
+			PubSubClient: pubSubClient,
 		},
 		PricingService: pricing.PricingService{
 			Logger:    logger,
