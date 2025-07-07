@@ -31,10 +31,10 @@ RETURNING subscription_tier_id
 `
 
 type CreateSubscriptionTierParams struct {
-	TierName        string
-	TierDescription pgtype.Text
-	TierCreatedAt   int32
-	TierUpdatedAt   int32
+	TierName        string      `json:"tier_name"`
+	TierDescription pgtype.Text `json:"tier_description"`
+	TierCreatedAt   int32       `json:"tier_created_at"`
+	TierUpdatedAt   int32       `json:"tier_updated_at"`
 }
 
 func (q *Queries) CreateSubscriptionTier(ctx context.Context, arg CreateSubscriptionTierParams) (int32, error) {
@@ -50,10 +50,10 @@ func (q *Queries) CreateSubscriptionTier(ctx context.Context, arg CreateSubscrip
 }
 
 type CreateSubscriptionTiersParams struct {
-	TierName        string
-	TierDescription pgtype.Text
-	TierCreatedAt   int32
-	TierUpdatedAt   int32
+	TierName        string      `json:"tier_name"`
+	TierDescription pgtype.Text `json:"tier_description"`
+	TierCreatedAt   int32       `json:"tier_created_at"`
+	TierUpdatedAt   int32       `json:"tier_updated_at"`
 }
 
 const deleteSubscriptionTierById = `-- name: DeleteSubscriptionTierById :exec
@@ -75,19 +75,19 @@ LIMIT $2 OFFSET $3
 `
 
 type ListSubscriptionTierParams struct {
-	TierArchived bool
-	Limit        int32
-	Offset       int32
+	TierArchived bool  `json:"tier_archived"`
+	Limit        int32 `json:"limit"`
+	Offset       int32 `json:"offset"`
 }
 
 type ListSubscriptionTierRow struct {
-	SubscriptionTierID int32
-	TierName           string
-	TierArchived       bool
-	TierDescription    pgtype.Text
-	TierCreatedAt      int32
-	TierUpdatedAt      int32
-	TotalItems         int64
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	TierName           string      `json:"tier_name"`
+	TierArchived       bool        `json:"tier_archived"`
+	TierDescription    pgtype.Text `json:"tier_description"`
+	TierCreatedAt      int32       `json:"tier_created_at"`
+	TierUpdatedAt      int32       `json:"tier_updated_at"`
+	TotalItems         int64       `json:"total_items"`
 }
 
 func (q *Queries) ListSubscriptionTier(ctx context.Context, arg ListSubscriptionTierParams) ([]ListSubscriptionTierRow, error) {

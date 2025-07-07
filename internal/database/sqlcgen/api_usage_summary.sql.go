@@ -7,16 +7,18 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CreateApiUsageSummariesParams struct {
-	UsageStartDate int32
-	UsageEndDate   int32
-	TotalCalls     int32
-	TotalCost      float64
-	SubscriptionID int32
-	ApiEndpointID  int32
-	OrganizationID int32
+	UsageStartDate int32   `json:"usage_start_date"`
+	UsageEndDate   int32   `json:"usage_end_date"`
+	TotalCalls     int32   `json:"total_calls"`
+	TotalCost      float64 `json:"total_cost"`
+	SubscriptionID int32   `json:"subscription_id"`
+	ApiEndpointID  int32   `json:"api_endpoint_id"`
+	OrganizationID int32   `json:"organization_id"`
 }
 
 const createApiUsageSummary = `-- name: CreateApiUsageSummary :one
@@ -30,13 +32,13 @@ RETURNING usage_summary_id
 `
 
 type CreateApiUsageSummaryParams struct {
-	UsageStartDate int32
-	UsageEndDate   int32
-	TotalCalls     int32
-	TotalCost      float64
-	SubscriptionID int32
-	ApiEndpointID  int32
-	OrganizationID int32
+	UsageStartDate int32   `json:"usage_start_date"`
+	UsageEndDate   int32   `json:"usage_end_date"`
+	TotalCalls     int32   `json:"total_calls"`
+	TotalCost      float64 `json:"total_cost"`
+	SubscriptionID int32   `json:"subscription_id"`
+	ApiEndpointID  int32   `json:"api_endpoint_id"`
+	OrganizationID int32   `json:"organization_id"`
 }
 
 func (q *Queries) CreateApiUsageSummary(ctx context.Context, arg CreateApiUsageSummaryParams) (int32, error) {
@@ -54,80 +56,83 @@ func (q *Queries) CreateApiUsageSummary(ctx context.Context, arg CreateApiUsageS
 	return usage_summary_id, err
 }
 
-const getApiUsageSummaryByEndpointId = `-- name: GetApiUsageSummaryByEndpointId :many
-SELECT usage_summary_id, usage_start_date, usage_end_date, total_calls, total_cost, subscription_id, api_endpoint_id, organization_id FROM api_usage_summary
-WHERE api_endpoint_id = $1
-LIMIT $2 OFFSET $3
-`
-
-type GetApiUsageSummaryByEndpointIdParams struct {
-	ApiEndpointID int32
-	Limit         int32
-	Offset        int32
-}
-
-func (q *Queries) GetApiUsageSummaryByEndpointId(ctx context.Context, arg GetApiUsageSummaryByEndpointIdParams) ([]ApiUsageSummary, error) {
-	rows, err := q.db.Query(ctx, getApiUsageSummaryByEndpointId, arg.ApiEndpointID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ApiUsageSummary{}
-	for rows.Next() {
-		var i ApiUsageSummary
-		if err := rows.Scan(
-			&i.UsageSummaryID,
-			&i.UsageStartDate,
-			&i.UsageEndDate,
-			&i.TotalCalls,
-			&i.TotalCost,
-			&i.SubscriptionID,
-			&i.ApiEndpointID,
-			&i.OrganizationID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getApiUsageSummaryByOrgId = `-- name: GetApiUsageSummaryByOrgId :many
-SELECT usage_summary_id, usage_start_date, usage_end_date, total_calls, total_cost, subscription_id, api_endpoint_id, organization_id FROM api_usage_summary
-WHERE subscription_id IN (
-    SELECT subscription_id FROM subscription s
-    WHERE s.organization_id = $1
+const getUsageSummary = `-- name: GetUsageSummary :many
+WITH filtered_usage AS (
+  SELECT organization_id, subscription_id, api_endpoint_id,
+  SUM(total_calls) AS total_calls,
+  SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE 
+    ($1::int IS NULL OR organization_id = $1) AND
+    ($2::int IS NULL OR subscription_id = $2) AND
+    ($3::int IS NULL OR api_endpoint_id = $3) AND
+    ($4::int IS NULL OR usage_start_date >= $4) AND
+    ($5::int IS NULL OR usage_end_date <= $5)
+  GROUP BY organization_id, subscription_id, api_endpoint_id
+  LIMIT $7 OFFSET $6
 )
-LIMIT $2 OFFSET $3
+SELECT 
+  f.organization_id,
+  org.organization_name,
+  f.subscription_id,
+  sub.subscription_name,
+  f.api_endpoint_id,
+  ae.endpoint_name,
+  f.total_calls,
+  f.total_cost
+FROM filtered_usage f
+JOIN api_endpoint ae ON f.api_endpoint_id = ae.api_endpoint_id
+JOIN subscription sub ON f.subscription_id = sub.subscription_id
+JOIN organization org ON f.organization_id = org.organization_id
 `
 
-type GetApiUsageSummaryByOrgIdParams struct {
-	OrganizationID int32
-	Limit          int32
-	Offset         int32
+type GetUsageSummaryParams struct {
+	OrgID      pgtype.Int4 `json:"org_id"`
+	SubID      pgtype.Int4 `json:"sub_id"`
+	EndpointID pgtype.Int4 `json:"endpoint_id"`
+	StartDate  pgtype.Int4 `json:"start_date"`
+	EndDate    pgtype.Int4 `json:"end_date"`
+	Offset     int32       `json:"offset"`
+	Limit      int32       `json:"limit"`
 }
 
-func (q *Queries) GetApiUsageSummaryByOrgId(ctx context.Context, arg GetApiUsageSummaryByOrgIdParams) ([]ApiUsageSummary, error) {
-	rows, err := q.db.Query(ctx, getApiUsageSummaryByOrgId, arg.OrganizationID, arg.Limit, arg.Offset)
+type GetUsageSummaryRow struct {
+	OrganizationID   int32  `json:"organization_id"`
+	OrganizationName string `json:"organization_name"`
+	SubscriptionID   int32  `json:"subscription_id"`
+	SubscriptionName string `json:"subscription_name"`
+	ApiEndpointID    int32  `json:"api_endpoint_id"`
+	EndpointName     string `json:"endpoint_name"`
+	TotalCalls       int64  `json:"total_calls"`
+	TotalCost        int64  `json:"total_cost"`
+}
+
+func (q *Queries) GetUsageSummary(ctx context.Context, arg GetUsageSummaryParams) ([]GetUsageSummaryRow, error) {
+	rows, err := q.db.Query(ctx, getUsageSummary,
+		arg.OrgID,
+		arg.SubID,
+		arg.EndpointID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ApiUsageSummary{}
+	items := []GetUsageSummaryRow{}
 	for rows.Next() {
-		var i ApiUsageSummary
+		var i GetUsageSummaryRow
 		if err := rows.Scan(
-			&i.UsageSummaryID,
-			&i.UsageStartDate,
-			&i.UsageEndDate,
+			&i.OrganizationID,
+			&i.OrganizationName,
+			&i.SubscriptionID,
+			&i.SubscriptionName,
+			&i.ApiEndpointID,
+			&i.EndpointName,
 			&i.TotalCalls,
 			&i.TotalCost,
-			&i.SubscriptionID,
-			&i.ApiEndpointID,
-			&i.OrganizationID,
 		); err != nil {
 			return nil, err
 		}
@@ -139,36 +144,96 @@ func (q *Queries) GetApiUsageSummaryByOrgId(ctx context.Context, arg GetApiUsage
 	return items, nil
 }
 
-const getApiUsageSummaryBySubId = `-- name: GetApiUsageSummaryBySubId :many
-SELECT usage_summary_id, usage_start_date, usage_end_date, total_calls, total_cost, subscription_id, api_endpoint_id, organization_id FROM api_usage_summary
-WHERE subscription_id = $1
-LIMIT $2 OFFSET $3
+const getUsageSummaryGroupedByDay = `-- name: GetUsageSummaryGroupedByDay :many
+WITH filtered_usage AS (
+  SELECT organization_id, subscription_id, api_endpoint_id,
+  EXTRACT(YEAR FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_year,
+  EXTRACT(MONTH FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_month,
+  EXTRACT(DAY FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_day,
+  SUM(total_calls) AS total_calls,
+  SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE 
+    ($1::int IS NULL OR organization_id = $1) AND
+    ($2::int IS NULL OR subscription_id = $2) AND
+    ($3::int IS NULL OR api_endpoint_id = $3) AND
+    ($4::int IS NULL OR usage_start_date >= $4) AND
+    ($5::int IS NULL OR usage_end_date <= $5)
+  GROUP BY usage_year, usage_month, usage_day, organization_id, subscription_id, api_endpoint_id
+  LIMIT $7 OFFSET $6
+)
+SELECT 
+  f.organization_id,
+  org.organization_name,
+  f.subscription_id,
+  sub.subscription_name,
+  f.api_endpoint_id,
+  ae.endpoint_name,
+  f.usage_year,
+  f.usage_month,
+  f.usage_day,
+  f.total_calls,
+  f.total_cost
+FROM filtered_usage f
+JOIN api_endpoint ae ON f.api_endpoint_id = ae.api_endpoint_id
+JOIN subscription sub ON f.subscription_id = sub.subscription_id
+JOIN organization org ON f.organization_id = org.organization_id
+ORDER BY usage_year DESC, usage_month DESC, usage_day DESC
 `
 
-type GetApiUsageSummaryBySubIdParams struct {
-	SubscriptionID int32
-	Limit          int32
-	Offset         int32
+type GetUsageSummaryGroupedByDayParams struct {
+	OrgID      pgtype.Int4 `json:"org_id"`
+	SubID      pgtype.Int4 `json:"sub_id"`
+	EndpointID pgtype.Int4 `json:"endpoint_id"`
+	StartDate  pgtype.Int4 `json:"start_date"`
+	EndDate    pgtype.Int4 `json:"end_date"`
+	Offset     int32       `json:"offset"`
+	Limit      int32       `json:"limit"`
 }
 
-func (q *Queries) GetApiUsageSummaryBySubId(ctx context.Context, arg GetApiUsageSummaryBySubIdParams) ([]ApiUsageSummary, error) {
-	rows, err := q.db.Query(ctx, getApiUsageSummaryBySubId, arg.SubscriptionID, arg.Limit, arg.Offset)
+type GetUsageSummaryGroupedByDayRow struct {
+	OrganizationID   int32  `json:"organization_id"`
+	OrganizationName string `json:"organization_name"`
+	SubscriptionID   int32  `json:"subscription_id"`
+	SubscriptionName string `json:"subscription_name"`
+	ApiEndpointID    int32  `json:"api_endpoint_id"`
+	EndpointName     string `json:"endpoint_name"`
+	UsageYear        int32  `json:"usage_year"`
+	UsageMonth       int32  `json:"usage_month"`
+	UsageDay         int32  `json:"usage_day"`
+	TotalCalls       int64  `json:"total_calls"`
+	TotalCost        int64  `json:"total_cost"`
+}
+
+func (q *Queries) GetUsageSummaryGroupedByDay(ctx context.Context, arg GetUsageSummaryGroupedByDayParams) ([]GetUsageSummaryGroupedByDayRow, error) {
+	rows, err := q.db.Query(ctx, getUsageSummaryGroupedByDay,
+		arg.OrgID,
+		arg.SubID,
+		arg.EndpointID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ApiUsageSummary{}
+	items := []GetUsageSummaryGroupedByDayRow{}
 	for rows.Next() {
-		var i ApiUsageSummary
+		var i GetUsageSummaryGroupedByDayRow
 		if err := rows.Scan(
-			&i.UsageSummaryID,
-			&i.UsageStartDate,
-			&i.UsageEndDate,
+			&i.OrganizationID,
+			&i.OrganizationName,
+			&i.SubscriptionID,
+			&i.SubscriptionName,
+			&i.ApiEndpointID,
+			&i.EndpointName,
+			&i.UsageYear,
+			&i.UsageMonth,
+			&i.UsageDay,
 			&i.TotalCalls,
 			&i.TotalCost,
-			&i.SubscriptionID,
-			&i.ApiEndpointID,
-			&i.OrganizationID,
 		); err != nil {
 			return nil, err
 		}
@@ -195,9 +260,9 @@ DO UPDATE SET total_calls = api_usage_summary.total_calls + 1
 `
 
 type IncrementUsageParams struct {
-	SubscriptionID int32
-	ApiEndpointID  int32
-	OrganizationID int32
+	SubscriptionID int32 `json:"subscription_id"`
+	ApiEndpointID  int32 `json:"api_endpoint_id"`
+	OrganizationID int32 `json:"organization_id"`
 }
 
 func (q *Queries) IncrementUsage(ctx context.Context, arg IncrementUsageParams) error {

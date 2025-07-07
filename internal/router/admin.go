@@ -103,9 +103,7 @@ func BillingHistoryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 func ApiUsageSummaryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/apiUsageSummary")
 	routerGrp.POST("/batch", h.CreateApiUsageInBatchHandler)
-	routerGrp.GET("/orgId/:organization_id", h.GetApiUsageSummaryByOrgIdHandler)
-	routerGrp.GET("/subId/:subscription_id", h.GetApiUsageSummaryBySubIdHandler)
-	routerGrp.GET("/endpointId/:endpoint_id", h.GetApiUsageSummaryByEndpointIdHandler)
+	routerGrp.GET("", h.GetApiUsageSummaryHandler)
 }
 
 func RegisterAdminHandlers(

@@ -1,11 +1,12 @@
 package usage
 
 import (
-	"github.com/bignyap/go-admin/internal/database/sqlcgen"
-
 	"context"
+	"fmt"
 
 	"github.com/bignyap/go-admin/internal/database/dbutils"
+	"github.com/bignyap/go-admin/internal/database/sqlcgen"
+	"github.com/bignyap/go-utilities/converter"
 	"github.com/bignyap/go-utilities/server"
 	"github.com/jackc/pgx/v5"
 )
@@ -16,17 +17,10 @@ type BulkApiSummaryInserter struct {
 }
 
 func (input BulkApiSummaryInserter) InsertRows(ctx context.Context, tx pgx.Tx) (int64, error) {
-
-	affectedRows, err := input.UsageSummaryService.DB.CreateApiUsageSummaries(ctx, input.ApiUsageSummaries)
-	if err != nil {
-		return 0, err
-	}
-
-	return affectedRows, nil
+	return input.UsageSummaryService.DB.CreateApiUsageSummaries(ctx, input.ApiUsageSummaries)
 }
 
 func (s *UsageSummaryService) CreateApiUsageInBatch(ctx context.Context, input []sqlcgen.CreateApiUsageSummariesParams) (int64, error) {
-
 	inserter := BulkApiSummaryInserter{
 		ApiUsageSummaries:   input,
 		UsageSummaryService: s,
@@ -44,7 +38,6 @@ func (s *UsageSummaryService) CreateApiUsageInBatch(ctx context.Context, input [
 }
 
 func (s *UsageSummaryService) CreateApiUsage(ctx context.Context, input *sqlcgen.CreateApiUsageSummaryParams) (int32, error) {
-
 	insertedID, err := s.DB.CreateApiUsageSummary(ctx, *input)
 	if err != nil {
 		return 0, server.NewError(
@@ -53,99 +46,39 @@ func (s *UsageSummaryService) CreateApiUsage(ctx context.Context, input *sqlcgen
 			err,
 		)
 	}
-
 	return insertedID, nil
 }
 
-func (s *UsageSummaryService) GetApiUsageSummaryByOrgId(ctx context.Context, orgId int, n int, page int) ([]CreateApiUsageSummaryOutput, error) {
-
-	input := sqlcgen.GetApiUsageSummaryByOrgIdParams{
-		OrganizationID: int32(orgId),
-		Limit:          int32(n),
-		Offset:         int32(page),
-	}
-
-	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByOrgId(ctx, input)
-	if err != nil {
-		return nil, server.NewError(
-			server.ErrorInternal,
-			"couldn't retrieve the api usage summaries",
-			err,
-		)
-	}
-
-	if len(apiUsageSummaries) == 0 {
-		return []CreateApiUsageSummaryOutput{}, nil
-	}
-
-	var output []CreateApiUsageSummaryOutput
-
-	for _, apiUsageSummary := range apiUsageSummaries {
-
-		output = append(output, ToCreateApiUsageSummaryOutput(apiUsageSummary))
-	}
-
-	return output, nil
+func (s *UsageSummaryService) GetUsageSummary(ctx context.Context, filters UsageSummaryFilters) ([]sqlcgen.GetUsageSummaryRow, error) {
+	return GetGroupedUsageSummary(ctx, s.DB.GetUsageSummary, buildGetUsageSummaryInputParams, filters)
 }
 
-func (s *UsageSummaryService) GetApiUsageSummaryBySubId(ctx context.Context, subId int, n int, page int) ([]CreateApiUsageSummaryOutput, error) {
-
-	input := sqlcgen.GetApiUsageSummaryBySubIdParams{
-		SubscriptionID: int32(subId),
-		Limit:          int32(n),
-		Offset:         int32(page),
-	}
-
-	apiUsageSummaries, err := s.DB.GetApiUsageSummaryBySubId(ctx, input)
-	if err != nil {
-		return nil, server.NewError(
-			server.ErrorInternal,
-			"couldn't retrieve the api usage summaries",
-			err,
-		)
-	}
-
-	if len(apiUsageSummaries) == 0 {
-		return []CreateApiUsageSummaryOutput{}, nil
-	}
-
-	var output []CreateApiUsageSummaryOutput
-
-	for _, apiUsageSummary := range apiUsageSummaries {
-
-		output = append(output, ToCreateApiUsageSummaryOutput(apiUsageSummary))
-	}
-
-	return output, nil
+func (s *UsageSummaryService) GetUsageSummaryByDay(ctx context.Context, filters UsageSummaryFilters) ([]sqlcgen.GetUsageSummaryGroupedByDayRow, error) {
+	return GetGroupedUsageSummary(ctx, s.DB.GetUsageSummaryGroupedByDay, buildGetUsageSummaryByDayInputParams, filters)
 }
 
-func (s *UsageSummaryService) GetApiUsageSummaryByEndpointId(ctx context.Context, eId int, n int, page int) ([]CreateApiUsageSummaryOutput, error) {
-
-	input := sqlcgen.GetApiUsageSummaryByEndpointIdParams{
-		ApiEndpointID: int32(eId),
-		Limit:         int32(n),
-		Offset:        int32(page),
+func buildGetUsageSummaryInputParams(f UsageSummaryFilters) sqlcgen.GetUsageSummaryParams {
+	val := sqlcgen.GetUsageSummaryParams{
+		OrgID:      converter.ToPgInt4(f.OrgID),
+		SubID:      converter.ToPgInt4(f.SubID),
+		EndpointID: converter.ToPgInt4(f.EndpointID),
+		StartDate:  converter.ToPgInt4(f.StartDate),
+		EndDate:    converter.ToPgInt4(f.EndDate),
+		Limit:      int32(f.Limit),
+		Offset:     int32(f.Offset),
 	}
+	fmt.Println("GetUsageSummaryInputParams:", val)
+	return val
+}
 
-	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByEndpointId(ctx, input)
-	if err != nil {
-		return nil, server.NewError(
-			server.ErrorInternal,
-			"couldn't retrieve the api usage summaries",
-			err,
-		)
+func buildGetUsageSummaryByDayInputParams(f UsageSummaryFilters) sqlcgen.GetUsageSummaryGroupedByDayParams {
+	return sqlcgen.GetUsageSummaryGroupedByDayParams{
+		OrgID:      converter.ToPgInt4(f.OrgID),
+		SubID:      converter.ToPgInt4(f.SubID),
+		EndpointID: converter.ToPgInt4(f.EndpointID),
+		StartDate:  converter.ToPgInt4(f.StartDate),
+		EndDate:    converter.ToPgInt4(f.EndDate),
+		Limit:      int32(f.Limit),
+		Offset:     int32(f.Offset),
 	}
-
-	if len(apiUsageSummaries) == 0 {
-		return []CreateApiUsageSummaryOutput{}, nil
-	}
-
-	var output []CreateApiUsageSummaryOutput
-
-	for _, apiUsageSummary := range apiUsageSummaries {
-
-		output = append(output, ToCreateApiUsageSummaryOutput(apiUsageSummary))
-	}
-
-	return output, nil
 }

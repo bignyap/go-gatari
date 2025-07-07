@@ -58,3 +58,70 @@ CreateApiUsageSummaryOutput:
     - subscription_id
     - api_endpoint_id
     - organization_id
+
+GetApiUsageSummaryOutput:
+  type: object
+  properties:
+    organization_id:
+      type: integer
+    organization_name:
+      type: string
+    subscription_id:
+      type: integer
+    subscription_name:
+      type: string
+    api_endpoint_id:
+      type: integer
+    endpoint_name:
+      type: string
+    total_calls:
+      type: integer
+    total_cost:
+      type: number
+  required:
+    - organization_id
+    - organization_name
+    - subscription_id
+    - subscription_name
+    - api_endpoint_id
+    - endpoint_name
+    - total_calls
+    - total_cost
+
+GetApiUsageSummaryOutputGroupedByDay:
+  type: object
+  properties:
+    organization_id:
+      type: integer
+    organization_name:
+      type: string
+    subscription_id:
+      type: integer
+    subscription_name:
+      type: string
+    api_endpoint_id:
+      type: integer
+    endpoint_name:
+      type: string
+    total_calls:
+      type: integer
+    total_cost:
+      type: number
+    usage_year:
+      type: integer
+    usage_month:
+      type: integer
+    usage_day:
+      type: integer
+  required:
+    - organization_id
+    - organization_name
+    - subscription_id
+    - subscription_name
+    - api_endpoint_id
+    - endpoint_name
+    - total_calls
+    - total_cost
+    - usage_year
+    - usage_month
+    - usage_day

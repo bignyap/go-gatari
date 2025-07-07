@@ -34,10 +34,10 @@ ORDER BY
 `
 
 type EndpointUsagePerOrganizationRow struct {
-	OrganizationName string
-	ApiEndpointID    int32
-	EndpointName     string
-	MonthlyCalls     int64
+	OrganizationName string `json:"organization_name"`
+	ApiEndpointID    int32  `json:"api_endpoint_id"`
+	EndpointName     string `json:"endpoint_name"`
+	MonthlyCalls     int64  `json:"monthly_calls"`
 }
 
 func (q *Queries) EndpointUsagePerOrganization(ctx context.Context) ([]EndpointUsagePerOrganizationRow, error) {
@@ -149,12 +149,12 @@ ORDER BY
 `
 
 type GetTierLevelMonthlyUsageRow struct {
-	SubscriptionTierID  int32
-	TierName            string
-	UsageMonth          pgtype.Interval
-	TotalCalls          int64
-	TotalRevenue        int64
-	ActiveSubscriptions int64
+	SubscriptionTierID  int32           `json:"subscription_tier_id"`
+	TierName            string          `json:"tier_name"`
+	UsageMonth          pgtype.Interval `json:"usage_month"`
+	TotalCalls          int64           `json:"total_calls"`
+	TotalRevenue        int64           `json:"total_revenue"`
+	ActiveSubscriptions int64           `json:"active_subscriptions"`
 }
 
 func (q *Queries) GetTierLevelMonthlyUsage(ctx context.Context) ([]GetTierLevelMonthlyUsageRow, error) {

@@ -87,12 +87,6 @@ paths:
     $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary'
   /apiUsageSummary/batch:
     $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1batch'
-  /apiUsageSummary/subId/{subscription_id}:
-    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1subId~1{subscription_id}'
-  /apiUsageSummary/orgId/{organization_id}:
-    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1orgId~1{organization_id}'
-  /apiUsageSummary/endpointId/{endpoint_id}:
-    $ref: './paths/apiusagesummary.yaml#/paths/~1apiUsageSummary~1endpointId~1{endpoint_id}'
 
   /billingHistory:
     $ref: './paths/billinghistory.yaml#/paths/~1billingHistory'
@@ -143,6 +137,10 @@ components:
       $ref: './schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryInput'
     CreateApiUsageSummaryOutput:
       $ref: './schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
+    GetApiUsageSummaryOutput:
+      $ref: './schemas/ApiUsageSummary.yaml#/GetApiUsageSummaryOutput'
+    GetApiUsageSummaryOutputGroupedByDay:
+      $ref: './schemas/ApiUsageSummary.yaml#/GetApiUsageSummaryOutputGroupedByDay'
     CreateBillingHistoryInput:
       $ref: './schemas/BillingHistory.yaml#/CreateBillingHistoryInput'
     CreateBillingHistoryOutput:

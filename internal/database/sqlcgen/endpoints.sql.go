@@ -29,13 +29,13 @@ WHERE api_endpoint_id = $1
 `
 
 type GetApiEndpointByIdRow struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
-	ResourceTypeName    string
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
+	ResourceTypeName    string      `json:"resource_type_name"`
 }
 
 func (q *Queries) GetApiEndpointById(ctx context.Context, apiEndpointID int32) (GetApiEndpointByIdRow, error) {
@@ -61,13 +61,13 @@ WHERE endpoint_name = $1
 `
 
 type GetApiEndpointByNameRow struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
-	ResourceTypeName    string
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
+	ResourceTypeName    string      `json:"resource_type_name"`
 }
 
 func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string) (GetApiEndpointByNameRow, error) {
@@ -94,8 +94,8 @@ WHERE endpoint_name = $1
 `
 
 type GetEndpointByNameRow struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 func (q *Queries) GetEndpointByName(ctx context.Context, endpointName string) (GetEndpointByNameRow, error) {
@@ -114,18 +114,18 @@ LIMIT $1 OFFSET $2
 `
 
 type ListApiEndpointParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 type ListApiEndpointRow struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
-	ResourceTypeName    string
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
+	ResourceTypeName    string      `json:"resource_type_name"`
 }
 
 func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams) ([]ListApiEndpointRow, error) {
@@ -165,13 +165,13 @@ ORDER BY api_endpoint_id DESC
 `
 
 type ListApiEndpointsByResourceTypeRow struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
-	ResourceTypeName    string
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
+	ResourceTypeName    string      `json:"resource_type_name"`
 }
 
 func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ListApiEndpointsByResourceTypeRow, error) {
@@ -215,11 +215,11 @@ RETURNING api_endpoint_id
 `
 
 type RegisterApiEndpointParams struct {
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
 }
 
 func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpointParams) (int32, error) {
@@ -236,11 +236,11 @@ func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpoi
 }
 
 type RegisterApiEndpointsParams struct {
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
 }
 
 const updateApiEndpointById = `-- name: UpdateApiEndpointById :exec
@@ -255,12 +255,12 @@ WHERE api_endpoint_id = $1
 `
 
 type UpdateApiEndpointByIdParams struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
 }
 
 func (q *Queries) UpdateApiEndpointById(ctx context.Context, arg UpdateApiEndpointByIdParams) error {
@@ -294,11 +294,11 @@ RETURNING api_endpoint_id
 `
 
 type UpsertApiEndpointByNameParams struct {
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
 }
 
 func (q *Queries) UpsertApiEndpointByName(ctx context.Context, arg UpsertApiEndpointByNameParams) (int32, error) {

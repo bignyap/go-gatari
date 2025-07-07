@@ -19,10 +19,10 @@ RETURNING tier_base_pricing_id
 `
 
 type CreateTierPricingParams struct {
-	SubscriptionTierID int32
-	ApiEndpointID      int32
-	BaseCostPerCall    float64
-	BaseRateLimit      pgtype.Int4
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	BaseCostPerCall    float64     `json:"base_cost_per_call"`
+	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
 }
 
 func (q *Queries) CreateTierPricing(ctx context.Context, arg CreateTierPricingParams) (int32, error) {
@@ -38,10 +38,10 @@ func (q *Queries) CreateTierPricing(ctx context.Context, arg CreateTierPricingPa
 }
 
 type CreateTierPricingsParams struct {
-	SubscriptionTierID int32
-	ApiEndpointID      int32
-	BaseCostPerCall    float64
-	BaseRateLimit      pgtype.Int4
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	BaseCostPerCall    float64     `json:"base_cost_per_call"`
+	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
 }
 
 const deleteTierPricingById = `-- name: DeleteTierPricingById :exec
@@ -78,8 +78,8 @@ WHERE subscription.subscription_id = $1
 `
 
 type GetPricingParams struct {
-	SubscriptionID int32
-	ApiEndpointID  int32
+	SubscriptionID int32 `json:"subscription_id"`
+	ApiEndpointID  int32 `json:"api_endpoint_id"`
 }
 
 func (q *Queries) GetPricing(ctx context.Context, arg GetPricingParams) (float64, error) {
@@ -100,19 +100,19 @@ LIMIT $2 OFFSET $3
 `
 
 type GetTierPricingByTierIdParams struct {
-	SubscriptionTierID int32
-	Limit              int32
-	Offset             int32
+	SubscriptionTierID int32 `json:"subscription_tier_id"`
+	Limit              int32 `json:"limit"`
+	Offset             int32 `json:"offset"`
 }
 
 type GetTierPricingByTierIdRow struct {
-	TierBasePricingID  int32
-	BaseCostPerCall    float64
-	BaseRateLimit      pgtype.Int4
-	ApiEndpointID      int32
-	SubscriptionTierID int32
-	EndpointName       string
-	TotalItems         int64
+	TierBasePricingID  int32       `json:"tier_base_pricing_id"`
+	BaseCostPerCall    float64     `json:"base_cost_per_call"`
+	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
+	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	EndpointName       string      `json:"endpoint_name"`
+	TotalItems         int64       `json:"total_items"`
 }
 
 func (q *Queries) GetTierPricingByTierId(ctx context.Context, arg GetTierPricingByTierIdParams) ([]GetTierPricingByTierIdRow, error) {
@@ -153,10 +153,10 @@ WHERE tier_base_pricing_id = $4
 `
 
 type UpdateTierPricingByIdParams struct {
-	BaseCostPerCall   float64
-	BaseRateLimit     pgtype.Int4
-	ApiEndpointID     int32
-	TierBasePricingID int32
+	BaseCostPerCall   float64     `json:"base_cost_per_call"`
+	BaseRateLimit     pgtype.Int4 `json:"base_rate_limit"`
+	ApiEndpointID     int32       `json:"api_endpoint_id"`
+	TierBasePricingID int32       `json:"tier_base_pricing_id"`
 }
 
 func (q *Queries) UpdateTierPricingById(ctx context.Context, arg UpdateTierPricingByIdParams) (pgconn.CommandTag, error) {
@@ -178,10 +178,10 @@ WHERE subscription_tier_id = $4
 `
 
 type UpdateTierPricingByTierIdParams struct {
-	BaseCostPerCall    float64
-	BaseRateLimit      pgtype.Int4
-	ApiEndpointID      int32
-	SubscriptionTierID int32
+	BaseCostPerCall    float64     `json:"base_cost_per_call"`
+	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
+	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
 }
 
 func (q *Queries) UpdateTierPricingByTierId(ctx context.Context, arg UpdateTierPricingByTierIdParams) (pgconn.CommandTag, error) {

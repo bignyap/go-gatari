@@ -20,9 +20,9 @@ RETURNING resource_type_id
 `
 
 type CreateResourceTypeParams struct {
-	ResourceTypeName        string
-	ResourceTypeCode        string
-	ResourceTypeDescription pgtype.Text
+	ResourceTypeName        string      `json:"resource_type_name"`
+	ResourceTypeCode        string      `json:"resource_type_code"`
+	ResourceTypeDescription pgtype.Text `json:"resource_type_description"`
 }
 
 func (q *Queries) CreateResourceType(ctx context.Context, arg CreateResourceTypeParams) (int32, error) {
@@ -33,9 +33,9 @@ func (q *Queries) CreateResourceType(ctx context.Context, arg CreateResourceType
 }
 
 type CreateResourceTypesParams struct {
-	ResourceTypeName        string
-	ResourceTypeCode        string
-	ResourceTypeDescription pgtype.Text
+	ResourceTypeName        string      `json:"resource_type_name"`
+	ResourceTypeCode        string      `json:"resource_type_code"`
+	ResourceTypeDescription pgtype.Text `json:"resource_type_description"`
 }
 
 const deleteResourceTypeById = `-- name: DeleteResourceTypeById :exec
@@ -55,8 +55,8 @@ LIMIT $1 OFFSET $2
 `
 
 type ListResourceTypeParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 func (q *Queries) ListResourceType(ctx context.Context, arg ListResourceTypeParams) ([]ResourceType, error) {

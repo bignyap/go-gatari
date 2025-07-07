@@ -24,16 +24,16 @@ RETURNING organization_id
 `
 
 type CreateOrganizationParams struct {
-	OrganizationName         string
-	OrganizationCreatedAt    int32
-	OrganizationUpdatedAt    int32
-	OrganizationRealm        string
-	OrganizationCountry      pgtype.Text
-	OrganizationSupportEmail string
-	OrganizationActive       pgtype.Bool
-	OrganizationReportQ      pgtype.Bool
-	OrganizationConfig       pgtype.Text
-	OrganizationTypeID       int32
+	OrganizationName         string      `json:"organization_name"`
+	OrganizationCreatedAt    int32       `json:"organization_created_at"`
+	OrganizationUpdatedAt    int32       `json:"organization_updated_at"`
+	OrganizationRealm        string      `json:"organization_realm"`
+	OrganizationCountry      pgtype.Text `json:"organization_country"`
+	OrganizationSupportEmail string      `json:"organization_support_email"`
+	OrganizationActive       pgtype.Bool `json:"organization_active"`
+	OrganizationReportQ      pgtype.Bool `json:"organization_report_q"`
+	OrganizationConfig       pgtype.Text `json:"organization_config"`
+	OrganizationTypeID       int32       `json:"organization_type_id"`
 }
 
 func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (int32, error) {
@@ -55,16 +55,16 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 }
 
 type CreateOrganizationsParams struct {
-	OrganizationName         string
-	OrganizationCreatedAt    int32
-	OrganizationUpdatedAt    int32
-	OrganizationRealm        string
-	OrganizationCountry      pgtype.Text
-	OrganizationSupportEmail string
-	OrganizationActive       pgtype.Bool
-	OrganizationReportQ      pgtype.Bool
-	OrganizationConfig       pgtype.Text
-	OrganizationTypeID       int32
+	OrganizationName         string      `json:"organization_name"`
+	OrganizationCreatedAt    int32       `json:"organization_created_at"`
+	OrganizationUpdatedAt    int32       `json:"organization_updated_at"`
+	OrganizationRealm        string      `json:"organization_realm"`
+	OrganizationCountry      pgtype.Text `json:"organization_country"`
+	OrganizationSupportEmail string      `json:"organization_support_email"`
+	OrganizationActive       pgtype.Bool `json:"organization_active"`
+	OrganizationReportQ      pgtype.Bool `json:"organization_report_q"`
+	OrganizationConfig       pgtype.Text `json:"organization_config"`
+	OrganizationTypeID       int32       `json:"organization_type_id"`
 }
 
 const deleteOrganizationById = `-- name: DeleteOrganizationById :exec
@@ -87,9 +87,9 @@ WHERE organization_realm = $1 AND organization_active = TRUE
 `
 
 type GetOrganizationByNameRow struct {
-	ID    int32
-	Name  string
-	Realm string
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Realm string `json:"realm"`
 }
 
 func (q *Queries) GetOrganizationByName(ctx context.Context, organizationRealm string) (GetOrganizationByNameRow, error) {
@@ -113,26 +113,26 @@ LIMIT $3 OFFSET $4
 `
 
 type ListOrganizationParams struct {
-	Column1        int32
-	OrganizationID int32
-	Limit          int32
-	Offset         int32
+	Column1        int32 `json:"column_1"`
+	OrganizationID int32 `json:"organization_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 type ListOrganizationRow struct {
-	OrganizationID           int32
-	OrganizationName         string
-	OrganizationCreatedAt    int32
-	OrganizationUpdatedAt    int32
-	OrganizationRealm        string
-	OrganizationCountry      pgtype.Text
-	OrganizationSupportEmail string
-	OrganizationActive       pgtype.Bool
-	OrganizationReportQ      pgtype.Bool
-	OrganizationConfig       pgtype.Text
-	OrganizationTypeID       int32
-	OrganizationTypeName     string
-	TotalItems               int64
+	OrganizationID           int32       `json:"organization_id"`
+	OrganizationName         string      `json:"organization_name"`
+	OrganizationCreatedAt    int32       `json:"organization_created_at"`
+	OrganizationUpdatedAt    int32       `json:"organization_updated_at"`
+	OrganizationRealm        string      `json:"organization_realm"`
+	OrganizationCountry      pgtype.Text `json:"organization_country"`
+	OrganizationSupportEmail string      `json:"organization_support_email"`
+	OrganizationActive       pgtype.Bool `json:"organization_active"`
+	OrganizationReportQ      pgtype.Bool `json:"organization_report_q"`
+	OrganizationConfig       pgtype.Text `json:"organization_config"`
+	OrganizationTypeID       int32       `json:"organization_type_id"`
+	OrganizationTypeName     string      `json:"organization_type_name"`
+	TotalItems               int64       `json:"total_items"`
 }
 
 func (q *Queries) ListOrganization(ctx context.Context, arg ListOrganizationParams) ([]ListOrganizationRow, error) {
@@ -190,16 +190,16 @@ WHERE organization_id = $10
 `
 
 type UpdateOrganizationParams struct {
-	OrganizationName         string
-	OrganizationUpdatedAt    int32
-	OrganizationRealm        string
-	OrganizationCountry      pgtype.Text
-	OrganizationSupportEmail string
-	OrganizationActive       pgtype.Bool
-	OrganizationReportQ      pgtype.Bool
-	OrganizationConfig       pgtype.Text
-	OrganizationTypeID       int32
-	OrganizationID           int32
+	OrganizationName         string      `json:"organization_name"`
+	OrganizationUpdatedAt    int32       `json:"organization_updated_at"`
+	OrganizationRealm        string      `json:"organization_realm"`
+	OrganizationCountry      pgtype.Text `json:"organization_country"`
+	OrganizationSupportEmail string      `json:"organization_support_email"`
+	OrganizationActive       pgtype.Bool `json:"organization_active"`
+	OrganizationReportQ      pgtype.Bool `json:"organization_report_q"`
+	OrganizationConfig       pgtype.Text `json:"organization_config"`
+	OrganizationTypeID       int32       `json:"organization_type_id"`
+	OrganizationID           int32       `json:"organization_id"`
 }
 
 func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (pgconn.CommandTag, error) {

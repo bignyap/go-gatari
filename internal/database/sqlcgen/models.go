@@ -9,122 +9,122 @@ import (
 )
 
 type ApiEndpoint struct {
-	ApiEndpointID       int32
-	EndpointName        string
-	EndpointDescription pgtype.Text
-	HttpMethod          string
-	PathTemplate        string
-	ResourceTypeID      int32
+	ApiEndpointID       int32       `json:"api_endpoint_id"`
+	EndpointName        string      `json:"endpoint_name"`
+	EndpointDescription pgtype.Text `json:"endpoint_description"`
+	HttpMethod          string      `json:"http_method"`
+	PathTemplate        string      `json:"path_template"`
+	ResourceTypeID      int32       `json:"resource_type_id"`
 }
 
 type ApiUsageSummary struct {
-	UsageSummaryID int32
-	UsageStartDate int32
-	UsageEndDate   int32
-	TotalCalls     int32
-	TotalCost      float64
-	SubscriptionID int32
-	ApiEndpointID  int32
-	OrganizationID int32
+	UsageSummaryID int32   `json:"usage_summary_id"`
+	UsageStartDate int32   `json:"usage_start_date"`
+	UsageEndDate   int32   `json:"usage_end_date"`
+	TotalCalls     int32   `json:"total_calls"`
+	TotalCost      float64 `json:"total_cost"`
+	SubscriptionID int32   `json:"subscription_id"`
+	ApiEndpointID  int32   `json:"api_endpoint_id"`
+	OrganizationID int32   `json:"organization_id"`
 }
 
 type BillingHistory struct {
-	BillingID        int32
-	BillingStartDate int32
-	BillingEndDate   int32
-	TotalAmountDue   float64
-	TotalCalls       int32
-	PaymentStatus    string
-	PaymentDate      pgtype.Int4
-	BillingCreatedAt int32
-	SubscriptionID   int32
+	BillingID        int32       `json:"billing_id"`
+	BillingStartDate int32       `json:"billing_start_date"`
+	BillingEndDate   int32       `json:"billing_end_date"`
+	TotalAmountDue   float64     `json:"total_amount_due"`
+	TotalCalls       int32       `json:"total_calls"`
+	PaymentStatus    string      `json:"payment_status"`
+	PaymentDate      pgtype.Int4 `json:"payment_date"`
+	BillingCreatedAt int32       `json:"billing_created_at"`
+	SubscriptionID   int32       `json:"subscription_id"`
 }
 
 type CustomEndpointPricing struct {
-	CustomEndpointPricingID int32
-	CustomCostPerCall       float64
-	CustomRateLimit         int32
-	SubscriptionID          int32
-	TierBasePricingID       int32
+	CustomEndpointPricingID int32   `json:"custom_endpoint_pricing_id"`
+	CustomCostPerCall       float64 `json:"custom_cost_per_call"`
+	CustomRateLimit         int32   `json:"custom_rate_limit"`
+	SubscriptionID          int32   `json:"subscription_id"`
+	TierBasePricingID       int32   `json:"tier_base_pricing_id"`
 }
 
 type Organization struct {
-	OrganizationID           int32
-	OrganizationName         string
-	OrganizationCreatedAt    int32
-	OrganizationUpdatedAt    int32
-	OrganizationRealm        string
-	OrganizationCountry      pgtype.Text
-	OrganizationSupportEmail string
-	OrganizationActive       pgtype.Bool
-	OrganizationReportQ      pgtype.Bool
-	OrganizationConfig       pgtype.Text
-	OrganizationTypeID       int32
+	OrganizationID           int32       `json:"organization_id"`
+	OrganizationName         string      `json:"organization_name"`
+	OrganizationCreatedAt    int32       `json:"organization_created_at"`
+	OrganizationUpdatedAt    int32       `json:"organization_updated_at"`
+	OrganizationRealm        string      `json:"organization_realm"`
+	OrganizationCountry      pgtype.Text `json:"organization_country"`
+	OrganizationSupportEmail string      `json:"organization_support_email"`
+	OrganizationActive       pgtype.Bool `json:"organization_active"`
+	OrganizationReportQ      pgtype.Bool `json:"organization_report_q"`
+	OrganizationConfig       pgtype.Text `json:"organization_config"`
+	OrganizationTypeID       int32       `json:"organization_type_id"`
 }
 
 type OrganizationPermission struct {
-	OrganizationPermissionID int32
-	ResourceTypeID           int32
-	PermissionCode           string
-	OrganizationID           int32
+	OrganizationPermissionID int32  `json:"organization_permission_id"`
+	ResourceTypeID           int32  `json:"resource_type_id"`
+	PermissionCode           string `json:"permission_code"`
+	OrganizationID           int32  `json:"organization_id"`
 }
 
 type OrganizationType struct {
-	OrganizationTypeID   int32
-	OrganizationTypeName string
+	OrganizationTypeID   int32  `json:"organization_type_id"`
+	OrganizationTypeName string `json:"organization_type_name"`
 }
 
 type ResourceType struct {
-	ResourceTypeID          int32
-	ResourceTypeCode        string
-	ResourceTypeName        string
-	ResourceTypeDescription pgtype.Text
+	ResourceTypeID          int32       `json:"resource_type_id"`
+	ResourceTypeCode        string      `json:"resource_type_code"`
+	ResourceTypeName        string      `json:"resource_type_name"`
+	ResourceTypeDescription pgtype.Text `json:"resource_type_description"`
 }
 
 type Subscription struct {
-	SubscriptionID                 int32
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionBillingInterval    pgtype.Text
+	SubscriptionID                 int32       `json:"subscription_id"`
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
 }
 
 type SubscriptionTier struct {
-	SubscriptionTierID int32
-	TierName           string
-	TierArchived       bool
-	TierDescription    pgtype.Text
-	TierCreatedAt      int32
-	TierUpdatedAt      int32
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	TierName           string      `json:"tier_name"`
+	TierArchived       bool        `json:"tier_archived"`
+	TierDescription    pgtype.Text `json:"tier_description"`
+	TierCreatedAt      int32       `json:"tier_created_at"`
+	TierUpdatedAt      int32       `json:"tier_updated_at"`
 }
 
 type TierBasePricing struct {
-	TierBasePricingID  int32
-	BaseCostPerCall    float64
-	BaseRateLimit      pgtype.Int4
-	ApiEndpointID      int32
-	SubscriptionTierID int32
+	TierBasePricingID  int32       `json:"tier_base_pricing_id"`
+	BaseCostPerCall    float64     `json:"base_cost_per_call"`
+	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
+	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	SubscriptionTierID int32       `json:"subscription_tier_id"`
 }
 
 type VSubscriptionQuotaUsage struct {
-	SubscriptionID                 int32
-	SubscriptionName               string
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionBillingInterval    pgtype.Text
-	CostsUsed                      int32
-	CountsUsed                     int32
-	CallsRemaining                 int32
-	QuotaExceeded                  bool
+	SubscriptionID                 int32       `json:"subscription_id"`
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	CostsUsed                      int32       `json:"costs_used"`
+	CountsUsed                     int32       `json:"counts_used"`
+	CallsRemaining                 int32       `json:"calls_remaining"`
+	QuotaExceeded                  bool        `json:"quota_exceeded"`
 }

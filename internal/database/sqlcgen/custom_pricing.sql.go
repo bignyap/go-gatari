@@ -19,10 +19,10 @@ RETURNING custom_endpoint_pricing_id
 `
 
 type CreateCustomPricingParams struct {
-	CustomCostPerCall float64
-	CustomRateLimit   int32
-	SubscriptionID    int32
-	TierBasePricingID int32
+	CustomCostPerCall float64 `json:"custom_cost_per_call"`
+	CustomRateLimit   int32   `json:"custom_rate_limit"`
+	SubscriptionID    int32   `json:"subscription_id"`
+	TierBasePricingID int32   `json:"tier_base_pricing_id"`
 }
 
 func (q *Queries) CreateCustomPricing(ctx context.Context, arg CreateCustomPricingParams) (int32, error) {
@@ -38,10 +38,10 @@ func (q *Queries) CreateCustomPricing(ctx context.Context, arg CreateCustomPrici
 }
 
 type CreateCustomPricingsParams struct {
-	CustomCostPerCall float64
-	CustomRateLimit   int32
-	SubscriptionID    int32
-	TierBasePricingID int32
+	CustomCostPerCall float64 `json:"custom_cost_per_call"`
+	CustomRateLimit   int32   `json:"custom_rate_limit"`
+	SubscriptionID    int32   `json:"subscription_id"`
+	TierBasePricingID int32   `json:"tier_base_pricing_id"`
 }
 
 const deleteCustomPricingById = `-- name: DeleteCustomPricingById :exec
@@ -71,9 +71,9 @@ LIMIT $2 OFFSET $3
 `
 
 type GetCustomPricingParams struct {
-	SubscriptionID int32
-	Limit          int32
-	Offset         int32
+	SubscriptionID int32 `json:"subscription_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 func (q *Queries) GetCustomPricing(ctx context.Context, arg GetCustomPricingParams) ([]CustomEndpointPricing, error) {

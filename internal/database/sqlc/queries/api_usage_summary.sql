@@ -1,20 +1,67 @@
--- name: GetApiUsageSummaryByOrgId :many
-SELECT * FROM api_usage_summary
-WHERE subscription_id IN (
-    SELECT subscription_id FROM subscription s
-    WHERE s.organization_id = $1
+-- name: GetUsageSummary :many
+WITH filtered_usage AS (
+  SELECT organization_id, subscription_id, api_endpoint_id,
+  SUM(total_calls) AS total_calls,
+  SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE 
+    (sqlc.narg('org_id')::int IS NULL OR organization_id = sqlc.narg('org_id')) AND
+    (sqlc.narg('sub_id')::int IS NULL OR subscription_id = sqlc.narg('sub_id')) AND
+    (sqlc.narg('endpoint_id')::int IS NULL OR api_endpoint_id = sqlc.narg('endpoint_id')) AND
+    (sqlc.narg('start_date')::int IS NULL OR usage_start_date >= sqlc.narg('start_date')) AND
+    (sqlc.narg('end_date')::int IS NULL OR usage_end_date <= sqlc.narg('end_date'))
+  GROUP BY organization_id, subscription_id, api_endpoint_id
+  LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset')
 )
-LIMIT $2 OFFSET $3;
+SELECT 
+  f.organization_id,
+  org.organization_name,
+  f.subscription_id,
+  sub.subscription_name,
+  f.api_endpoint_id,
+  ae.endpoint_name,
+  f.total_calls,
+  f.total_cost
+FROM filtered_usage f
+JOIN api_endpoint ae ON f.api_endpoint_id = ae.api_endpoint_id
+JOIN subscription sub ON f.subscription_id = sub.subscription_id
+JOIN organization org ON f.organization_id = org.organization_id;
 
--- name: GetApiUsageSummaryBySubId :many
-SELECT * FROM api_usage_summary
-WHERE subscription_id = $1
-LIMIT $2 OFFSET $3;
-
--- name: GetApiUsageSummaryByEndpointId :many
-SELECT * FROM api_usage_summary
-WHERE api_endpoint_id = $1
-LIMIT $2 OFFSET $3;
+-- name: GetUsageSummaryGroupedByDay :many
+WITH filtered_usage AS (
+  SELECT organization_id, subscription_id, api_endpoint_id,
+  EXTRACT(YEAR FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_year,
+  EXTRACT(MONTH FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_month,
+  EXTRACT(DAY FROM TO_TIMESTAMP(usage_start_date))::INT AS usage_day,
+  SUM(total_calls) AS total_calls,
+  SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE 
+    (sqlc.narg('org_id')::int IS NULL OR organization_id = sqlc.narg('org_id')) AND
+    (sqlc.narg('sub_id')::int IS NULL OR subscription_id = sqlc.narg('sub_id')) AND
+    (sqlc.narg('endpoint_id')::int IS NULL OR api_endpoint_id = sqlc.narg('endpoint_id')) AND
+    (sqlc.narg('start_date')::int IS NULL OR usage_start_date >= sqlc.narg('start_date')) AND
+    (sqlc.narg('end_date')::int IS NULL OR usage_end_date <= sqlc.narg('end_date'))
+  GROUP BY usage_year, usage_month, usage_day, organization_id, subscription_id, api_endpoint_id
+  LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset')
+)
+SELECT 
+  f.organization_id,
+  org.organization_name,
+  f.subscription_id,
+  sub.subscription_name,
+  f.api_endpoint_id,
+  ae.endpoint_name,
+  f.usage_year,
+  f.usage_month,
+  f.usage_day,
+  f.total_calls,
+  f.total_cost
+FROM filtered_usage f
+JOIN api_endpoint ae ON f.api_endpoint_id = ae.api_endpoint_id
+JOIN subscription sub ON f.subscription_id = sub.subscription_id
+JOIN organization org ON f.organization_id = org.organization_id
+ORDER BY usage_year DESC, usage_month DESC, usage_day DESC;
 
 -- name: CreateApiUsageSummary :one 
 INSERT INTO api_usage_summary (

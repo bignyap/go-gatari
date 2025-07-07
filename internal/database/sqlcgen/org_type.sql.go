@@ -39,8 +39,8 @@ LIMIT $1 OFFSET $2
 `
 
 type ListOrgTypeParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 func (q *Queries) ListOrgType(ctx context.Context, arg ListOrgTypeParams) ([]OrganizationType, error) {

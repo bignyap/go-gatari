@@ -1,23 +1,91 @@
 paths:
   /apiUsageSummary:
-    post:
-      summary: Create an API usage summary
-      operationId: createApiUsageSummary
+    # post:
+    #   summary: Create an API usage summary
+    #   operationId: createApiUsageSummary
+    #   tags:
+    #     - API Usage
+    #   requestBody:
+    #     required: true
+    #     content:
+    #       application/x-www-form-urlencoded:
+    #         schema:
+    #           $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryInput'
+    #   responses:
+    #     '201':
+    #       description: Successfully created API usage summary.
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
+    get:
+      summary: Get grouped API usage summaries
+      operationId: getApiUsageSummary
       tags:
         - API Usage
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryInput'
+      parameters:
+        - name: organization_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: subscription_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: endpoint_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Unix timestamp
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Unix timestamp
+        - name: group_by
+          in: query
+          required: true
+          schema:
+            type: boolean
+            default: false
+            description: Grouping criteria for the API usage summary.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
       responses:
-        '201':
-          description: Successfully created API usage summary.
+        '200':
+          description: Successfully retrieved grouped API usage summary.
           content:
             application/json:
               schema:
-                $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '../schemas/ApiUsageSummary.yaml#/GetApiUsageSummaryOutput'
+                    - $ref: '../schemas/ApiUsageSummary.yaml#/GetApiUsageSummaryOutputGroupedByDay'
+        '400':
+          description: Invalid input or unsupported groupBy value
+        '500':
+          description: Server error while retrieving usage summary
+
   /apiUsageSummary/batch:
     post:
       summary: Create API usage summaries in bulk
@@ -35,81 +103,3 @@ paths:
       responses:
         '201':
           description: Successfully created API usage summaries.
-  /apiUsageSummary/subId/{subscription_id}:
-    get:
-      summary: Get API usage summaries by subscription ID
-      operationId: getApiUsageSummariesBySubscriptionId
-      tags:
-        - API Usage
-      parameters:
-        - name: subscription_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: ID of the subscription to retrieve API usage summaries.
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/PageNumber'
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/ItemsPerPage'
-      responses:
-        '200':
-          description: Successfully retrieved API usage summaries.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
-        '400':
-          description: Invalid subscription ID format or error during retrieval.
-  /apiUsageSummary/orgId/{organization_id}:
-    get:
-      summary: Get API usage summaries by organization ID
-      operationId: getApiUsageSummariesByOrganizationId
-      tags:
-        - API Usage
-      parameters:
-        - name: organization_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: ID of the organization to retrieve API usage summaries.
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/PageNumber'
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/ItemsPerPage'
-      responses:
-        '200':
-          description: Successfully retrieved API usage summaries.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
-        '400':
-          description: Invalid organization ID format or error during retrieval.
-  /apiUsageSummary/endpointId/{endpoint_id}:
-    get:
-      summary: Get API usage summaries by endpoint ID
-      operationId: getApiUsageSummariesByEndpointId
-      tags:
-        - API Usage
-      parameters:
-        - name: endpoint_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: ID of the endpoint to retrieve API usage summaries.
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/PageNumber'
-        - $ref: '../schemas/Pagination.yaml#/components/parameters/ItemsPerPage'
-      responses:
-        '200':
-          description: Successfully retrieved API usage summaries.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../schemas/ApiUsageSummary.yaml#/CreateApiUsageSummaryOutput'
-        '400':
-          description: Invalid endpoint ID format or error during retrieval.

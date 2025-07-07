@@ -25,20 +25,20 @@ RETURNING subscription_id
 `
 
 type CreateSubscriptionParams struct {
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionBillingInterval    pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
 }
 
 func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int32, error) {
@@ -64,20 +64,20 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 }
 
 type CreateSubscriptionsParams struct {
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionBillingInterval    pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionQuotaResetInterval pgtype.Text
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
 }
 
 const deleteSubscriptionById = `-- name: DeleteSubscriptionById :exec
@@ -113,11 +113,11 @@ WHERE organization_id = $1
 `
 
 type GetActiveSubscriptionRow struct {
-	ID              int32
-	OrganizationID  int32
-	ApiLimit        pgtype.Int4
-	ExpiryTimestamp pgtype.Int4
-	Active          pgtype.Bool
+	ID              int32       `json:"id"`
+	OrganizationID  int32       `json:"organization_id"`
+	ApiLimit        pgtype.Int4 `json:"api_limit"`
+	ExpiryTimestamp pgtype.Int4 `json:"expiry_timestamp"`
+	Active          pgtype.Bool `json:"active"`
 }
 
 func (q *Queries) GetActiveSubscription(ctx context.Context, organizationID int32) (GetActiveSubscriptionRow, error) {
@@ -142,22 +142,22 @@ WHERE subscription.subscription_id = $1
 `
 
 type GetSubscriptionByIdRow struct {
-	SubscriptionID                 int32
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionBillingInterval    pgtype.Text
-	TierName                       string
+	SubscriptionID                 int32       `json:"subscription_id"`
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	TierName                       string      `json:"tier_name"`
 }
 
 func (q *Queries) GetSubscriptionById(ctx context.Context, subscriptionID int32) (GetSubscriptionByIdRow, error) {
@@ -195,29 +195,29 @@ LIMIT $2 OFFSET $3
 `
 
 type GetSubscriptionByOrgIdParams struct {
-	OrganizationID int32
-	Limit          int32
-	Offset         int32
+	OrganizationID int32 `json:"organization_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 type GetSubscriptionByOrgIdRow struct {
-	SubscriptionID                 int32
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionBillingInterval    pgtype.Text
-	TierName                       string
-	TotalItems                     int64
+	SubscriptionID                 int32       `json:"subscription_id"`
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	TierName                       string      `json:"tier_name"`
+	TotalItems                     int64       `json:"total_items"`
 }
 
 func (q *Queries) GetSubscriptionByOrgId(ctx context.Context, arg GetSubscriptionByOrgIdParams) ([]GetSubscriptionByOrgIdRow, error) {
@@ -269,28 +269,28 @@ LIMIT $1 OFFSET $2
 `
 
 type ListSubscriptionParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 type ListSubscriptionRow struct {
-	SubscriptionID                 int32
-	SubscriptionName               string
-	SubscriptionType               string
-	SubscriptionCreatedDate        int32
-	SubscriptionUpdatedDate        int32
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionBillingInterval    pgtype.Text
-	TierName                       string
-	TotalItems                     int64
+	SubscriptionID                 int32       `json:"subscription_id"`
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionType               string      `json:"subscription_type"`
+	SubscriptionCreatedDate        int32       `json:"subscription_created_date"`
+	SubscriptionUpdatedDate        int32       `json:"subscription_updated_date"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	TierName                       string      `json:"tier_name"`
+	TotalItems                     int64       `json:"total_items"`
 }
 
 func (q *Queries) ListSubscription(ctx context.Context, arg ListSubscriptionParams) ([]ListSubscriptionRow, error) {
@@ -349,18 +349,18 @@ WHERE subscription_id = $12
 `
 
 type UpdateSubscriptionParams struct {
-	SubscriptionName               string
-	SubscriptionStartDate          int32
-	SubscriptionApiLimit           pgtype.Int4
-	SubscriptionExpiryDate         pgtype.Int4
-	SubscriptionDescription        pgtype.Text
-	SubscriptionStatus             pgtype.Bool
-	OrganizationID                 int32
-	SubscriptionTierID             int32
-	SubscriptionBillingInterval    pgtype.Text
-	SubscriptionBillingModel       pgtype.Text
-	SubscriptionQuotaResetInterval pgtype.Text
-	SubscriptionID                 int32
+	SubscriptionName               string      `json:"subscription_name"`
+	SubscriptionStartDate          int32       `json:"subscription_start_date"`
+	SubscriptionApiLimit           pgtype.Int4 `json:"subscription_api_limit"`
+	SubscriptionExpiryDate         pgtype.Int4 `json:"subscription_expiry_date"`
+	SubscriptionDescription        pgtype.Text `json:"subscription_description"`
+	SubscriptionStatus             pgtype.Bool `json:"subscription_status"`
+	OrganizationID                 int32       `json:"organization_id"`
+	SubscriptionTierID             int32       `json:"subscription_tier_id"`
+	SubscriptionBillingInterval    pgtype.Text `json:"subscription_billing_interval"`
+	SubscriptionBillingModel       pgtype.Text `json:"subscription_billing_model"`
+	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
+	SubscriptionID                 int32       `json:"subscription_id"`
 }
 
 func (q *Queries) UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (pgconn.CommandTag, error) {

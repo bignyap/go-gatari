@@ -18,9 +18,9 @@ RETURNING organization_id
 `
 
 type CreateOrgPermissionParams struct {
-	ResourceTypeID int32
-	PermissionCode string
-	OrganizationID int32
+	ResourceTypeID int32  `json:"resource_type_id"`
+	PermissionCode string `json:"permission_code"`
+	OrganizationID int32  `json:"organization_id"`
 }
 
 func (q *Queries) CreateOrgPermission(ctx context.Context, arg CreateOrgPermissionParams) (int32, error) {
@@ -31,9 +31,9 @@ func (q *Queries) CreateOrgPermission(ctx context.Context, arg CreateOrgPermissi
 }
 
 type CreateOrgPermissionsParams struct {
-	ResourceTypeID int32
-	PermissionCode string
-	OrganizationID int32
+	ResourceTypeID int32  `json:"resource_type_id"`
+	PermissionCode string `json:"permission_code"`
+	OrganizationID int32  `json:"organization_id"`
 }
 
 const deleteOrgPermissionById = `-- name: DeleteOrgPermissionById :exec
@@ -63,9 +63,9 @@ LIMIT $2 OFFSET $3
 `
 
 type GetOrgPermissionParams struct {
-	OrganizationID int32
-	Limit          int32
-	Offset         int32
+	OrganizationID int32 `json:"organization_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 func (q *Queries) GetOrgPermission(ctx context.Context, arg GetOrgPermissionParams) ([]OrganizationPermission, error) {

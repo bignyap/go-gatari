@@ -12,14 +12,14 @@ import (
 )
 
 type CreateBillingHistoriesParams struct {
-	BillingStartDate int32
-	BillingEndDate   int32
-	TotalAmountDue   float64
-	TotalCalls       int32
-	PaymentStatus    string
-	PaymentDate      pgtype.Int4
-	BillingCreatedAt int32
-	SubscriptionID   int32
+	BillingStartDate int32       `json:"billing_start_date"`
+	BillingEndDate   int32       `json:"billing_end_date"`
+	TotalAmountDue   float64     `json:"total_amount_due"`
+	TotalCalls       int32       `json:"total_calls"`
+	PaymentStatus    string      `json:"payment_status"`
+	PaymentDate      pgtype.Int4 `json:"payment_date"`
+	BillingCreatedAt int32       `json:"billing_created_at"`
+	SubscriptionID   int32       `json:"subscription_id"`
 }
 
 const createBillingHistory = `-- name: CreateBillingHistory :one
@@ -33,14 +33,14 @@ RETURNING billing_id
 `
 
 type CreateBillingHistoryParams struct {
-	BillingStartDate int32
-	BillingEndDate   int32
-	TotalAmountDue   float64
-	TotalCalls       int32
-	PaymentStatus    string
-	PaymentDate      pgtype.Int4
-	BillingCreatedAt int32
-	SubscriptionID   int32
+	BillingStartDate int32       `json:"billing_start_date"`
+	BillingEndDate   int32       `json:"billing_end_date"`
+	TotalAmountDue   float64     `json:"total_amount_due"`
+	TotalCalls       int32       `json:"total_calls"`
+	PaymentStatus    string      `json:"payment_status"`
+	PaymentDate      pgtype.Int4 `json:"payment_date"`
+	BillingCreatedAt int32       `json:"billing_created_at"`
+	SubscriptionID   int32       `json:"subscription_id"`
 }
 
 func (q *Queries) CreateBillingHistory(ctx context.Context, arg CreateBillingHistoryParams) (int32, error) {
@@ -66,9 +66,9 @@ LIMIT $2 OFFSET $3
 `
 
 type GetBillingHistoryByIdParams struct {
-	BillingID int32
-	Limit     int32
-	Offset    int32
+	BillingID int32 `json:"billing_id"`
+	Limit     int32 `json:"limit"`
+	Offset    int32 `json:"offset"`
 }
 
 func (q *Queries) GetBillingHistoryById(ctx context.Context, arg GetBillingHistoryByIdParams) ([]BillingHistory, error) {
@@ -111,9 +111,9 @@ LIMIT $2 OFFSET $3
 `
 
 type GetBillingHistoryByOrgIdParams struct {
-	OrganizationID int32
-	Limit          int32
-	Offset         int32
+	OrganizationID int32 `json:"organization_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 func (q *Queries) GetBillingHistoryByOrgId(ctx context.Context, arg GetBillingHistoryByOrgIdParams) ([]BillingHistory, error) {
@@ -153,9 +153,9 @@ LIMIT $2 OFFSET $3
 `
 
 type GetBillingHistoryBySubIdParams struct {
-	SubscriptionID int32
-	Limit          int32
-	Offset         int32
+	SubscriptionID int32 `json:"subscription_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 func (q *Queries) GetBillingHistoryBySubId(ctx context.Context, arg GetBillingHistoryBySubIdParams) ([]BillingHistory, error) {
