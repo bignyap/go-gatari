@@ -39,3 +39,15 @@ WHERE subscription_tier_id = $1;
 -- name: DeleteTierPricingById :exec
 DELETE FROM tier_base_pricing
 WHERE tier_base_pricing_id = $1;
+
+-- name: GetPricing :one
+SELECT
+  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call, 0)::double precision AS cost_per_call
+FROM subscription
+JOIN tier_base_pricing tbp
+  ON subscription.subscription_tier_id = tbp.subscription_tier_id
+  AND tbp.api_endpoint_id = $2
+LEFT JOIN custom_endpoint_pricing cep
+  ON cep.subscription_id = subscription.subscription_id
+  AND cep.tier_base_pricing_id = tbp.tier_base_pricing_id
+WHERE subscription.subscription_id = $1;

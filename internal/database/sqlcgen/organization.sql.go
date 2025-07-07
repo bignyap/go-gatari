@@ -77,6 +77,28 @@ func (q *Queries) DeleteOrganizationById(ctx context.Context, organizationID int
 	return err
 }
 
+const getOrganizationByName = `-- name: GetOrganizationByName :one
+SELECT
+  organization_id AS id,
+  organization_name AS name,
+  organization_realm AS realm
+FROM organization
+WHERE organization_realm = $1 AND organization_active = TRUE
+`
+
+type GetOrganizationByNameRow struct {
+	ID    int32
+	Name  string
+	Realm string
+}
+
+func (q *Queries) GetOrganizationByName(ctx context.Context, organizationRealm string) (GetOrganizationByNameRow, error) {
+	row := q.db.QueryRow(ctx, getOrganizationByName, organizationRealm)
+	var i GetOrganizationByNameRow
+	err := row.Scan(&i.ID, &i.Name, &i.Realm)
+	return i, err
+}
+
 const listOrganization = `-- name: ListOrganization :many
 SELECT 
     organization.organization_id, organization.organization_name, organization.organization_created_at, organization.organization_updated_at, organization.organization_realm, organization.organization_country, organization.organization_support_email, organization.organization_active, organization.organization_report_q, organization.organization_config, organization.organization_type_id, 

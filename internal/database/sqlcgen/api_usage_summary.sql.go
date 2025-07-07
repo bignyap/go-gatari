@@ -179,3 +179,28 @@ func (q *Queries) GetApiUsageSummaryBySubId(ctx context.Context, arg GetApiUsage
 	}
 	return items, nil
 }
+
+const incrementUsage = `-- name: IncrementUsage :exec
+INSERT INTO api_usage_summary (
+  usage_start_date, usage_end_date, total_calls, total_cost,
+  subscription_id, api_endpoint_id, organization_id
+)
+VALUES (
+  FLOOR(EXTRACT(EPOCH FROM now())/60)*60,
+  FLOOR(EXTRACT(EPOCH FROM now())/60)*60 + 59,
+  1, 0.0, $1, $2, $3
+)
+ON CONFLICT (usage_start_date, usage_end_date, api_endpoint_id, organization_id)
+DO UPDATE SET total_calls = api_usage_summary.total_calls + 1
+`
+
+type IncrementUsageParams struct {
+	SubscriptionID int32
+	ApiEndpointID  int32
+	OrganizationID int32
+}
+
+func (q *Queries) IncrementUsage(ctx context.Context, arg IncrementUsageParams) error {
+	_, err := q.db.Exec(ctx, incrementUsage, arg.SubscriptionID, arg.ApiEndpointID, arg.OrganizationID)
+	return err
+}

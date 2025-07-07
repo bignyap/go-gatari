@@ -64,6 +64,31 @@ func (q *Queries) DeleteTierPricingByTierId(ctx context.Context, subscriptionTie
 	return err
 }
 
+const getPricing = `-- name: GetPricing :one
+SELECT
+  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call, 0)::double precision AS cost_per_call
+FROM subscription
+JOIN tier_base_pricing tbp
+  ON subscription.subscription_tier_id = tbp.subscription_tier_id
+  AND tbp.api_endpoint_id = $2
+LEFT JOIN custom_endpoint_pricing cep
+  ON cep.subscription_id = subscription.subscription_id
+  AND cep.tier_base_pricing_id = tbp.tier_base_pricing_id
+WHERE subscription.subscription_id = $1
+`
+
+type GetPricingParams struct {
+	SubscriptionID int32
+	ApiEndpointID  int32
+}
+
+func (q *Queries) GetPricing(ctx context.Context, arg GetPricingParams) (float64, error) {
+	row := q.db.QueryRow(ctx, getPricing, arg.SubscriptionID, arg.ApiEndpointID)
+	var cost_per_call float64
+	err := row.Scan(&cost_per_call)
+	return cost_per_call, err
+}
+
 const getTierPricingByTierId = `-- name: GetTierPricingByTierId :many
 SELECT 
     tier_base_pricing.tier_base_pricing_id, tier_base_pricing.base_cost_per_call, tier_base_pricing.base_rate_limit, tier_base_pricing.api_endpoint_id, tier_base_pricing.subscription_tier_id, api_endpoint.endpoint_name,

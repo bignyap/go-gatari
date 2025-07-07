@@ -85,6 +85,26 @@ func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string)
 	return i, err
 }
 
+const getEndpointByName = `-- name: GetEndpointByName :one
+SELECT
+  api_endpoint_id AS id,
+  endpoint_name AS name
+FROM api_endpoint
+WHERE endpoint_name = $1
+`
+
+type GetEndpointByNameRow struct {
+	ID   int32
+	Name string
+}
+
+func (q *Queries) GetEndpointByName(ctx context.Context, endpointName string) (GetEndpointByNameRow, error) {
+	row := q.db.QueryRow(ctx, getEndpointByName, endpointName)
+	var i GetEndpointByNameRow
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
 const listApiEndpoint = `-- name: ListApiEndpoint :many
 SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
 FROM api_endpoint

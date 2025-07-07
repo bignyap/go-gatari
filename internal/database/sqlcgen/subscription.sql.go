@@ -100,6 +100,39 @@ func (q *Queries) DeleteSubscriptionByOrgId(ctx context.Context, organizationID 
 	return err
 }
 
+const getActiveSubscription = `-- name: GetActiveSubscription :one
+SELECT
+  subscription_id AS id,
+  organization_id,
+  subscription_api_limit AS api_limit,
+  subscription_expiry_date AS expiry_timestamp,
+  subscription_status AS active
+FROM subscription
+WHERE organization_id = $1
+  AND subscription_status = TRUE
+`
+
+type GetActiveSubscriptionRow struct {
+	ID              int32
+	OrganizationID  int32
+	ApiLimit        pgtype.Int4
+	ExpiryTimestamp pgtype.Int4
+	Active          pgtype.Bool
+}
+
+func (q *Queries) GetActiveSubscription(ctx context.Context, organizationID int32) (GetActiveSubscriptionRow, error) {
+	row := q.db.QueryRow(ctx, getActiveSubscription, organizationID)
+	var i GetActiveSubscriptionRow
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.ApiLimit,
+		&i.ExpiryTimestamp,
+		&i.Active,
+	)
+	return i, err
+}
+
 const getSubscriptionById = `-- name: GetSubscriptionById :one
 SELECT 
     subscription.subscription_id, subscription.subscription_name, subscription.subscription_type, subscription.subscription_created_date, subscription.subscription_updated_date, subscription.subscription_start_date, subscription.subscription_api_limit, subscription.subscription_expiry_date, subscription.subscription_description, subscription.subscription_status, subscription.organization_id, subscription.subscription_tier_id, subscription.subscription_quota_reset_interval, subscription.subscription_billing_model, subscription.subscription_billing_interval, subscription_tier.tier_name  

@@ -75,3 +75,10 @@ SET
   path_template = EXCLUDED.path_template,
   resource_type_id = EXCLUDED.resource_type_id
 RETURNING api_endpoint_id;
+
+-- name: GetEndpointByName :one
+SELECT
+  api_endpoint_id AS id,
+  endpoint_name AS name
+FROM api_endpoint
+WHERE endpoint_name = $1;

@@ -61,8 +61,8 @@ func (s *UsageSummaryService) GetApiUsageSummaryByOrgId(ctx context.Context, org
 
 	input := sqlcgen.GetApiUsageSummaryByOrgIdParams{
 		OrganizationID: int32(orgId),
-		Limit:          int32(page),
-		Offset:         int32(n),
+		Limit:          int32(n),
+		Offset:         int32(page),
 	}
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByOrgId(ctx, input)
@@ -72,6 +72,10 @@ func (s *UsageSummaryService) GetApiUsageSummaryByOrgId(ctx context.Context, org
 			"couldn't retrieve the api usage summaries",
 			err,
 		)
+	}
+
+	if len(apiUsageSummaries) == 0 {
+		return []CreateApiUsageSummaryOutput{}, nil
 	}
 
 	var output []CreateApiUsageSummaryOutput
@@ -88,8 +92,8 @@ func (s *UsageSummaryService) GetApiUsageSummaryBySubId(ctx context.Context, sub
 
 	input := sqlcgen.GetApiUsageSummaryBySubIdParams{
 		SubscriptionID: int32(subId),
-		Limit:          int32(page),
-		Offset:         int32(n),
+		Limit:          int32(n),
+		Offset:         int32(page),
 	}
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryBySubId(ctx, input)
@@ -99,6 +103,10 @@ func (s *UsageSummaryService) GetApiUsageSummaryBySubId(ctx context.Context, sub
 			"couldn't retrieve the api usage summaries",
 			err,
 		)
+	}
+
+	if len(apiUsageSummaries) == 0 {
+		return []CreateApiUsageSummaryOutput{}, nil
 	}
 
 	var output []CreateApiUsageSummaryOutput
@@ -115,8 +123,8 @@ func (s *UsageSummaryService) GetApiUsageSummaryByEndpointId(ctx context.Context
 
 	input := sqlcgen.GetApiUsageSummaryByEndpointIdParams{
 		ApiEndpointID: int32(eId),
-		Limit:         int32(page),
-		Offset:        int32(n),
+		Limit:         int32(n),
+		Offset:        int32(page),
 	}
 
 	apiUsageSummaries, err := s.DB.GetApiUsageSummaryByEndpointId(ctx, input)
@@ -126,6 +134,10 @@ func (s *UsageSummaryService) GetApiUsageSummaryByEndpointId(ctx context.Context
 			"couldn't retrieve the api usage summaries",
 			err,
 		)
+	}
+
+	if len(apiUsageSummaries) == 0 {
+		return []CreateApiUsageSummaryOutput{}, nil
 	}
 
 	var output []CreateApiUsageSummaryOutput

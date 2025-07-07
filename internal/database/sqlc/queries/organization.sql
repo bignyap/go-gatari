@@ -46,3 +46,11 @@ WHERE organization_id = $10;
 -- name: DeleteOrganizationById :exec
 DELETE FROM organization
 WHERE organization_id = $1;
+
+-- name: GetOrganizationByName :one
+SELECT
+  organization_id AS id,
+  organization_name AS name,
+  organization_realm AS realm
+FROM organization
+WHERE organization_realm = $1 AND organization_active = TRUE;

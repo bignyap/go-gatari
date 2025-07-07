@@ -129,10 +129,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		strconv.Itoa(int(endpoint.ID)),
 	)
 	sub, err := caching.GetFromCache(ctx, s.Cache, subKey, func() (sqlcgen.GetActiveSubscriptionRow, error) {
-		return s.DB.GetActiveSubscription(ctx, sqlcgen.GetActiveSubscriptionParams{
-			OrganizationID: org.ID,
-			ApiEndpointID:  endpoint.ID,
-		})
+		return s.DB.GetActiveSubscription(ctx, org.ID)
 	})
 	if err != nil || !sub.Active.Bool {
 		return nil, server.NewError(server.ErrorUnauthorized, "no active subscription", nil)

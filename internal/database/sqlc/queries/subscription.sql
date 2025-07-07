@@ -67,3 +67,19 @@ WHERE organization_id = $1;
 -- name: DeleteSubscriptionById :exec
 DELETE FROM subscription
 WHERE subscription_id = $1;
+
+-- name: GetActiveSubscription :one
+SELECT
+  subscription_id AS id,
+  organization_id,
+  subscription_api_limit AS api_limit,
+  subscription_expiry_date AS expiry_timestamp,
+  subscription_status AS active
+FROM subscription
+WHERE organization_id = $1
+  AND subscription_status = TRUE;
+  -- AND EXISTS (
+  --   SELECT 1 FROM tier_base_pricing tbp
+  --   WHERE tbp.subscription_tier_id = subscription.subscription_tier_id
+  --     AND tbp.api_endpoint_id = $2
+  -- );
