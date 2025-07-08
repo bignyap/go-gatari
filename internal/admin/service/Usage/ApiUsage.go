@@ -2,7 +2,6 @@ package usage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
@@ -67,7 +66,6 @@ func buildGetUsageSummaryInputParams(f UsageSummaryFilters) sqlcgen.GetUsageSumm
 		Limit:      int32(f.Limit),
 		Offset:     int32(f.Offset),
 	}
-	fmt.Println("GetUsageSummaryInputParams:", val)
 	return val
 }
 

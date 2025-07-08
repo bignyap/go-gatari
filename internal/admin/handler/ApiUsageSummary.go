@@ -27,10 +27,22 @@ func (h *AdminHandler) GetApiUsageSummaryHandler(c *gin.Context) {
 	var err error
 	var output interface{}
 
-	input, err := h.UsageService.UsageSummaryQueryValidation(c)
+	query, err := h.UsageService.UsageSummaryQueryValidation(c)
 	if err != nil {
-		h.ResponseWriter.Error(c, err)
+		h.ResponseWriter.BadRequest(c, err.Error())
 		return
+	}
+
+	limit, offset, err := ExtractPaginationDetail(c)
+	if err != nil {
+		h.ResponseWriter.BadRequest(c, err.Error())
+		return
+	}
+
+	input := usage.UsageSummaryFilters{
+		Limit:                         int32(limit),
+		Offset:                        int32(offset),
+		UsageSummaryFilterQueryParams: query,
 	}
 
 	if input.GroupBy {
