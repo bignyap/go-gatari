@@ -24,17 +24,19 @@ vars:
 tasks:
   clean:
     cmds:
-      - go clean
+      # - go clean
       - go clean -modcache
 
   mod-update:
     cmds:
       - go mod tidy
-      - go mod vendor
+      # - go mod vendor
 
   run-debug:
     cmds:
-      - ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=debug go run {{.ENTRYPOINT}}
+      - echo "Running service {{.SERVICE_NAME}}"
+      - "ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=debug go run {{.ENTRYPOINT}}"
+
 
   run-dev:
     cmds:
@@ -52,11 +54,18 @@ tasks:
     vars: { SERVICE_NAME: go-admin }
     cmds:
       - task: run-debug
-
+  
   run-gatekeeper:
-    vars: { SERVICE_NAME: gate-keeper }
+    vars:
+      SERVICE_NAME: gate-keeper
+      ENTRYPOINT: cmd/gate-keeper/main.go
     cmds:
       - task: run-debug
+        vars:
+          SERVICE_NAME: gate-keeper
+          ENTRYPOINT: cmd/gate-keeper/main.go
+
+
 
   test:
     cmds:
@@ -128,7 +137,14 @@ tasks:
   remove-container:
     cmds:
       - |
-        docker images --format "{{'{{.Repository}}:{{.Tag}}'}}" | grep '^{{.SERVICE_NAME}}' | xargs -r docker rmi
+        powershell -Command "
+          docker images --format '{{.Repository}}:{{.Tag}}' |
+          ForEach-Object {
+            if (\$_ -like '{{.SERVICE_NAME}}:*') {
+              docker rmi \$_
+            }
+          }
+        "
 
   start-container:
     cmds:
