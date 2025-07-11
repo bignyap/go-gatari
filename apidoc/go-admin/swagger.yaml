@@ -22,6 +22,13 @@ paths:
   /resourceType/{id}:
     $ref: './paths/resourceType.yaml#/paths/~1resourceType~1{id}'
 
+  /permissionType:
+    $ref: './paths/permissionType.yaml#/paths/~1permissionType'
+  /permissionType/batch:
+    $ref: './paths/permissionType.yaml#/paths/~1permissionType~1batch'
+  /permissionType/{id}:
+    $ref: './paths/permissionType.yaml#/paths/~1permissionType~1{id}'
+
   /orgType:
     $ref: './paths/orgType.yaml#/paths/~1orgType'
   /orgType/batch:

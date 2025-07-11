@@ -91,3 +91,57 @@ func (h *ResourceService) CreateResourceTypeJSONValidation(c *gin.Context) ([]sq
 
 	return outputs, nil
 }
+
+func (h *ResourceService) CreatePermissionTypeFormValidator(c *gin.Context) (*sqlcgen.CreatePermissionTypeParams, error) {
+
+	var input CreatePermissionTypeParams
+	if err := c.ShouldBind(&input); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
+	}
+
+	// Validate struct
+	if err := h.Validator.Struct(input); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	// Convert description to pgtype.Text
+	desc := pgtype.Text{Valid: false}
+	if input.Description != nil {
+		desc = pgtype.Text{String: *input.Description, Valid: true}
+	}
+
+	// Build and return final params
+	return &sqlcgen.CreatePermissionTypeParams{
+		PermissionName:        input.Name,
+		PermissionCode:        input.Code,
+		PermissionDescription: desc,
+	}, nil
+}
+
+func (h *ResourceService) CreatePermissionTypeJSONValidation(c *gin.Context) ([]sqlcgen.CreatePermissionTypesParams, error) {
+
+	var inputs []CreateResourceTypeParams
+	if err := c.ShouldBindJSON(&inputs); err != nil {
+		return []sqlcgen.CreatePermissionTypesParams{}, fmt.Errorf("invalid JSON: %w", err)
+	}
+
+	var outputs []sqlcgen.CreatePermissionTypesParams
+	for _, input := range inputs {
+		if err := h.Validator.Struct(input); err != nil {
+			return nil, fmt.Errorf("validation failed: %w", err)
+		}
+
+		desc := pgtype.Text{Valid: false}
+		if input.Description != nil {
+			desc = pgtype.Text{String: *input.Description, Valid: true}
+		}
+
+		outputs = append(outputs, sqlcgen.CreatePermissionTypesParams{
+			PermissionName:        input.Name,
+			PermissionCode:        input.Code,
+			PermissionDescription: desc,
+		})
+	}
+
+	return outputs, nil
+}

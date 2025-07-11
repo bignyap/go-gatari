@@ -48,6 +48,21 @@ type CustomEndpointPricing struct {
 	TierBasePricingID       int32   `json:"tier_base_pricing_id"`
 }
 
+type DashboardSummaryView struct {
+	ResourceTypeCount           int64 `json:"resource_type_count"`
+	ApiEndpointCount            int64 `json:"api_endpoint_count"`
+	OrganizationCount           int64 `json:"organization_count"`
+	ActiveOrganizationCount     int64 `json:"active_organization_count"`
+	SubscriptionTierCount       int64 `json:"subscription_tier_count"`
+	ActiveSubscriptionTierCount int64 `json:"active_subscription_tier_count"`
+	SubscriptionCount           int64 `json:"subscription_count"`
+	ActiveSubscriptionCount     int64 `json:"active_subscription_count"`
+	BillingHistoryCount         int64 `json:"billing_history_count"`
+	UsageSummaryCount           int64 `json:"usage_summary_count"`
+	OrganizationPermissionCount int64 `json:"organization_permission_count"`
+	PermissionTypeCount         int64 `json:"permission_type_count"`
+}
+
 type Organization struct {
 	OrganizationID           int32       `json:"organization_id"`
 	OrganizationName         string      `json:"organization_name"`
@@ -72,6 +87,12 @@ type OrganizationPermission struct {
 type OrganizationType struct {
 	OrganizationTypeID   int32  `json:"organization_type_id"`
 	OrganizationTypeName string `json:"organization_type_name"`
+}
+
+type PermissionType struct {
+	PermissionCode        string      `json:"permission_code"`
+	PermissionName        string      `json:"permission_name"`
+	PermissionDescription pgtype.Text `json:"permission_description"`
 }
 
 type ResourceType struct {

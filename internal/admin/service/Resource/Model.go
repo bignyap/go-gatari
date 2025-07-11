@@ -29,3 +29,13 @@ type CreateResourceTypeOutput struct {
 	ID int `json:"id"`
 	CreateResourceTypeParams
 }
+
+type CreatePermissionTypeParams struct {
+	Name        string  `form:"name" json:"name" validate:"required,min=1"`
+	Code        string  `form:"code" json:"code" validate:"required,min=1"`
+	Description *string `form:"description" json:"description"`
+}
+
+type CreatePermissionTypeOutput struct {
+	CreatePermissionTypeParams
+}

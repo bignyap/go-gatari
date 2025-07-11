@@ -82,6 +82,14 @@ func ResourceTypeHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp.GET("", h.ListResourceTypeHandler)
 }
 
+func PermissionTypeHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
+	routerGrp := r.Group("/permissionType")
+	routerGrp.POST("", h.CreatePermissionTypeHandler)
+	routerGrp.POST("/batch", h.CreatePermissionTypeInBatchHandler)
+	routerGrp.DELETE("/:id", h.DeletePermissionTypeHandler)
+	routerGrp.GET("", h.ListPermissionTypeHandler)
+}
+
 func OrgPermissionHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/orgPermission")
 	routerGrp.POST("", h.CreateOrgPermissionHandler)
@@ -104,6 +112,11 @@ func ApiUsageSummaryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/apiUsageSummary")
 	routerGrp.POST("/batch", h.CreateApiUsageInBatchHandler)
 	routerGrp.GET("", h.GetApiUsageSummaryHandler)
+}
+
+func DashboardHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
+	routerGrp := r.Group("/dashboard")
+	routerGrp.POST("/counts", h.DashboardCountHandler)
 }
 
 func RegisterAdminHandlers(
@@ -132,9 +145,11 @@ func RegisterAdminHandlers(
 	SubscriptionHandler(adminGrpRouter, handler)
 	CustomPricingHandler(adminGrpRouter, handler)
 	ResourceTypeHandler(adminGrpRouter, handler)
+	PermissionTypeHandler(adminGrpRouter, handler)
 	OrgPermissionHandler(adminGrpRouter, handler)
 	BillingHistoryHandler(adminGrpRouter, handler)
 	ApiUsageSummaryHandler(adminGrpRouter, handler)
+	DashboardHandler(adminGrpRouter, handler)
 
 	regRouterLogger.Info("Completed")
 }

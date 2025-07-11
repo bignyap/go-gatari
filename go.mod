@@ -2,7 +2,7 @@ module github.com/bignyap/go-admin
 
 go 1.24.1
 
-replace github.com/bignyap/go-utilities => C:\Bignya\MyProjects\go-utilities
+replace github.com/bignyap/go-utilities => /Users/bpathi/Desktop/Bignya/go-utilities
 
 require (
 	github.com/bignyap/go-utilities v0.0.5

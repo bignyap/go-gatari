@@ -1,0 +1,89 @@
+paths:
+  /permissionType:
+    post:
+      summary: Create a new permission type
+      operationId: createPermissionType
+      tags:
+        - Permission Type
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '../schemas/PermissionType.yaml#/CreatePermissionTypeInput'
+      responses:
+        "201":
+          description: Permission type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/PermissionType.yaml#/CretePermissionTypeOutput'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/PermissionType.yaml#/Error'
+    get:
+      summary: List all premission types
+      operationId: listPermisionTypes
+      tags:
+        - Permission Type
+      parameters:
+        - $ref: '../schemas/Pagination.yaml#/components/parameters/PageNumber'
+        - $ref: '../schemas/Pagination.yaml#/components/parameters/ItemsPerPage'
+      responses:
+        "200":
+          description: A list of premission types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/PermissionType.yaml#/CretePermissionTypeOutput'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/PermissionType.yaml#/Error'
+  /permissionType/batch:
+    post:
+      summary: Create premission type in bulk
+      operationId: createPermisionTypeInBulk
+      tags:
+        - Permission Type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../schemas/PermissionType.yaml#/CreatePermissionTypeInput'
+      responses:
+        "201":
+          description: Permission type created successfully
+  /permissionType/{id}:
+    delete:
+      summary: Delete a permission type by ID
+      operationId: deletePermisionType
+      tags:
+        - Permission Type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "204":
+          description: Permission type deleted successfully
+        "400":
+          description: Bad request or invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/PermissionType.yaml#/Error'
+    

@@ -228,6 +228,40 @@ func (q *Queries) CreateOrganizations(ctx context.Context, arg []CreateOrganizat
 	return q.db.CopyFrom(ctx, []string{"organization"}, []string{"organization_name", "organization_created_at", "organization_updated_at", "organization_realm", "organization_country", "organization_support_email", "organization_active", "organization_report_q", "organization_config", "organization_type_id"}, &iteratorForCreateOrganizations{rows: arg})
 }
 
+// iteratorForCreatePermissionTypes implements pgx.CopyFromSource.
+type iteratorForCreatePermissionTypes struct {
+	rows                 []CreatePermissionTypesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreatePermissionTypes) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreatePermissionTypes) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].PermissionCode,
+		r.rows[0].PermissionName,
+		r.rows[0].PermissionDescription,
+	}, nil
+}
+
+func (r iteratorForCreatePermissionTypes) Err() error {
+	return nil
+}
+
+func (q *Queries) CreatePermissionTypes(ctx context.Context, arg []CreatePermissionTypesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"permission_type"}, []string{"permission_code", "permission_name", "permission_description"}, &iteratorForCreatePermissionTypes{rows: arg})
+}
+
 // iteratorForCreateResourceTypes implements pgx.CopyFromSource.
 type iteratorForCreateResourceTypes struct {
 	rows                 []CreateResourceTypesParams
