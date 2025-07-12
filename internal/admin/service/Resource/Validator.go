@@ -145,3 +145,13 @@ func (h *ResourceService) CreatePermissionTypeJSONValidation(c *gin.Context) ([]
 
 	return outputs, nil
 }
+
+func (s *ResourceService) ListEndpointQueryValidation(c *gin.Context) (ListEndpointQueryParameters, error) {
+
+	var filters ListEndpointQueryParameters
+	if err := c.ShouldBindQuery(&filters); err != nil {
+		return ListEndpointQueryParameters{}, err
+	}
+
+	return filters, nil
+}

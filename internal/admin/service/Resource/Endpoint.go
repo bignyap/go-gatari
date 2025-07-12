@@ -165,6 +165,44 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 	return output, nil
 }
 
+func (s *ResourceService) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ListEndpointOutputs, error) {
+
+	apiEndpoints, err := s.DB.ListApiEndpointsByResourceType(ctx, resourceTypeID)
+	if err != nil {
+		return []ListEndpointOutputs{}, server.NewError(
+			server.ErrorInternal,
+			"couldn't retrieve endpoints",
+			err,
+		)
+	}
+
+	if len(apiEndpoints) == 0 {
+		return []ListEndpointOutputs{}, nil
+	}
+
+	var output []ListEndpointOutputs
+	for _, apiEndpoint := range apiEndpoints {
+		var desc *string
+		if apiEndpoint.EndpointDescription.Valid {
+			desc = &apiEndpoint.EndpointDescription.String
+		}
+
+		output = append(output, ListEndpointOutputs{
+			ID:               int(apiEndpoint.ApiEndpointID),
+			ResourceTypeName: apiEndpoint.ResourceTypeName,
+			RegisterEndpointParams: RegisterEndpointParams{
+				Name:           apiEndpoint.EndpointName,
+				Description:    desc,
+				HttpMethod:     apiEndpoint.HttpMethod,
+				PathTemplate:   apiEndpoint.PathTemplate,
+				ResourceTypeID: apiEndpoint.ResourceTypeID,
+			},
+		})
+	}
+
+	return output, nil
+}
+
 func (s *ResourceService) DeleteApiEndpointsById(ctx context.Context, id int) error {
 
 	input, err := s.DB.GetApiEndpointById(ctx, int32(id))

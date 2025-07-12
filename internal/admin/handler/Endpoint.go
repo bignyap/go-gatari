@@ -45,13 +45,28 @@ func (h *AdminHandler) RegisterEndpointInBatchHandler(c *gin.Context) {
 
 func (h *AdminHandler) ListEndpointsHandler(c *gin.Context) {
 
+	var err error
+	var output interface{}
+
+	query, err := h.ResourceService.ListEndpointQueryValidation(c)
+	if err != nil {
+		h.ResponseWriter.BadRequest(c, err.Error())
+		return
+	}
+
 	n, page, err := ExtractPaginationDetail(c)
 	if err != nil {
 		h.ResponseWriter.BadRequest(c, err.Error())
 		return
 	}
 
-	output, err := h.ResourceService.ListApiEndpoints(c.Request.Context(), n, page)
+	if query.ResourceTypeID != nil {
+		output, err = h.ResourceService.ListApiEndpointsByResourceType(
+			c.Request.Context(), int32(*query.ResourceTypeID),
+		)
+	} else {
+		output, err = h.ResourceService.ListApiEndpoints(c.Request.Context(), n, page)
+	}
 	if err != nil {
 		h.ResponseWriter.Error(c, err)
 		return

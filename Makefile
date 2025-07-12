@@ -121,3 +121,16 @@ start-container:
 
 stop-container:
 	docker compose -f docker-compose.yaml down
+
+
+######################
+# Clean build and Start
+######################
+
+clean-build-run:
+	$(MAKE) stop-container
+	$(MAKE) remove-container SERVICE_NAME=go-admin
+	$(MAKE) remove-container SERVICE_NAME=gate-keeper
+	$(MAKE) build-container SERVICE_NAME=go-admin
+	$(MAKE) build-container SERVICE_NAME=gate-keeper
+	$(MAKE) start-container

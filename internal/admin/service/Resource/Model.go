@@ -13,6 +13,10 @@ type RegisterEndpointOutputs struct {
 	RegisterEndpointParams
 }
 
+type ListEndpointQueryParameters struct {
+	ResourceTypeID *int `form:"resource_type_id" json:"resource_type_id"`
+}
+
 type ListEndpointOutputs struct {
 	ID               int    `json:"id"`
 	ResourceTypeName string `json:"resource_type_name"`
