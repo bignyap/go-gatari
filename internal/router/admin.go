@@ -117,6 +117,7 @@ func ApiUsageSummaryHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 func DashboardHandler(r *gin.RouterGroup, h *adminHandler.AdminHandler) {
 	routerGrp := r.Group("/dashboard")
 	routerGrp.GET("/counts", h.DashboardCountHandler)
+	routerGrp.GET("/usage", h.DashboardUsageHandler)
 }
 
 func RegisterAdminHandlers(

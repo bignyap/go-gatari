@@ -56,6 +56,77 @@ func (q *Queries) CreateApiUsageSummary(ctx context.Context, arg CreateApiUsageS
 	return usage_summary_id, err
 }
 
+const getTotalCallsGroupedByOrgAndTimeBucket = `-- name: GetTotalCallsGroupedByOrgAndTimeBucket :many
+WITH usage_buckets AS (
+  SELECT
+    organization_id,
+    FLOOR(usage_start_date / $1::int) * $1::int AS bucket_start,
+    SUM(total_calls) AS total_calls,
+    SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE
+    ($2::int IS NULL OR organization_id = $2) AND
+    ($3::int IS NULL OR usage_start_date >= $3) AND
+    ($4::int IS NULL OR usage_end_date <= $4)
+  GROUP BY organization_id, bucket_start
+)
+SELECT
+  u.organization_id,
+  o.organization_name,
+  u.bucket_start,
+  u.total_calls,
+  u.total_cost
+FROM usage_buckets u
+JOIN organization o ON u.organization_id = o.organization_id
+ORDER BY u.bucket_start ASC, u.organization_id
+`
+
+type GetTotalCallsGroupedByOrgAndTimeBucketParams struct {
+	BucketSize int32       `json:"bucket_size"`
+	OrgID      pgtype.Int4 `json:"org_id"`
+	StartDate  pgtype.Int4 `json:"start_date"`
+	EndDate    pgtype.Int4 `json:"end_date"`
+}
+
+type GetTotalCallsGroupedByOrgAndTimeBucketRow struct {
+	OrganizationID   int32  `json:"organization_id"`
+	OrganizationName string `json:"organization_name"`
+	BucketStart      int32  `json:"bucket_start"`
+	TotalCalls       int64  `json:"total_calls"`
+	TotalCost        int64  `json:"total_cost"`
+}
+
+func (q *Queries) GetTotalCallsGroupedByOrgAndTimeBucket(ctx context.Context, arg GetTotalCallsGroupedByOrgAndTimeBucketParams) ([]GetTotalCallsGroupedByOrgAndTimeBucketRow, error) {
+	rows, err := q.db.Query(ctx, getTotalCallsGroupedByOrgAndTimeBucket,
+		arg.BucketSize,
+		arg.OrgID,
+		arg.StartDate,
+		arg.EndDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetTotalCallsGroupedByOrgAndTimeBucketRow{}
+	for rows.Next() {
+		var i GetTotalCallsGroupedByOrgAndTimeBucketRow
+		if err := rows.Scan(
+			&i.OrganizationID,
+			&i.OrganizationName,
+			&i.BucketStart,
+			&i.TotalCalls,
+			&i.TotalCost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUsageSummary = `-- name: GetUsageSummary :many
 WITH filtered_usage AS (
   SELECT organization_id, subscription_id, api_endpoint_id,

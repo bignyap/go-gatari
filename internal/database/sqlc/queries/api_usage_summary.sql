@@ -92,3 +92,27 @@ VALUES (
 )
 ON CONFLICT (usage_start_date, usage_end_date, api_endpoint_id, organization_id)
 DO UPDATE SET total_calls = api_usage_summary.total_calls + 1;
+
+-- name: GetTotalCallsGroupedByOrgAndTimeBucket :many
+WITH usage_buckets AS (
+  SELECT
+    organization_id,
+    FLOOR(usage_start_date / sqlc.arg('bucket_size')::int) * sqlc.arg('bucket_size')::int AS bucket_start,
+    SUM(total_calls) AS total_calls,
+    SUM(total_cost) AS total_cost
+  FROM api_usage_summary
+  WHERE
+    (sqlc.narg('org_id')::int IS NULL OR organization_id = sqlc.narg('org_id')) AND
+    (sqlc.narg('start_date')::int IS NULL OR usage_start_date >= sqlc.narg('start_date')) AND
+    (sqlc.narg('end_date')::int IS NULL OR usage_end_date <= sqlc.narg('end_date'))
+  GROUP BY organization_id, bucket_start
+)
+SELECT
+  u.organization_id,
+  o.organization_name,
+  u.bucket_start,
+  u.total_calls,
+  u.total_cost
+FROM usage_buckets u
+JOIN organization o ON u.organization_id = o.organization_id
+ORDER BY u.bucket_start ASC, u.organization_id;

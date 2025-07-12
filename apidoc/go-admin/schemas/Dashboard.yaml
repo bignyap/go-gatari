@@ -38,3 +38,23 @@ DashboardCountOutput:
     - usage_summary_count
     - organization_permission_count
     - permission_type_count
+
+DashboardUsageOutput:
+  type: object
+  properties:
+    organization_id:
+      type: integer
+    organization_name:
+      type: string
+    bucket_size:
+      type: integer
+    total_calls:
+      type: integer
+    total_cost:
+      type: number
+  required:
+    - organization_id
+    - organization_name
+    - bucket_size
+    - total_calls
+    - total_cost
