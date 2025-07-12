@@ -106,6 +106,9 @@ paths:
   /billingHistory/endpointId/id/{id}:
     $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1id~1{billing_id}'
 
+  /dashboard/counts:
+    $ref: './paths/dashboard.yaml#/paths/~1dashboard~1counts'
+
 components:
   schemas:
     CreateCustomPricingInput:

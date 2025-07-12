@@ -1,0 +1,40 @@
+DashboardCountOutput:
+  type: object
+  properties:
+    resource_type_count:
+      type: integer
+    api_endpoint_count:
+      type: integer
+    organization_count:
+      type: integer
+    active_organization_count:
+      type: integer
+    subscription_tier_count:
+      type: integer
+    active_subscription_tier_count:
+      type: integer
+    subscription_count:
+      type: integer
+    active_subscription_count:
+      type: integer
+    billing_history_count:
+      type: integer
+    usage_summary_count:
+      type: integer
+    organization_permission_count:
+      type: integer
+    permission_type_count:
+      type: integer
+  required:
+    - resource_type_count
+    - api_endpoint_count
+    - organization_count
+    - active_organization_count
+    - subscription_tier_count
+    - active_subscription_tier_count
+    - subscription_count
+    - active_subscription_count
+    - billing_history_count
+    - usage_summary_count
+    - organization_permission_count
+    - permission_type_count
