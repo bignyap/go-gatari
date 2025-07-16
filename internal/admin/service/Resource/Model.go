@@ -6,6 +6,7 @@ type RegisterEndpointParams struct {
 	HttpMethod     string  `form:"http_method" json:"http_method" validate:"required,oneof=GET POST PUT DELETE PATCH"`
 	PathTemplate   string  `form:"path_template" json:"path_template" validate:"required"`
 	ResourceTypeID int32   `form:"resource_type_id" json:"resource_type_id" validate:"required"`
+	PermissionCode string  `form:"permission_code" json:"permission_code" validate:"required"`
 }
 
 type RegisterEndpointOutputs struct {

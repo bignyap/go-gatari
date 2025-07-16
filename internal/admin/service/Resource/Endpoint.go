@@ -34,6 +34,7 @@ func (s *ResourceService) RegisterApiEndpoint(ctx context.Context, input *Regist
 		HttpMethod:          input.HttpMethod,
 		PathTemplate:        input.PathTemplate,
 		ResourceTypeID:      input.ResourceTypeID,
+		PermissionCode:      input.PermissionCode,
 	}
 
 	err := s.PubSubClient.Publish(ctx, string(common.EndpointCreated), common.EndpointCreatedEvent{
@@ -66,6 +67,7 @@ func (s *ResourceService) RegisterApiEndpoint(ctx context.Context, input *Regist
 			HttpMethod:     input.HttpMethod,
 			PathTemplate:   input.PathTemplate,
 			ResourceTypeID: input.ResourceTypeID,
+			PermissionCode: input.PermissionCode,
 		},
 	}
 
@@ -87,6 +89,7 @@ func (s *ResourceService) RegisterApiEndpointInBatch(ctx context.Context, inputs
 			HttpMethod:          in.HttpMethod,
 			PathTemplate:        in.PathTemplate,
 			ResourceTypeID:      in.ResourceTypeID,
+			PermissionCode:      in.PermissionCode,
 		}
 
 		err := s.PubSubClient.Publish(ctx, string(common.EndpointCreated), common.EndpointCreatedEvent{
@@ -158,6 +161,7 @@ func (s *ResourceService) ListApiEndpoints(ctx context.Context, limit int, offse
 				HttpMethod:     apiEndpoint.HttpMethod,
 				PathTemplate:   apiEndpoint.PathTemplate,
 				ResourceTypeID: apiEndpoint.ResourceTypeID,
+				PermissionCode: apiEndpoint.PermissionCode,
 			},
 		})
 	}
@@ -196,6 +200,7 @@ func (s *ResourceService) ListApiEndpointsByResourceType(ctx context.Context, re
 				HttpMethod:     apiEndpoint.HttpMethod,
 				PathTemplate:   apiEndpoint.PathTemplate,
 				ResourceTypeID: apiEndpoint.ResourceTypeID,
+				PermissionCode: apiEndpoint.PermissionCode,
 			},
 		})
 	}

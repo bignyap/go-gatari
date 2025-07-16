@@ -22,9 +22,10 @@ func (q *Queries) DeleteApiEndpointById(ctx context.Context, apiEndpointID int32
 }
 
 const getApiEndpointById = `-- name: GetApiEndpointById :one
-SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code
 WHERE api_endpoint_id = $1
 `
 
@@ -35,7 +36,10 @@ type GetApiEndpointByIdRow struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 	ResourceTypeName    string      `json:"resource_type_name"`
+	PermissionCode_2    string      `json:"permission_code_2"`
+	PermissionName      string      `json:"permission_name"`
 }
 
 func (q *Queries) GetApiEndpointById(ctx context.Context, apiEndpointID int32) (GetApiEndpointByIdRow, error) {
@@ -48,15 +52,19 @@ func (q *Queries) GetApiEndpointById(ctx context.Context, apiEndpointID int32) (
 		&i.HttpMethod,
 		&i.PathTemplate,
 		&i.ResourceTypeID,
+		&i.PermissionCode,
 		&i.ResourceTypeName,
+		&i.PermissionCode_2,
+		&i.PermissionName,
 	)
 	return i, err
 }
 
 const getApiEndpointByName = `-- name: GetApiEndpointByName :one
-SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code
 WHERE endpoint_name = $1
 `
 
@@ -67,7 +75,10 @@ type GetApiEndpointByNameRow struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 	ResourceTypeName    string      `json:"resource_type_name"`
+	PermissionCode_2    string      `json:"permission_code_2"`
+	PermissionName      string      `json:"permission_name"`
 }
 
 func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string) (GetApiEndpointByNameRow, error) {
@@ -80,7 +91,10 @@ func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string)
 		&i.HttpMethod,
 		&i.PathTemplate,
 		&i.ResourceTypeID,
+		&i.PermissionCode,
 		&i.ResourceTypeName,
+		&i.PermissionCode_2,
+		&i.PermissionName,
 	)
 	return i, err
 }
@@ -106,9 +120,10 @@ func (q *Queries) GetEndpointByName(ctx context.Context, endpointName string) (G
 }
 
 const listApiEndpoint = `-- name: ListApiEndpoint :many
-SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code
 ORDER BY api_endpoint_id DESC
 LIMIT $1 OFFSET $2
 `
@@ -125,7 +140,10 @@ type ListApiEndpointRow struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 	ResourceTypeName    string      `json:"resource_type_name"`
+	PermissionCode_2    string      `json:"permission_code_2"`
+	PermissionName      string      `json:"permission_name"`
 }
 
 func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams) ([]ListApiEndpointRow, error) {
@@ -144,7 +162,10 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 			&i.HttpMethod,
 			&i.PathTemplate,
 			&i.ResourceTypeID,
+			&i.PermissionCode,
 			&i.ResourceTypeName,
+			&i.PermissionCode_2,
+			&i.PermissionName,
 		); err != nil {
 			return nil, err
 		}
@@ -157,9 +178,10 @@ func (q *Queries) ListApiEndpoint(ctx context.Context, arg ListApiEndpointParams
 }
 
 const listApiEndpointsByResourceType = `-- name: ListApiEndpointsByResourceType :many
-SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, resource_type.resource_type_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
+INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code
 WHERE api_endpoint.resource_type_id = $1
 ORDER BY api_endpoint_id DESC
 `
@@ -171,7 +193,10 @@ type ListApiEndpointsByResourceTypeRow struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 	ResourceTypeName    string      `json:"resource_type_name"`
+	PermissionCode_2    string      `json:"permission_code_2"`
+	PermissionName      string      `json:"permission_name"`
 }
 
 func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTypeID int32) ([]ListApiEndpointsByResourceTypeRow, error) {
@@ -190,7 +215,10 @@ func (q *Queries) ListApiEndpointsByResourceType(ctx context.Context, resourceTy
 			&i.HttpMethod,
 			&i.PathTemplate,
 			&i.ResourceTypeID,
+			&i.PermissionCode,
 			&i.ResourceTypeName,
+			&i.PermissionCode_2,
+			&i.PermissionName,
 		); err != nil {
 			return nil, err
 		}
@@ -208,9 +236,10 @@ INSERT INTO api_endpoint (
   endpoint_description,
   http_method,
   path_template,
-  resource_type_id
+  resource_type_id,
+  permission_code
 )
-VALUES ($1, $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING api_endpoint_id
 `
 
@@ -220,6 +249,7 @@ type RegisterApiEndpointParams struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 }
 
 func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpointParams) (int32, error) {
@@ -229,6 +259,7 @@ func (q *Queries) RegisterApiEndpoint(ctx context.Context, arg RegisterApiEndpoi
 		arg.HttpMethod,
 		arg.PathTemplate,
 		arg.ResourceTypeID,
+		arg.PermissionCode,
 	)
 	var api_endpoint_id int32
 	err := row.Scan(&api_endpoint_id)
@@ -241,6 +272,7 @@ type RegisterApiEndpointsParams struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 }
 
 const updateApiEndpointById = `-- name: UpdateApiEndpointById :exec
@@ -250,7 +282,8 @@ SET
   endpoint_description = $3,
   http_method = $4,
   path_template = $5,
-  resource_type_id = $6
+  resource_type_id = $6,
+  permission_code = $7
 WHERE api_endpoint_id = $1
 `
 
@@ -261,6 +294,7 @@ type UpdateApiEndpointByIdParams struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 }
 
 func (q *Queries) UpdateApiEndpointById(ctx context.Context, arg UpdateApiEndpointByIdParams) error {
@@ -271,6 +305,7 @@ func (q *Queries) UpdateApiEndpointById(ctx context.Context, arg UpdateApiEndpoi
 		arg.HttpMethod,
 		arg.PathTemplate,
 		arg.ResourceTypeID,
+		arg.PermissionCode,
 	)
 	return err
 }
@@ -281,15 +316,17 @@ INSERT INTO api_endpoint (
   endpoint_description,
   http_method,
   path_template,
-  resource_type_id
+  resource_type_id,
+  permission_code
 )
-VALUES ($1, $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (endpoint_name) DO UPDATE
 SET
   endpoint_description = EXCLUDED.endpoint_description,
   http_method = EXCLUDED.http_method,
   path_template = EXCLUDED.path_template,
-  resource_type_id = EXCLUDED.resource_type_id
+  resource_type_id = EXCLUDED.resource_type_id,
+  permission_code = EXCLUDED.permission_code
 RETURNING api_endpoint_id
 `
 
@@ -299,6 +336,7 @@ type UpsertApiEndpointByNameParams struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 }
 
 func (q *Queries) UpsertApiEndpointByName(ctx context.Context, arg UpsertApiEndpointByNameParams) (int32, error) {
@@ -308,6 +346,7 @@ func (q *Queries) UpsertApiEndpointByName(ctx context.Context, arg UpsertApiEndp
 		arg.HttpMethod,
 		arg.PathTemplate,
 		arg.ResourceTypeID,
+		arg.PermissionCode,
 	)
 	var api_endpoint_id int32
 	err := row.Scan(&api_endpoint_id)

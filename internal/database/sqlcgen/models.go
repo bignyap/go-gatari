@@ -15,6 +15,7 @@ type ApiEndpoint struct {
 	HttpMethod          string      `json:"http_method"`
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
+	PermissionCode      string      `json:"permission_code"`
 }
 
 type ApiUsageSummary struct {
