@@ -9,6 +9,27 @@ import (
 	"context"
 )
 
+const checkOrgPermission = `-- name: CheckOrgPermission :one
+SELECT EXISTS (
+  SELECT 1
+  FROM organization_permission
+  WHERE resource_type_id = $1
+    AND permission_code = $2
+)
+`
+
+type CheckOrgPermissionParams struct {
+	ResourceTypeID int32  `json:"resource_type_id"`
+	PermissionCode string `json:"permission_code"`
+}
+
+func (q *Queries) CheckOrgPermission(ctx context.Context, arg CheckOrgPermissionParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkOrgPermission, arg.ResourceTypeID, arg.PermissionCode)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createOrgPermission = `-- name: CreateOrgPermission :one
 INSERT INTO organization_permission (
     resource_type_id, permission_code, organization_id

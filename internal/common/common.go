@@ -36,6 +36,7 @@ const (
 	OrganizationPrefix RedisPrefix = "organization"
 	EndpointPrefix     RedisPrefix = "endpoint"
 	SubscriptionPrefix RedisPrefix = "subscription"
+	PermissionPrefix   RedisPrefix = "permission"
 )
 
 var keyTypeTTLs = map[RedisPrefix]time.Duration{

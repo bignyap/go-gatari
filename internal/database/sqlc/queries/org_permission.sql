@@ -23,3 +23,11 @@ WHERE organization_permission_id = $1;
 -- name: DeleteOrgPermissionByOrgId :exec
 DELETE FROM organization_permission
 WHERE organization_id = $1;
+
+-- name: CheckOrgPermission :one
+SELECT EXISTS (
+  SELECT 1
+  FROM organization_permission
+  WHERE resource_type_id = $1
+    AND permission_code = $2
+);

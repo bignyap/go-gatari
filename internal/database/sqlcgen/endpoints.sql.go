@@ -61,7 +61,7 @@ func (q *Queries) GetApiEndpointById(ctx context.Context, apiEndpointID int32) (
 }
 
 const getApiEndpointByName = `-- name: GetApiEndpointByName :one
-SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
+SELECT api_endpoint.api_endpoint_id, api_endpoint.endpoint_name, api_endpoint.endpoint_description, api_endpoint.http_method, api_endpoint.path_template, api_endpoint.resource_type_id, api_endpoint.permission_code, resource_type.resource_type_id, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
 INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code
@@ -76,6 +76,7 @@ type GetApiEndpointByNameRow struct {
 	PathTemplate        string      `json:"path_template"`
 	ResourceTypeID      int32       `json:"resource_type_id"`
 	PermissionCode      string      `json:"permission_code"`
+	ResourceTypeID_2    int32       `json:"resource_type_id_2"`
 	ResourceTypeName    string      `json:"resource_type_name"`
 	PermissionCode_2    string      `json:"permission_code_2"`
 	PermissionName      string      `json:"permission_name"`
@@ -92,6 +93,7 @@ func (q *Queries) GetApiEndpointByName(ctx context.Context, endpointName string)
 		&i.PathTemplate,
 		&i.ResourceTypeID,
 		&i.PermissionCode,
+		&i.ResourceTypeID_2,
 		&i.ResourceTypeName,
 		&i.PermissionCode_2,
 		&i.PermissionName,

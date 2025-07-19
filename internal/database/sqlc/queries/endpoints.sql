@@ -7,7 +7,7 @@ ORDER BY api_endpoint_id DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetApiEndpointByName :one
-SELECT api_endpoint.*, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
+SELECT api_endpoint.*, resource_type.resource_type_id, resource_type.resource_type_name, permission_type.permission_code, permission_type.permission_name
 FROM api_endpoint
 INNER JOIN resource_type ON resource_type.resource_type_id = api_endpoint.resource_type_id
 INNER JOIN permission_type ON permission_type.permission_code = api_endpoint.permission_code

@@ -42,7 +42,7 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 	pricing, err := caching.GetFromCache(ctx, s.Cache, pricingcacheKey, func() (float64, error) {
 		val, err := s.DB.GetPricing(ctx, sqlcgen.GetPricingParams{
 			SubscriptionID: orgSubDetails.Subscription.ID,
-			ApiEndpointID:  orgSubDetails.Endpoint.ID,
+			ApiEndpointID:  orgSubDetails.Endpoint.ApiEndpointID,
 		})
 		return val, err
 	})
@@ -68,7 +68,7 @@ func updateUsageCounters(
 	usageKey := common.UsageKey(
 		orgSubDetails.Organization.ID,
 		orgSubDetails.Subscription.ID,
-		orgSubDetails.Endpoint.ID,
+		orgSubDetails.Endpoint.ApiEndpointID,
 	)
 
 	countWorker.Increment(
@@ -116,17 +116,31 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 	}
 
 	epKey := common.RedisKeyFormatter(string(common.EndpointPrefix), endpointCode)
-	endpoint, err := caching.GetFromCache(ctx, s.Cache, epKey, func() (sqlcgen.GetEndpointByNameRow, error) {
-		return s.DB.GetEndpointByName(ctx, endpointCode)
+	endpoint, err := caching.GetFromCache(ctx, s.Cache, epKey, func() (sqlcgen.GetApiEndpointByNameRow, error) {
+		return s.DB.GetApiEndpointByName(ctx, endpointCode)
 	})
 	if err != nil {
 		return nil, server.NewError(server.ErrorNotFound, "endpoint not found", err)
 	}
 
+	epPerKey := common.RedisKeyFormatter(
+		string(common.EndpointPrefix), string(endpoint.ResourceTypeID),
+		string(common.PermissionPrefix), endpoint.PermissionCode,
+	)
+	orgPerExists, err := caching.GetFromCache(ctx, s.Cache, epPerKey, func() (bool, error) {
+		return s.DB.CheckOrgPermission(ctx, sqlcgen.CheckOrgPermissionParams{
+			ResourceTypeID: endpoint.ResourceTypeID,
+			PermissionCode: endpoint.PermissionCode,
+		})
+	})
+	if err != nil || !orgPerExists {
+		return nil, server.NewError(server.ErrorUnauthorized, "insufficient permission", err)
+	}
+
 	subKey := common.RedisKeyFormatter(
 		string(common.SubscriptionPrefix),
 		strconv.Itoa(int(org.ID)),
-		strconv.Itoa(int(endpoint.ID)),
+		strconv.Itoa(int(endpoint.ApiEndpointID)),
 	)
 	sub, err := caching.GetFromCache(ctx, s.Cache, subKey, func() (sqlcgen.GetActiveSubscriptionRow, error) {
 		return s.DB.GetActiveSubscription(ctx, org.ID)
@@ -138,9 +152,13 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		return nil, server.NewError(server.ErrorUnauthorized, "subscription expired", nil)
 	}
 
+	// Check if the ratelimit had reached for the endpoint + subscriptionid
+	// We might need to implement a ratelimiter for this. Let's think through this
+	// I definitely do not want to have a full blown Ratelimiter implementation here
+
 	var remaining int32 = -1
 	if sub.ApiLimit.Int32 > 0 {
-		usage, err := s.GetUsageDetailFromCache(ctx, org.ID, sub.ID, endpoint.ID)
+		usage, err := s.GetUsageDetailFromCache(ctx, org.ID, sub.ID, endpoint.ApiEndpointID)
 		if err != nil {
 			return nil, server.NewError(server.ErrorInternal, "error fetching the total usage", err)
 		}
