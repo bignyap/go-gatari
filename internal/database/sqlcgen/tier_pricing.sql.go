@@ -13,8 +13,8 @@ import (
 )
 
 const createTierPricing = `-- name: CreateTierPricing :one
-INSERT INTO tier_base_pricing (subscription_tier_id, api_endpoint_id, base_cost_per_call, base_rate_limit) 
-VALUES ($1, $2, $3, $4)
+INSERT INTO tier_base_pricing (subscription_tier_id, api_endpoint_id, base_cost_per_call, base_rate_limit, cost_mode) 
+VALUES ($1, $2, $3, $4, $5)
 RETURNING tier_base_pricing_id
 `
 
@@ -23,6 +23,7 @@ type CreateTierPricingParams struct {
 	ApiEndpointID      int32       `json:"api_endpoint_id"`
 	BaseCostPerCall    float64     `json:"base_cost_per_call"`
 	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
+	CostMode           string      `json:"cost_mode"`
 }
 
 func (q *Queries) CreateTierPricing(ctx context.Context, arg CreateTierPricingParams) (int32, error) {
@@ -31,6 +32,7 @@ func (q *Queries) CreateTierPricing(ctx context.Context, arg CreateTierPricingPa
 		arg.ApiEndpointID,
 		arg.BaseCostPerCall,
 		arg.BaseRateLimit,
+		arg.CostMode,
 	)
 	var tier_base_pricing_id int32
 	err := row.Scan(&tier_base_pricing_id)
@@ -42,6 +44,7 @@ type CreateTierPricingsParams struct {
 	ApiEndpointID      int32       `json:"api_endpoint_id"`
 	BaseCostPerCall    float64     `json:"base_cost_per_call"`
 	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
+	CostMode           string      `json:"cost_mode"`
 }
 
 const deleteTierPricingById = `-- name: DeleteTierPricingById :exec
@@ -66,7 +69,8 @@ func (q *Queries) DeleteTierPricingByTierId(ctx context.Context, subscriptionTie
 
 const getPricing = `-- name: GetPricing :one
 SELECT
-  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call, 0)::double precision AS cost_per_call
+  COALESCE(cep.custom_cost_per_call, tbp.base_cost_per_call, 0)::double precision AS cost_per_call,
+  COALESCE(cep.cost_mode, tbp.cost_mode, 'fixed') AS cost_mode
 FROM subscription
 JOIN tier_base_pricing tbp
   ON subscription.subscription_tier_id = tbp.subscription_tier_id
@@ -82,16 +86,21 @@ type GetPricingParams struct {
 	ApiEndpointID  int32 `json:"api_endpoint_id"`
 }
 
-func (q *Queries) GetPricing(ctx context.Context, arg GetPricingParams) (float64, error) {
+type GetPricingRow struct {
+	CostPerCall float64 `json:"cost_per_call"`
+	CostMode    string  `json:"cost_mode"`
+}
+
+func (q *Queries) GetPricing(ctx context.Context, arg GetPricingParams) (GetPricingRow, error) {
 	row := q.db.QueryRow(ctx, getPricing, arg.SubscriptionID, arg.ApiEndpointID)
-	var cost_per_call float64
-	err := row.Scan(&cost_per_call)
-	return cost_per_call, err
+	var i GetPricingRow
+	err := row.Scan(&i.CostPerCall, &i.CostMode)
+	return i, err
 }
 
 const getTierPricingByTierId = `-- name: GetTierPricingByTierId :many
 SELECT 
-    tier_base_pricing.tier_base_pricing_id, tier_base_pricing.base_cost_per_call, tier_base_pricing.base_rate_limit, tier_base_pricing.api_endpoint_id, tier_base_pricing.subscription_tier_id, api_endpoint.endpoint_name,
+    tier_base_pricing.tier_base_pricing_id, tier_base_pricing.base_cost_per_call, tier_base_pricing.base_rate_limit, tier_base_pricing.api_endpoint_id, tier_base_pricing.subscription_tier_id, tier_base_pricing.cost_mode, api_endpoint.endpoint_name,
     COUNT(tier_base_pricing_id) OVER() AS total_items
 FROM tier_base_pricing
 INNER JOIN api_endpoint ON tier_base_pricing.api_endpoint_id = api_endpoint.api_endpoint_id
@@ -111,6 +120,7 @@ type GetTierPricingByTierIdRow struct {
 	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
 	ApiEndpointID      int32       `json:"api_endpoint_id"`
 	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	CostMode           string      `json:"cost_mode"`
 	EndpointName       string      `json:"endpoint_name"`
 	TotalItems         int64       `json:"total_items"`
 }
@@ -130,6 +140,7 @@ func (q *Queries) GetTierPricingByTierId(ctx context.Context, arg GetTierPricing
 			&i.BaseRateLimit,
 			&i.ApiEndpointID,
 			&i.SubscriptionTierID,
+			&i.CostMode,
 			&i.EndpointName,
 			&i.TotalItems,
 		); err != nil {
@@ -148,14 +159,16 @@ UPDATE tier_base_pricing
 SET 
     base_cost_per_call = $1,
     base_rate_limit = $2,
-    api_endpoint_id = $3
-WHERE tier_base_pricing_id = $4
+    api_endpoint_id = $3,
+    cost_mode = $4
+WHERE tier_base_pricing_id = $5
 `
 
 type UpdateTierPricingByIdParams struct {
 	BaseCostPerCall   float64     `json:"base_cost_per_call"`
 	BaseRateLimit     pgtype.Int4 `json:"base_rate_limit"`
 	ApiEndpointID     int32       `json:"api_endpoint_id"`
+	CostMode          string      `json:"cost_mode"`
 	TierBasePricingID int32       `json:"tier_base_pricing_id"`
 }
 
@@ -164,6 +177,7 @@ func (q *Queries) UpdateTierPricingById(ctx context.Context, arg UpdateTierPrici
 		arg.BaseCostPerCall,
 		arg.BaseRateLimit,
 		arg.ApiEndpointID,
+		arg.CostMode,
 		arg.TierBasePricingID,
 	)
 }
@@ -173,14 +187,16 @@ UPDATE tier_base_pricing
 SET 
     base_cost_per_call = $1,
     base_rate_limit = $2,
-    api_endpoint_id = $3
-WHERE subscription_tier_id = $4
+    api_endpoint_id = $3,
+    cost_mode = $4
+WHERE subscription_tier_id = $5
 `
 
 type UpdateTierPricingByTierIdParams struct {
 	BaseCostPerCall    float64     `json:"base_cost_per_call"`
 	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
 	ApiEndpointID      int32       `json:"api_endpoint_id"`
+	CostMode           string      `json:"cost_mode"`
 	SubscriptionTierID int32       `json:"subscription_tier_id"`
 }
 
@@ -189,6 +205,7 @@ func (q *Queries) UpdateTierPricingByTierId(ctx context.Context, arg UpdateTierP
 		arg.BaseCostPerCall,
 		arg.BaseRateLimit,
 		arg.ApiEndpointID,
+		arg.CostMode,
 		arg.SubscriptionTierID,
 	)
 }

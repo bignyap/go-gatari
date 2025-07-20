@@ -47,6 +47,7 @@ type CustomEndpointPricing struct {
 	CustomRateLimit         int32   `json:"custom_rate_limit"`
 	SubscriptionID          int32   `json:"subscription_id"`
 	TierBasePricingID       int32   `json:"tier_base_pricing_id"`
+	CostMode                string  `json:"cost_mode"`
 }
 
 type DashboardSummaryView struct {
@@ -136,6 +137,7 @@ type TierBasePricing struct {
 	BaseRateLimit      pgtype.Int4 `json:"base_rate_limit"`
 	ApiEndpointID      int32       `json:"api_endpoint_id"`
 	SubscriptionTierID int32       `json:"subscription_tier_id"`
+	CostMode           string      `json:"cost_mode"`
 }
 
 type VSubscriptionQuotaUsage struct {

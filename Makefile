@@ -84,6 +84,7 @@ cpu-profile:
 # DB Migration With Goose
 ######################
 migrate-up:
+	go get github.com/pressly/goose/v3/cmd/goose
 	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" up
 
 migrate-down:

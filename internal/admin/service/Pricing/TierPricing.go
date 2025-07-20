@@ -58,6 +58,7 @@ func (s *PricingService) CreateTierPricing(ctx context.Context, input *sqlcgen.C
 			BaseRateLimit:      converter.FromPgInt4Ptr(input.BaseRateLimit),
 			ApiEndpointId:      int(input.ApiEndpointID),
 			SubscriptionTierID: int(input.SubscriptionTierID),
+			CostMode:           input.CostMode,
 		},
 	}
 
@@ -92,6 +93,7 @@ func (s *PricingService) GetTierPricingByTierId(ctx context.Context, id int, lim
 					ApiEndpointId:      int(tierPricing.ApiEndpointID),
 					BaseCostPerCall:    tierPricing.BaseCostPerCall,
 					BaseRateLimit:      fromPgInt4Ptr(tierPricing.BaseRateLimit),
+					CostMode:           tierPricing.CostMode,
 				},
 			},
 		}

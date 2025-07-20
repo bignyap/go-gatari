@@ -62,6 +62,7 @@ func (s *PricingService) CreateCustomPricing(ctx context.Context, input *sqlcgen
 			CustomRateLimit:   int(input.CustomRateLimit),
 			SubscriptionID:    int(input.SubscriptionID),
 			TierBasePricingID: int(input.TierBasePricingID),
+			CostMode:          input.CostMode,
 		},
 	}
 
@@ -123,6 +124,7 @@ func (s *PricingService) GetCustomPricing(ctx context.Context, sId int, limit in
 				SubscriptionID:    int(customPricing.SubscriptionID),
 				CustomCostPerCall: customPricing.CustomCostPerCall,
 				CustomRateLimit:   int(customPricing.CustomRateLimit),
+				CostMode:          customPricing.CostMode,
 			},
 		})
 	}

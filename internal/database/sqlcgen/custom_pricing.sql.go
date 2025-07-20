@@ -12,9 +12,9 @@ import (
 const createCustomPricing = `-- name: CreateCustomPricing :one
 INSERT INTO custom_endpoint_pricing (
     custom_cost_per_call, custom_rate_limit,
-    subscription_id, tier_base_pricing_id
+    subscription_id, tier_base_pricing_id, cost_mode
 ) 
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING custom_endpoint_pricing_id
 `
 
@@ -23,6 +23,7 @@ type CreateCustomPricingParams struct {
 	CustomRateLimit   int32   `json:"custom_rate_limit"`
 	SubscriptionID    int32   `json:"subscription_id"`
 	TierBasePricingID int32   `json:"tier_base_pricing_id"`
+	CostMode          string  `json:"cost_mode"`
 }
 
 func (q *Queries) CreateCustomPricing(ctx context.Context, arg CreateCustomPricingParams) (int32, error) {
@@ -31,6 +32,7 @@ func (q *Queries) CreateCustomPricing(ctx context.Context, arg CreateCustomPrici
 		arg.CustomRateLimit,
 		arg.SubscriptionID,
 		arg.TierBasePricingID,
+		arg.CostMode,
 	)
 	var custom_endpoint_pricing_id int32
 	err := row.Scan(&custom_endpoint_pricing_id)
@@ -42,6 +44,7 @@ type CreateCustomPricingsParams struct {
 	CustomRateLimit   int32   `json:"custom_rate_limit"`
 	SubscriptionID    int32   `json:"subscription_id"`
 	TierBasePricingID int32   `json:"tier_base_pricing_id"`
+	CostMode          string  `json:"cost_mode"`
 }
 
 const deleteCustomPricingById = `-- name: DeleteCustomPricingById :exec
@@ -65,7 +68,7 @@ func (q *Queries) DeleteCustomPricingBySubscriptionId(ctx context.Context, subsc
 }
 
 const getCustomPricing = `-- name: GetCustomPricing :many
-SELECT custom_endpoint_pricing_id, custom_cost_per_call, custom_rate_limit, subscription_id, tier_base_pricing_id FROM custom_endpoint_pricing
+SELECT custom_endpoint_pricing_id, custom_cost_per_call, custom_rate_limit, subscription_id, tier_base_pricing_id, cost_mode FROM custom_endpoint_pricing
 WHERE subscription_id = $1
 LIMIT $2 OFFSET $3
 `
@@ -91,6 +94,7 @@ func (q *Queries) GetCustomPricing(ctx context.Context, arg GetCustomPricingPara
 			&i.CustomRateLimit,
 			&i.SubscriptionID,
 			&i.TierBasePricingID,
+			&i.CostMode,
 		); err != nil {
 			return nil, err
 		}

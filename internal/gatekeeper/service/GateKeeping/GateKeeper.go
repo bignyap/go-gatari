@@ -3,6 +3,7 @@ package gatekeeping
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bignyap/go-admin/internal/caching"
@@ -39,7 +40,7 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		string(common.PricingPrefix), orgSubDetails.Organization.Name, orgSubDetails.EndpointCode,
 	)
 
-	pricing, err := caching.GetFromCache(ctx, s.Cache, pricingcacheKey, func() (float64, error) {
+	pricing, err := caching.GetFromCache(ctx, s.Cache, pricingcacheKey, func() (sqlcgen.GetPricingRow, error) {
 		val, err := s.DB.GetPricing(ctx, sqlcgen.GetPricingParams{
 			SubscriptionID: orgSubDetails.Subscription.ID,
 			ApiEndpointID:  orgSubDetails.Endpoint.ApiEndpointID,
@@ -50,9 +51,20 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 		return 0, server.NewError(server.ErrorInternal, "pricing error", err)
 	}
 
-	updateUsageCounters(s.CounterWorker, orgSubDetails, s.FlushInterval, pricing)
+	effectiveCalls := 1
+	if val := ctx.Value("x-effective-calls"); val != nil {
+		if intVal, ok := val.(int); ok && intVal > 0 {
+			effectiveCalls = intVal
+		}
+	}
+	effectivePricing := pricing.CostPerCall
+	if strings.EqualFold(pricing.CostMode, "dynamic") {
+		effectivePricing *= float64(effectiveCalls)
+	}
 
-	return pricing, nil
+	updateUsageCounters(s.CounterWorker, orgSubDetails, s.FlushInterval, effectivePricing)
+
+	return effectivePricing, nil
 }
 
 func updateUsageCounters(

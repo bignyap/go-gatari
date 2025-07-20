@@ -110,6 +110,7 @@ func (r iteratorForCreateCustomPricings) Values() ([]interface{}, error) {
 		r.rows[0].CustomRateLimit,
 		r.rows[0].SubscriptionID,
 		r.rows[0].TierBasePricingID,
+		r.rows[0].CostMode,
 	}, nil
 }
 
@@ -118,7 +119,7 @@ func (r iteratorForCreateCustomPricings) Err() error {
 }
 
 func (q *Queries) CreateCustomPricings(ctx context.Context, arg []CreateCustomPricingsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"custom_endpoint_pricing"}, []string{"custom_cost_per_call", "custom_rate_limit", "subscription_id", "tier_base_pricing_id"}, &iteratorForCreateCustomPricings{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"custom_endpoint_pricing"}, []string{"custom_cost_per_call", "custom_rate_limit", "subscription_id", "tier_base_pricing_id", "cost_mode"}, &iteratorForCreateCustomPricings{rows: arg})
 }
 
 // iteratorForCreateOrgPermissions implements pgx.CopyFromSource.
@@ -400,6 +401,7 @@ func (r iteratorForCreateTierPricings) Values() ([]interface{}, error) {
 		r.rows[0].ApiEndpointID,
 		r.rows[0].BaseCostPerCall,
 		r.rows[0].BaseRateLimit,
+		r.rows[0].CostMode,
 	}, nil
 }
 
@@ -408,7 +410,7 @@ func (r iteratorForCreateTierPricings) Err() error {
 }
 
 func (q *Queries) CreateTierPricings(ctx context.Context, arg []CreateTierPricingsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"tier_base_pricing"}, []string{"subscription_tier_id", "api_endpoint_id", "base_cost_per_call", "base_rate_limit"}, &iteratorForCreateTierPricings{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"tier_base_pricing"}, []string{"subscription_tier_id", "api_endpoint_id", "base_cost_per_call", "base_rate_limit", "cost_mode"}, &iteratorForCreateTierPricings{rows: arg})
 }
 
 // iteratorForRegisterApiEndpoints implements pgx.CopyFromSource.

@@ -39,6 +39,7 @@ type TierPricingForm struct {
 	SubscriptionTierID int32   `form:"subscription_tier_id" binding:"required"`
 	BaseRateLimit      int32   `form:"base_rate_limit" binding:"required"`
 	BaseCostPerCall    float64 `form:"base_cost_per_call" binding:"required"`
+	CostMode           string  `form:"cost_mode" binding:"omitempty,oneof=fixed dynamic"`
 }
 
 func (h *PricingService) CreateTierPricingFormValidator(c *gin.Context) (*sqlcgen.CreateTierPricingParams, error) {
@@ -48,11 +49,16 @@ func (h *PricingService) CreateTierPricingFormValidator(c *gin.Context) (*sqlcge
 		return nil, err
 	}
 
+	if form.CostMode == "" {
+		form.CostMode = "fixed"
+	}
+
 	input := sqlcgen.CreateTierPricingParams{
 		BaseCostPerCall:    form.BaseCostPerCall,
 		SubscriptionTierID: form.SubscriptionTierID,
 		BaseRateLimit:      converter.ToPgInt4(ptrInt(form.BaseRateLimit)),
 		ApiEndpointID:      form.ApiEndpointID,
+		CostMode:           form.CostMode,
 	}
 
 	return &input, nil
@@ -68,6 +74,7 @@ type CustomPricingForm struct {
 	SubscriptionID    int32   `form:"subscription_id" binding:"required"`
 	CustomRateLimit   int32   `form:"custom_rate_limit" binding:"required"`
 	CustomCostPerCall float64 `form:"custom_cost_per_call" binding:"required"`
+	CostMode          string  `form:"cost_mode" binding:"omitempty,oneof=fixed dynamic"`
 }
 
 func (h *PricingService) CreateCustomPricingFormValidator(c *gin.Context) (*sqlcgen.CreateCustomPricingParams, error) {
@@ -78,11 +85,16 @@ func (h *PricingService) CreateCustomPricingFormValidator(c *gin.Context) (*sqlc
 		return nil, err
 	}
 
+	if form.CostMode == "" {
+		form.CostMode = "fixed"
+	}
+
 	input := sqlcgen.CreateCustomPricingParams{
 		TierBasePricingID: form.TierBasePricingID,
 		SubscriptionID:    form.SubscriptionID,
 		CustomRateLimit:   form.CustomRateLimit,
 		CustomCostPerCall: form.CustomCostPerCall,
+		CostMode:          form.CostMode,
 	}
 
 	return &input, nil
