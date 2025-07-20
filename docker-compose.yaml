@@ -73,6 +73,19 @@ services:
       postgres:
         condition: service_healthy
 
+  gatari-apidoc:
+    image: styled-swagger-ui:latest
+    restart: always
+    ports:
+      - '8083:80'
+    expose:
+      - '8083'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apidoc:/usr/share/nginx/html/apidoc
+      - ./apidoc/config.js:/usr/share/nginx/html/config.js
+
   postgres:
     image: postgres:15
     restart: always
@@ -92,29 +105,17 @@ services:
       timeout: 5s
       retries: 10
 
-  go-admin-apidoc:
-    image: styled-swagger-ui:latest
-    restart: always
-    ports:
-      - '8083:80'
-    expose:
-      - '8083'
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ./apidoc/go-admin:/usr/share/nginx/html/apidoc
-
-  gatekeeper-apidoc:
-    image: styled-swagger-ui:latest
-    restart: always
-    ports:
-      - '8084:80'
-    expose:
-      - '8084'
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ./apidoc/gatekeeper:/usr/share/nginx/html/apidoc
+  # gatekeeper-apidoc:
+  #   image: styled-swagger-ui:latest
+  #   restart: always
+  #   ports:
+  #     - '8084:80'
+  #   expose:
+  #     - '8084'
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - ./apidoc/gatekeeper:/usr/share/nginx/html/apidoc
 
   redis:
     image: redis
