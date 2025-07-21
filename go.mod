@@ -2,10 +2,10 @@ module github.com/bignyap/go-admin
 
 go 1.24.1
 
-replace github.com/bignyap/go-utilities => /Users/bpathi/Desktop/Bignya/go-utilities
+// replace github.com/bignyap/go-utilities => /Users/bpathi/Desktop/Bignya/go-utilities
 
 require (
-	// github.com/bignyap/go-utilities v0.0.5
+	github.com/bignyap/go-utilities v0.0.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/jackc/pgx/v5 v5.7.5
@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/bignyap/go-utilities v0.0.0-00010101000000-000000000000
+	// github.com/bignyap/go-utilities v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
