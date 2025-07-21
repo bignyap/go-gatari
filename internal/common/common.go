@@ -1,10 +1,13 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type TimeInterval int64
@@ -160,4 +163,18 @@ func SafeGet[K comparable, V any](m map[K]V, key K, defaultVal V) V {
 		return v
 	}
 	return defaultVal
+}
+
+func ConvertProtoStruct(v interface{}) (*structpb.Struct, error) {
+	jsonBytes, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	var generic map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &generic); err != nil {
+		return nil, err
+	}
+
+	return structpb.NewStruct(generic)
 }

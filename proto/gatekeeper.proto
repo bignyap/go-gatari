@@ -1,6 +1,9 @@
 syntax = "proto3";
 
 package gatekeeper;
+
+import "google/protobuf/struct.proto";
+
 option go_package = "github.com/bignyap/go-admin/internal/gatekeeper/proto";
 
 message RecordUsageRequest {
@@ -20,8 +23,10 @@ message ValidateRequestRequest {
 }
 
 message ValidateRequestResponse {
-  bool valid = 1;
-  string message = 2;
+  google.protobuf.Struct organization = 1;
+  google.protobuf.Struct endpoint = 2;
+  google.protobuf.Struct subscription = 3;
+  int64 remaining = 4;
 }
 
 service GatekeeperService {

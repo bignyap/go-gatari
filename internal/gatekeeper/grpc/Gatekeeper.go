@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/bignyap/go-admin/internal/common"
 	pb "github.com/bignyap/go-admin/internal/gatekeeper/proto"
 	gatekeeping "github.com/bignyap/go-admin/internal/gatekeeper/service/GateKeeping"
 )
@@ -38,10 +39,30 @@ func (g *GatekeeperGRPCHandler) ValidateRequest(ctx context.Context, req *pb.Val
 		Path:             req.Path,
 	}
 
-	_, err := g.Service.ValidateRequest(ctx, input)
+	output, err := g.Service.ValidateRequest(ctx, input)
 	if err != nil {
-		return &pb.ValidateRequestResponse{Valid: false, Message: err.Error()}, nil
+		return nil, err
 	}
 
-	return &pb.ValidateRequestResponse{Valid: true, Message: "Valid"}, nil
+	orgStruct, err := common.ConvertProtoStruct(output.Organization)
+	if err != nil {
+		return nil, err
+	}
+
+	endpointStruct, err := common.ConvertProtoStruct(output.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	subStruct, err := common.ConvertProtoStruct(output.Subscription)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ValidateRequestResponse{
+		Organization: orgStruct,
+		Endpoint:     endpointStruct,
+		Subscription: subStruct,
+		Remaining:    int64(output.Remaining),
+	}, nil
 }

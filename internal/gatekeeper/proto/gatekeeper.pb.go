@@ -9,6 +9,7 @@ package proto
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -187,8 +188,10 @@ func (x *ValidateRequestRequest) GetPath() string {
 
 type ValidateRequestResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Organization  *structpb.Struct       `protobuf:"bytes,1,opt,name=organization,proto3" json:"organization,omitempty"`
+	Endpoint      *structpb.Struct       `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Subscription  *structpb.Struct       `protobuf:"bytes,3,opt,name=subscription,proto3" json:"subscription,omitempty"`
+	Remaining     int64                  `protobuf:"varint,4,opt,name=remaining,proto3" json:"remaining,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -223,18 +226,32 @@ func (*ValidateRequestResponse) Descriptor() ([]byte, []int) {
 	return file_proto_gatekeeper_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ValidateRequestResponse) GetValid() bool {
+func (x *ValidateRequestResponse) GetOrganization() *structpb.Struct {
 	if x != nil {
-		return x.Valid
+		return x.Organization
 	}
-	return false
+	return nil
 }
 
-func (x *ValidateRequestResponse) GetMessage() string {
+func (x *ValidateRequestResponse) GetEndpoint() *structpb.Struct {
 	if x != nil {
-		return x.Message
+		return x.Endpoint
 	}
-	return ""
+	return nil
+}
+
+func (x *ValidateRequestResponse) GetSubscription() *structpb.Struct {
+	if x != nil {
+		return x.Subscription
+	}
+	return nil
+}
+
+func (x *ValidateRequestResponse) GetRemaining() int64 {
+	if x != nil {
+		return x.Remaining
+	}
+	return 0
 }
 
 var File_proto_gatekeeper_proto protoreflect.FileDescriptor
@@ -242,7 +259,7 @@ var File_proto_gatekeeper_proto protoreflect.FileDescriptor
 const file_proto_gatekeeper_proto_rawDesc = "" +
 	"\n" +
 	"\x16proto/gatekeeper.proto\x12\n" +
-	"gatekeeper\"m\n" +
+	"gatekeeper\x1a\x1cgoogle/protobuf/struct.proto\"m\n" +
 	"\x12RecordUsageRequest\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12+\n" +
@@ -252,10 +269,12 @@ const file_proto_gatekeeper_proto_rawDesc = "" +
 	"\x16ValidateRequestRequest\x12+\n" +
 	"\x11organization_name\x18\x01 \x01(\tR\x10organizationName\x12\x16\n" +
 	"\x06method\x18\x03 \x01(\tR\x06method\x12\x12\n" +
-	"\x04path\x18\x04 \x01(\tR\x04path\"I\n" +
-	"\x17ValidateRequestResponse\x12\x14\n" +
-	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xbf\x01\n" +
+	"\x04path\x18\x04 \x01(\tR\x04path\"\xe6\x01\n" +
+	"\x17ValidateRequestResponse\x12;\n" +
+	"\forganization\x18\x01 \x01(\v2\x17.google.protobuf.StructR\forganization\x123\n" +
+	"\bendpoint\x18\x02 \x01(\v2\x17.google.protobuf.StructR\bendpoint\x12;\n" +
+	"\fsubscription\x18\x03 \x01(\v2\x17.google.protobuf.StructR\fsubscription\x12\x1c\n" +
+	"\tremaining\x18\x04 \x01(\x03R\tremaining2\xbf\x01\n" +
 	"\x11GatekeeperService\x12N\n" +
 	"\vRecordUsage\x12\x1e.gatekeeper.RecordUsageRequest\x1a\x1f.gatekeeper.RecordUsageResponse\x12Z\n" +
 	"\x0fValidateRequest\x12\".gatekeeper.ValidateRequestRequest\x1a#.gatekeeper.ValidateRequestResponseB7Z5github.com/bignyap/go-admin/internal/gatekeeper/protob\x06proto3"
@@ -278,17 +297,21 @@ var file_proto_gatekeeper_proto_goTypes = []any{
 	(*RecordUsageResponse)(nil),     // 1: gatekeeper.RecordUsageResponse
 	(*ValidateRequestRequest)(nil),  // 2: gatekeeper.ValidateRequestRequest
 	(*ValidateRequestResponse)(nil), // 3: gatekeeper.ValidateRequestResponse
+	(*structpb.Struct)(nil),         // 4: google.protobuf.Struct
 }
 var file_proto_gatekeeper_proto_depIdxs = []int32{
-	0, // 0: gatekeeper.GatekeeperService.RecordUsage:input_type -> gatekeeper.RecordUsageRequest
-	2, // 1: gatekeeper.GatekeeperService.ValidateRequest:input_type -> gatekeeper.ValidateRequestRequest
-	1, // 2: gatekeeper.GatekeeperService.RecordUsage:output_type -> gatekeeper.RecordUsageResponse
-	3, // 3: gatekeeper.GatekeeperService.ValidateRequest:output_type -> gatekeeper.ValidateRequestResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4, // 0: gatekeeper.ValidateRequestResponse.organization:type_name -> google.protobuf.Struct
+	4, // 1: gatekeeper.ValidateRequestResponse.endpoint:type_name -> google.protobuf.Struct
+	4, // 2: gatekeeper.ValidateRequestResponse.subscription:type_name -> google.protobuf.Struct
+	0, // 3: gatekeeper.GatekeeperService.RecordUsage:input_type -> gatekeeper.RecordUsageRequest
+	2, // 4: gatekeeper.GatekeeperService.ValidateRequest:input_type -> gatekeeper.ValidateRequestRequest
+	1, // 5: gatekeeper.GatekeeperService.RecordUsage:output_type -> gatekeeper.RecordUsageResponse
+	3, // 6: gatekeeper.GatekeeperService.ValidateRequest:output_type -> gatekeeper.ValidateRequestResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_gatekeeper_proto_init() }
