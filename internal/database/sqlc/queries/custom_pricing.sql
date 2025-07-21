@@ -18,10 +18,12 @@ INSERT INTO custom_endpoint_pricing (
 ) 
 VALUES ($1, $2, $3, $4, $5);
 
--- name: DeleteCustomPricingById :exec
+-- name: DeleteCustomPricingById :one
 DELETE FROM custom_endpoint_pricing
-WHERE custom_endpoint_pricing_id = $1;
+WHERE custom_endpoint_pricing_id = $1
+RETURNING subscription_id;
 
--- name: DeleteCustomPricingBySubscriptionId :exec
+-- name: DeleteCustomPricingBySubscriptionId :one
 DELETE FROM custom_endpoint_pricing
-WHERE subscription_id = $1;
+WHERE subscription_id = $1
+RETURNING subscription_id;

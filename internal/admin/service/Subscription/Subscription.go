@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/bignyap/go-admin/internal/common"
@@ -107,13 +108,40 @@ func (s *SubscriptionService) CreateSubscriptionInBatch(ctx context.Context, inp
 	return int(affectedRows), nil
 }
 
-func (s *SubscriptionService) DeleteSubscription(ctx context.Context, subId int) error {
+func (s *SubscriptionService) DeleteSubscription(ctx context.Context, idType string, Id int) error {
 
-	err := s.DB.DeleteOrganizationById(ctx, int32(subId))
+	var pusbSubId int32
+
+	switch strings.ToLower(idType) {
+	case "organization":
+		err := s.DB.DeleteSubscriptionByOrgId(ctx, int32(Id))
+		if err != nil {
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the subscription",
+				err,
+			)
+		}
+		pusbSubId = int32(Id)
+	case "subscription":
+		orgId, err := s.DB.DeleteSubscriptionById(ctx, int32(Id))
+		if err != nil {
+			return server.NewError(
+				server.ErrorInternal,
+				"couldn't delete the subscription",
+				err,
+			)
+		}
+		pusbSubId = orgId
+	}
+
+	err := s.PubSubClient.Publish(ctx, string(common.SubscriptionModified), common.SubscriptionModifiedEvent{
+		ID: pusbSubId,
+	})
 	if err != nil {
 		return server.NewError(
 			server.ErrorInternal,
-			"couldn't delete the subscription",
+			"couldn't push to the queue",
 			err,
 		)
 	}
@@ -185,7 +213,7 @@ func (s *SubscriptionService) ListSubscription(ctx context.Context, limit int, o
 	return output, nil
 }
 
-func (s *SubscriptionService) UpdateOrganization(ctx context.Context, input *UpdateSubscriptionParams) error {
+func (s *SubscriptionService) UpdateSubscription(ctx context.Context, input *UpdateSubscriptionParams) error {
 
 	params := sqlcgen.UpdateSubscriptionParams{
 		SubscriptionName:               input.Name,

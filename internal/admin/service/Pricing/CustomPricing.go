@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/server"
@@ -71,6 +72,8 @@ func (s *PricingService) CreateCustomPricing(ctx context.Context, input *sqlcgen
 
 func (s *PricingService) DeleteCustomPricing(ctx context.Context, idType string, id int) error {
 
+	var pubsubId int32
+
 	switch strings.ToLower(idType) {
 	case "subscription":
 		err := s.DB.DeleteCustomPricingBySubscriptionId(ctx, int32(id))
@@ -90,7 +93,18 @@ func (s *PricingService) DeleteCustomPricing(ctx context.Context, idType string,
 				err,
 			)
 		}
+	}
 
+	err := s.PubSubClient.Publish(ctx, string(common.SubscriptionModified), common.PricingModifiedEvent{
+		ID:   pubsubId,
+		Type: "subscription_tier",
+	})
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
+			err,
+		)
 	}
 
 	return nil

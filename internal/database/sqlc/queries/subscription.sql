@@ -64,9 +64,10 @@ WHERE subscription_id = $12;
 DELETE FROM subscription
 WHERE organization_id = $1;
 
--- name: DeleteSubscriptionById :exec
+-- name: DeleteSubscriptionById :one
 DELETE FROM subscription
-WHERE subscription_id = $1;
+WHERE subscription_id = $1
+RETURNING organization_id;
 
 -- name: GetActiveSubscription :one
 SELECT

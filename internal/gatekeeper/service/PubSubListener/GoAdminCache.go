@@ -19,6 +19,10 @@ func (s *PubsubListener) ResetGoAdminCache() error {
 		common.PricingModified,
 		s.cacheInvalidationHandler(common.PricingModified, &common.PricingModifiedEvent{}),
 	)
+	s.asyncSubscribe(
+		common.PricingModified,
+		s.cacheInvalidationHandler(common.OrgPermissionModified, &common.OrgPermissionModifiedEvent{}),
+	)
 
 	s.Logger.Info("subscribed to pubsub channels: org/sub/pricing modified")
 	return nil

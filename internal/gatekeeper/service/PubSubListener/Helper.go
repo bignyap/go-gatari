@@ -27,22 +27,29 @@ func (s *PubsubListener) cacheInvalidationHandler(key common.PubSubChannel, evtP
 			return s.logUnmarshalError(key, err)
 		}
 
-		id := extractID(evtPtr)
-		s.Cache.DeleteRedisValue(ctx, string(common.OrganizationPrefix), fmt.Sprintf("%s:%s", id, "*"))
+		prefix, id := extractPrefixAndId(evtPtr)
+		if prefix == common.PricingPrefix {
+			s.Cache.DeleteRedisValue(ctx, string(prefix), "*")
+		} else {
+			s.Cache.DeleteRedisValue(ctx, string(prefix), fmt.Sprintf("%s:%s", id, "*"))
+		}
 		s.Logger.Info("cache removed", api.Field{Key: "event", Value: evtPtr})
 		return nil
 	}
 }
 
-func extractID(evt any) string {
+func extractPrefixAndId(evt any) (common.RedisPrefix, string) {
 	switch e := evt.(type) {
 	case *common.OrganizationModifiedEvent:
-		return strconv.Itoa(int(e.ID))
+		return common.OrganizationPrefix, e.Name
 	case *common.SubscriptionModifiedEvent:
-		return strconv.Itoa(int(e.ID))
+		return common.SubscriptionPrefix, strconv.Itoa(int(e.ID))
 	case *common.PricingModifiedEvent:
-		return strconv.Itoa(int(e.ID))
+		return common.PricingPrefix, ""
+		// return common.PricingPrefix, strconv.Itoa(int(e.ID))
+	case *common.OrgPermissionModifiedEvent:
+		return common.OrganizationPrefix, strconv.Itoa(int(e.ID))
 	default:
-		return "unknown"
+		return "", "unknown"
 	}
 }

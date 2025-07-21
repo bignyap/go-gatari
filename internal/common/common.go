@@ -17,11 +17,12 @@ const (
 type PubSubChannel string
 
 const (
-	EndpointCreated      PubSubChannel = "endpoint:created"
-	EndpointDeleted      PubSubChannel = "endpoint:deleted"
-	OrganizationModified PubSubChannel = "organization:modified"
-	SubscriptionModified PubSubChannel = "subscription:modified"
-	PricingModified      PubSubChannel = "pricing:modified"
+	EndpointCreated       PubSubChannel = "endpoint:created"
+	EndpointDeleted       PubSubChannel = "endpoint:deleted"
+	OrganizationModified  PubSubChannel = "organization:modified"
+	SubscriptionModified  PubSubChannel = "subscription:modified"
+	PricingModified       PubSubChannel = "pricing:modified"
+	OrgPermissionModified PubSubChannel = "orgPermission:modified"
 )
 
 type RedisPrefix string
@@ -114,6 +115,11 @@ type EndpointDeletedEvent struct {
 }
 
 type OrganizationModifiedEvent struct {
+	ID   int32
+	Name string
+}
+
+type OrgPermissionModifiedEvent struct {
 	ID int32
 }
 
@@ -122,7 +128,8 @@ type SubscriptionModifiedEvent struct {
 }
 
 type PricingModifiedEvent struct {
-	ID int32
+	ID   int32
+	Type string
 }
 
 func FetchAll[T any](fetchFunc func(offset, batchsize int32) ([]T, error), batchsize int32) ([]T, error) {

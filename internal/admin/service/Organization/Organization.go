@@ -159,8 +159,8 @@ func (apiCfg *OrganizationService) UpdateOrganization(ctx context.Context, input
 	currentTime := int32(converter.ToUnixTime())
 	org := sqlcgen.UpdateOrganizationParams{
 
-		OrganizationName:         input.Name,
 		OrganizationRealm:        input.Realm,
+		OrganizationName:         input.Name,
 		OrganizationSupportEmail: input.SupportEmail,
 		OrganizationUpdatedAt:    currentTime,
 		OrganizationCountry:      converter.ToPgText(input.Country),
@@ -181,7 +181,8 @@ func (apiCfg *OrganizationService) UpdateOrganization(ctx context.Context, input
 	}
 
 	err = apiCfg.PubSubClient.Publish(ctx, string(common.OrganizationModified), common.OrganizationModifiedEvent{
-		ID: int32(input.OrganizationID),
+		ID:   int32(input.OrganizationID),
+		Name: input.Realm,
 	})
 	if err != nil {
 		return server.NewError(

@@ -37,7 +37,9 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 	}
 
 	pricingcacheKey := common.RedisKeyFormatter(
-		string(common.PricingPrefix), orgSubDetails.Organization.Name, orgSubDetails.EndpointCode,
+		string(common.PricingPrefix), string(orgSubDetails.Subscription.ID),
+		string(common.OrganizationPrefix), string(orgSubDetails.Organization.ID),
+		string(common.EndpointPrefix), string(orgSubDetails.Endpoint.ApiEndpointID),
 	)
 
 	pricing, err := caching.GetFromCache(ctx, s.Cache, pricingcacheKey, func() (sqlcgen.GetPricingRow, error) {
@@ -136,6 +138,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 	}
 
 	epPerKey := common.RedisKeyFormatter(
+		string(common.OrganizationPrefix), string(org.ID),
 		string(common.EndpointPrefix), string(endpoint.ResourceTypeID),
 		string(common.PermissionPrefix), endpoint.PermissionCode,
 	)
@@ -143,6 +146,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		return s.DB.CheckOrgPermission(ctx, sqlcgen.CheckOrgPermissionParams{
 			ResourceTypeID: endpoint.ResourceTypeID,
 			PermissionCode: endpoint.PermissionCode,
+			OrganizationID: org.ID,
 		})
 	})
 	if err != nil || !orgPerExists {

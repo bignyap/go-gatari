@@ -34,13 +34,15 @@ SET
     cost_mode = $4
 WHERE tier_base_pricing_id = $5;
 
--- name: DeleteTierPricingByTierId :exec
+-- name: DeleteTierPricingByTierId :one
 DELETE FROM tier_base_pricing
-WHERE subscription_tier_id = $1;
+WHERE subscription_tier_id = $1
+RETURNING subscription_tier_id;
 
--- name: DeleteTierPricingById :exec
+-- name: DeleteTierPricingById :one
 DELETE FROM tier_base_pricing
-WHERE tier_base_pricing_id = $1;
+WHERE tier_base_pricing_id = $1
+RETURNING subscription_tier_id;
 
 -- name: GetPricing :one
 SELECT

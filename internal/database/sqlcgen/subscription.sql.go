@@ -80,14 +80,17 @@ type CreateSubscriptionsParams struct {
 	SubscriptionQuotaResetInterval pgtype.Text `json:"subscription_quota_reset_interval"`
 }
 
-const deleteSubscriptionById = `-- name: DeleteSubscriptionById :exec
+const deleteSubscriptionById = `-- name: DeleteSubscriptionById :one
 DELETE FROM subscription
 WHERE subscription_id = $1
+RETURNING organization_id
 `
 
-func (q *Queries) DeleteSubscriptionById(ctx context.Context, subscriptionID int32) error {
-	_, err := q.db.Exec(ctx, deleteSubscriptionById, subscriptionID)
-	return err
+func (q *Queries) DeleteSubscriptionById(ctx context.Context, subscriptionID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteSubscriptionById, subscriptionID)
+	var organization_id int32
+	err := row.Scan(&organization_id)
+	return organization_id, err
 }
 
 const deleteSubscriptionByOrgId = `-- name: DeleteSubscriptionByOrgId :exec

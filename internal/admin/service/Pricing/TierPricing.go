@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/converter"
@@ -120,9 +121,11 @@ func fromPgInt4Ptr(v pgtype.Int4) *int {
 
 func (s *PricingService) DeleteTierPricing(ctx context.Context, idType string, id int) error {
 
+	var pubsubId int32
+
 	switch strings.ToLower(idType) {
 	case "id":
-		err := s.DB.DeleteTierPricingById(ctx, int32(id))
+		tier, err := s.DB.DeleteTierPricingById(ctx, int32(id))
 		if err != nil {
 			return server.NewError(
 				server.ErrorInternal,
@@ -130,8 +133,9 @@ func (s *PricingService) DeleteTierPricing(ctx context.Context, idType string, i
 				err,
 			)
 		}
+		pubsubId = tier
 	case "tier":
-		err := s.DB.DeleteTierPricingByTierId(ctx, int32(id))
+		tier, err := s.DB.DeleteTierPricingByTierId(ctx, int32(id))
 		if err != nil {
 			return server.NewError(
 				server.ErrorInternal,
@@ -139,6 +143,19 @@ func (s *PricingService) DeleteTierPricing(ctx context.Context, idType string, i
 				err,
 			)
 		}
+		pubsubId = tier
+	}
+
+	err := s.PubSubClient.Publish(ctx, string(common.SubscriptionModified), common.PricingModifiedEvent{
+		ID:   pubsubId,
+		Type: "subscription_tier",
+	})
+	if err != nil {
+		return server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
+			err,
+		)
 	}
 
 	return nil

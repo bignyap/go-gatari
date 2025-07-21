@@ -15,16 +15,18 @@ SELECT EXISTS (
   FROM organization_permission
   WHERE resource_type_id = $1
     AND permission_code = $2
+    AND organization_id = $3
 )
 `
 
 type CheckOrgPermissionParams struct {
 	ResourceTypeID int32  `json:"resource_type_id"`
 	PermissionCode string `json:"permission_code"`
+	OrganizationID int32  `json:"organization_id"`
 }
 
 func (q *Queries) CheckOrgPermission(ctx context.Context, arg CheckOrgPermissionParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkOrgPermission, arg.ResourceTypeID, arg.PermissionCode)
+	row := q.db.QueryRow(ctx, checkOrgPermission, arg.ResourceTypeID, arg.PermissionCode, arg.OrganizationID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

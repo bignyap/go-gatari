@@ -30,4 +30,5 @@ SELECT EXISTS (
   FROM organization_permission
   WHERE resource_type_id = $1
     AND permission_code = $2
+    AND organization_id = $3
 );

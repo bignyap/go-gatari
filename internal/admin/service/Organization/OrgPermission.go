@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bignyap/go-admin/internal/common"
 	"github.com/bignyap/go-admin/internal/database/dbutils"
 	"github.com/bignyap/go-admin/internal/database/sqlcgen"
 	"github.com/bignyap/go-utilities/server"
@@ -142,6 +143,17 @@ func (s *OrganizationService) UpsertOrgPermissions(ctx context.Context, orgID in
 
 	if len(toInsert) == 0 {
 		return 0, nil
+	}
+
+	err = s.PubSubClient.Publish(ctx, string(common.OrganizationModified), common.OrgPermissionModifiedEvent{
+		ID: int32(orgID),
+	})
+	if err != nil {
+		return 0, server.NewError(
+			server.ErrorInternal,
+			"couldn't push to the queue",
+			err,
+		)
 	}
 
 	return s.CreateOrgPermissionInBatch(ctx, toInsert)

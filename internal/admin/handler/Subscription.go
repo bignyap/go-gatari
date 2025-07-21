@@ -1,9 +1,9 @@
 package adminHandler
 
 import (
-	"fmt"
 	"strconv"
 
+	converter "github.com/bignyap/go-utilities/converter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,21 +43,42 @@ func (h *AdminHandler) CreateSubscriptionInBatchandler(c *gin.Context) {
 
 func (h *AdminHandler) DeleteSubscriptionHandler(c *gin.Context) {
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		h.ResponseWriter.BadRequest(c, "invalid id format")
-		return
+	orgId := c.Param("organization_id")
+	id := c.Param("id")
+
+	if orgId != "" {
+
+		id32, err := converter.StrToInt(orgId)
+		if err != nil {
+			h.ResponseWriter.BadRequest(c, "Invalid organization_id format")
+			return
+		}
+
+		err = h.SubscriptionService.DeleteSubscription(c.Request.Context(), "organization", id32)
+		if err != nil {
+			h.ResponseWriter.Error(c, err)
+			return
+		}
+
+		h.ResponseWriter.Success(c, "deleted successfully")
 	}
 
-	err = h.SubscriptionService.DeleteSubscription(c.Request.Context(), int(id))
-	if err != nil {
-		h.ResponseWriter.Error(c, err)
-		return
-	}
+	if id != "" {
 
-	h.ResponseWriter.Success(c, map[string]string{
-		"message": fmt.Sprintf("organization with ID %d deleted successfully", id),
-	})
+		id32, err := converter.StrToInt(id)
+		if err != nil {
+			h.ResponseWriter.BadRequest(c, "Invalid id format")
+			return
+		}
+
+		err = h.SubscriptionService.DeleteSubscription(c.Request.Context(), "subscription", id32)
+		if err != nil {
+			h.ResponseWriter.Error(c, err)
+			return
+		}
+
+		h.ResponseWriter.Success(c, "deleted successfully")
+	}
 }
 
 func (h *AdminHandler) GetSubscriptionHandler(c *gin.Context) {

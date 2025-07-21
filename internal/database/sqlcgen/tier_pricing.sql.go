@@ -47,24 +47,30 @@ type CreateTierPricingsParams struct {
 	CostMode           string      `json:"cost_mode"`
 }
 
-const deleteTierPricingById = `-- name: DeleteTierPricingById :exec
+const deleteTierPricingById = `-- name: DeleteTierPricingById :one
 DELETE FROM tier_base_pricing
 WHERE tier_base_pricing_id = $1
+RETURNING subscription_tier_id
 `
 
-func (q *Queries) DeleteTierPricingById(ctx context.Context, tierBasePricingID int32) error {
-	_, err := q.db.Exec(ctx, deleteTierPricingById, tierBasePricingID)
-	return err
+func (q *Queries) DeleteTierPricingById(ctx context.Context, tierBasePricingID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteTierPricingById, tierBasePricingID)
+	var subscription_tier_id int32
+	err := row.Scan(&subscription_tier_id)
+	return subscription_tier_id, err
 }
 
-const deleteTierPricingByTierId = `-- name: DeleteTierPricingByTierId :exec
+const deleteTierPricingByTierId = `-- name: DeleteTierPricingByTierId :one
 DELETE FROM tier_base_pricing
 WHERE subscription_tier_id = $1
+RETURNING subscription_tier_id
 `
 
-func (q *Queries) DeleteTierPricingByTierId(ctx context.Context, subscriptionTierID int32) error {
-	_, err := q.db.Exec(ctx, deleteTierPricingByTierId, subscriptionTierID)
-	return err
+func (q *Queries) DeleteTierPricingByTierId(ctx context.Context, subscriptionTierID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteTierPricingByTierId, subscriptionTierID)
+	var subscription_tier_id int32
+	err := row.Scan(&subscription_tier_id)
+	return subscription_tier_id, err
 }
 
 const getPricing = `-- name: GetPricing :one
