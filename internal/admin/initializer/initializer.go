@@ -92,6 +92,11 @@ func InitializeAdminServer() {
 		environment = "dev"
 	}
 
+	serverType := os.Getenv("SERVER_TYPE")
+	if serverType == "" {
+		serverType = "http"
+	}
+
 	var logConfig config.LogConfig
 	if environment == "prod" {
 		logConfig = config.ProductionConfig()
@@ -118,7 +123,7 @@ func InitializeAdminServer() {
 		logger, conn, validator, pubSubClient,
 	)
 
-	if err := initialize.InitializeWebServer(logger, adminSrvc); err != nil {
+	if err := initialize.InitializeWebServer(server.ServerType(serverType), logger, adminSrvc); err != nil {
 		log.Fatalf("Failed to start web server: %v", err)
 	}
 }

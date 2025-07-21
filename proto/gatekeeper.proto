@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package gatekeeper;
+option go_package = "github.com/bignyap/go-admin/internal/gatekeeper/proto";
+
+message RecordUsageRequest {
+  string method = 1;
+  string path = 2;
+  string organization_name = 3;
+}
+
+message RecordUsageResponse {
+  double cost = 1;
+}
+
+message ValidateRequestRequest {
+  string organization_name = 1;
+  string method = 3;
+  string path = 4;
+}
+
+message ValidateRequestResponse {
+  bool valid = 1;
+  string message = 2;
+}
+
+service GatekeeperService {
+  rpc RecordUsage(RecordUsageRequest) returns (RecordUsageResponse);
+  rpc ValidateRequest(ValidateRequestRequest) returns (ValidateRequestResponse);
+}

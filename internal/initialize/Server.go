@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -9,13 +10,13 @@ import (
 	"github.com/bignyap/go-utilities/server"
 )
 
-func InitializeWebServer(logger api.Logger, srvc server.Handler) error {
+func InitializeWebServer(serverType server.ServerType, logger api.Logger, srvc server.Handler) error {
 
 	srvLogger := logger.WithComponent("server.InitializeWebServer")
 
 	srvLogger.Info("Starting")
 
-	config := server.DefaultConfig()
+	config := server.DefaultConfig(serverType)
 	ensureDefaultServerConfig(config)
 
 	srvLogger.Info("Configs",
@@ -27,16 +28,30 @@ func InitializeWebServer(logger api.Logger, srvc server.Handler) error {
 			Key:   "Environment",
 			Value: config.Environment,
 		},
+		api.Field{
+			Key:   "Server Type",
+			Value: serverType,
+		},
 	)
 
-	s := server.NewHTTPServer(
-		config,
-		server.WithLogger(logger),
-		server.WithHandler(srvc),
-	)
+	var srv server.Server
+	switch serverType {
+	case server.ServerHTTP:
+		srv = server.NewHTTPServer(config,
+			server.WithLogger(logger),
+			server.WithHandler(srvc),
+		)
+	case server.ServerGRPC:
+		srv = server.NewGRPCServer(config,
+			server.WithLogger(logger),
+			server.WithHandler(srvc),
+		)
+	default:
+		return fmt.Errorf("unsupported server type: %s", serverType)
+	}
 
-	if err := s.Start(); err != nil {
-		srvLogger.Error("Server failed", err)
+	if err := srv.Start(); err != nil {
+		return fmt.Errorf("error starting the server %s", err)
 	}
 
 	srvLogger.Info("Completed")

@@ -202,6 +202,11 @@ func InitializeGateKeeperServer() {
 		log.Fatal("PROXY_TARGET must be set in proxy mode")
 	}
 
+	serverType := os.Getenv("SERVER_TYPE")
+	if serverType == "" {
+		serverType = "http"
+	}
+
 	// Logger
 	var logConfig config.LogConfig
 	if environment == "prod" {
@@ -277,6 +282,6 @@ func InitializeGateKeeperServer() {
 	})
 
 	logWithComponent("InitializeWebServer", func() error {
-		return initialize.InitializeWebServer(logger, gkService)
+		return initialize.InitializeWebServer(server.ServerType(serverType), logger, gkService)
 	})
 }

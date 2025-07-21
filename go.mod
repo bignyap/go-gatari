@@ -5,7 +5,7 @@ go 1.24.1
 replace github.com/bignyap/go-utilities => /Users/bpathi/Desktop/Bignya/go-utilities
 
 require (
-	github.com/bignyap/go-utilities v0.0.5
+	// github.com/bignyap/go-utilities v0.0.5
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/jackc/pgx/v5 v5.7.5
@@ -14,6 +14,8 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/redis/go-redis/v9 v9.11.0
 )
+
+require github.com/bignyap/go-utilities v0.0.0-00010101000000-000000000000
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -30,7 +32,6 @@ require (
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -55,6 +56,8 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
