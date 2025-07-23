@@ -10,8 +10,6 @@ vars:
   GIT_TAG:
     sh: git describe --tags --exact-match HEAD 2>/dev/null || echo ""
   CONTAINER_IMAGE_TAG: "{{if .GIT_TAG}}{{.GIT_TAG}}{{else}}{{.GIT_HASH}}{{end}}"
-  CONTAINER_IMAGE: "{{.SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
-  CONTAINER_IMAGE_LATEST: "{{.SERVICE_NAME}}:latest"
   ENABLE_PPROF: "true"
   PROFILE_OUTPUT: top
   DB_DRIVER: postgres
@@ -36,7 +34,6 @@ tasks:
     cmds:
       - echo "Running service {{.SERVICE_NAME}}"
       - "ENABLE_PPROF={{.ENABLE_PPROF}} ENVIRONMENT=debug go run {{.ENTRYPOINT}}"
-
 
   run-dev:
     cmds:
@@ -65,8 +62,6 @@ tasks:
           SERVICE_NAME: gate-keeper
           ENTRYPOINT: cmd/gate-keeper/main.go
 
-
-
   test:
     cmds:
       - go test -v ./...
@@ -85,14 +80,17 @@ tasks:
 
   migrate-up:
     cmds:
+      - go get github.com/pressly/goose/v3/cmd/goose
       - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" up
 
   migrate-down:
     cmds:
+      - go get github.com/pressly/goose/v3/cmd/goose
       - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" down
 
   migrate-status:
     cmds:
+      - go get github.com/pressly/goose/v3/cmd/goose
       - go run github.com/pressly/goose/v3/cmd/goose -dir {{.MIGRATIONS_DIR}} {{.DB_DRIVER}} "{{.DB_DSN}}" status
 
   sqlc-generate:
@@ -100,11 +98,15 @@ tasks:
       - sqlc generate
 
   compile-artifacts:
+    vars:
+      CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
+      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
     cmds:
       - task: pre_compile
-        vars: { SERVICE_NAME: "{{.SERVICE_NAME}}" }
+        vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
       - task: compile
-        vars: { SERVICE_NAME: "{{.SERVICE_NAME}}" }
+        vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
 
   pre_compile:
     cmds:
@@ -112,12 +114,14 @@ tasks:
       - task: mod-update
 
   compile:
-    dir: "{{.REPO_FOLDER}}/cmd/{{.SERVICE_NAME}}"
+    vars:
+      CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
+    dir: "{{.REPO_FOLDER}}/cmd/{{.CURRENT_SERVICE_NAME}}"
     cmds:
-      - echo "SERVICE_NAME={{.SERVICE_NAME}}"
+      - echo "SERVICE_NAME={{.CURRENT_SERVICE_NAME}}"
       - echo "PWD=$(pwd)"
       - task: mkdir-build-dir
-      - GOOS=linux GOARCH=amd64 go build -o ../../build/{{.SERVICE_NAME}} main.go
+      - GOOS=linux GOARCH=amd64 go build -o ../../build/{{.CURRENT_SERVICE_NAME}} main.go
 
   mkdir-build-dir:
     cmds:
@@ -129,18 +133,26 @@ tasks:
         {{end}}
   
   build-container:
-    deps: [compile-artifacts]
+    vars:
+      CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
+      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+    deps: 
+      - task: compile-artifacts
+        vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
     cmds:
-      - docker build --build-arg BINARY_NAME={{.SERVICE_NAME}} -t {{.CONTAINER_IMAGE}} .
+      - docker build --build-arg BINARY_NAME={{.CURRENT_SERVICE_NAME}} -t {{.CONTAINER_IMAGE}} .
       - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
 
   remove-container:
+    vars:
+      CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
     cmds:
       - |
         powershell -Command "
           docker images --format '{{.Repository}}:{{.Tag}}' |
           ForEach-Object {
-            if (\$_ -like '{{.SERVICE_NAME}}:*') {
+            if (\$_ -like '{{.CURRENT_SERVICE_NAME}}:*') {
               docker rmi \$_
             }
           }
