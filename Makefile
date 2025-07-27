@@ -1,17 +1,26 @@
 SERVICE_NAME ?= go-admin
 REPO_FOLDER ?= $(shell pwd)
 BUILD_DIR = $(REPO_FOLDER)/build
-GIT_HASH = $(shell git rev-parse --short HEAD)
-GIT_TAG = $(shell git describe --tags --exact-match HEAD 2>/dev/null)
-CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
-CONTAINER_IMAGE = $(SERVICE_NAME):$(CONTAINER_IMAGE_TAG)
-CONTAINER_IMAGE_LATEST = $(SERVICE_NAME):latest
 
-# Entry point defaults based on service
+GIT_HASH := $(shell git rev-parse --short HEAD)
+GIT_TAG := $(shell git describe --tags --exact-match HEAD 2>/dev/null || true)
+CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
+DOCKER_NAMESPACE ?=
+PLATFORM ?= linux/amd64
+
+# Conditional Docker image names
+ifeq ($(DOCKER_NAMESPACE),)
+  IMAGE_NAME = $(SERVICE_NAME)
+else
+  IMAGE_NAME = $(DOCKER_NAMESPACE)/$(SERVICE_NAME)
+endif
+
+CONTAINER_IMAGE = $(IMAGE_NAME):$(CONTAINER_IMAGE_TAG)
+CONTAINER_IMAGE_LATEST = $(IMAGE_NAME):latest
+
 ENTRYPOINT = cmd/$(SERVICE_NAME)/main.go
 DEBUG_ENTRYPOINT = cmd/debug/debug.go
 
-# Goose / DB
 GOOSE = go run github.com/pressly/goose/v3/cmd/goose
 DB_DRIVER = postgres
 DB_NAME = go-admin
@@ -22,19 +31,14 @@ ENABLE_PPROF = true
 PROFILE_OUTPUT = top
 
 ######################
-# Go Clean & Setup
+# Dev & Run
 ######################
 clean:
 	go clean
-# go clean -modcache
 
 mod-update:
 	go mod tidy
-# go mod vendor
 
-######################
-# Run Modes
-######################
 run-debug:
 	ENABLE_PPROF=$(ENABLE_PPROF) ENVIRONMENT=debug go run $(ENTRYPOINT)
 
@@ -47,9 +51,6 @@ run-prod:
 debug:
 	go run $(DEBUG_ENTRYPOINT)
 
-######################
-# Service-Specific Run Shortcuts
-######################
 run-go-admin:
 	$(MAKE) run-debug SERVICE_NAME=go-admin
 
@@ -75,7 +76,7 @@ cpu-profile:
 	echo "$(PROFILE_OUTPUT)" | go tool pprof cpu.pprof
 
 ######################
-# DB Migration With Goose
+# Migrations
 ######################
 migrate-up:
 	go get github.com/pressly/goose/v3/cmd/goose
@@ -98,18 +99,25 @@ compile-artifacts: pre_compile compile
 pre_compile: clean mod-update
 
 compile:
+	@echo "🧱 Compiling binary for $(SERVICE_NAME)..."
 	mkdir -p $(BUILD_DIR)
-	cd $(REPO_FOLDER)/cmd/$(SERVICE_NAME) && GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(SERVICE_NAME) main.go
+	cd "$(REPO_FOLDER)/cmd/$(SERVICE_NAME)" && \
+		GOOS=linux GOARCH=amd64 go build -o "$(BUILD_DIR)/$(SERVICE_NAME)" main.go
 
 ######################
-# Container
+# Docker
 ######################
 build-container: compile-artifacts
-	docker build --build-arg BINARY_NAME=$(SERVICE_NAME) -t $(CONTAINER_IMAGE) . && \
-	docker tag $(CONTAINER_IMAGE) $(CONTAINER_IMAGE_LATEST)
+	@echo "📦 Building Docker image: $(CONTAINER_IMAGE)"
+	docker buildx build \
+		--platform=$(PLATFORM) \
+		--build-arg BINARY_NAME=$(SERVICE_NAME) \
+		-t $(CONTAINER_IMAGE) \
+		-t $(CONTAINER_IMAGE_LATEST) \
+		$(if $(DOCKER_NAMESPACE),--push,--load) .
 
 remove-container:
-	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(SERVICE_NAME)' | xargs -r docker rmi
+	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(IMAGE_NAME)' | xargs -r docker rmi
 
 start-container:
 	docker compose -f docker-compose.yaml up -d
@@ -117,27 +125,23 @@ start-container:
 stop-container:
 	docker compose -f docker-compose.yaml down
 
-
 ######################
-# Proto buf
+# Proto
 ######################
-
 generate-gatekeeper-proto:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	export PATH="$PATH:$(go env GOPATH)/bin"
+	export PATH="$$PATH:$(go env GOPATH)/bin"
 	protoc \
-	--go_out=internal/gatekeeper \
-	--go-grpc_out=internal/gatekeeper \
-	--go_opt=paths=source_relative \
-	--go-grpc_opt=paths=source_relative \
-	proto/gatekeeper.proto
-
+		--go_out=internal/gatekeeper \
+		--go-grpc_out=internal/gatekeeper \
+		--go_opt=paths=source_relative \
+		--go-grpc_opt=paths=source_relative \
+		proto/gatekeeper.proto
 
 ######################
-# Clean build and Start
+# Clean Build & Run
 ######################
-
 clean-build-run:
 	$(MAKE) stop-container
 	$(MAKE) remove-container SERVICE_NAME=go-admin
