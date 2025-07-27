@@ -45,7 +45,7 @@ jobs:
 
             make build-container \
               SERVICE_NAME=$SERVICE \
-              PLATFORM=linux/amd64 \
+              PLATFORM=linux/amd64,linux/arm64 \
               CONTAINER_IMAGE_TAG=$TAG \
               DOCKER_NAMESPACE=$DOCKER_NAMESPACE
           done
