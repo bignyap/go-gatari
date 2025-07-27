@@ -2,14 +2,14 @@ name: Build & Push Multi-Arch Docker Images
 
 on:
   push:
-    # branches: [main]
+    branches: [main]
     tags:
       - 'v*'
   workflow_dispatch:
 
 env:
   SERVICES: go-admin gate-keeper gatari-db-init
-  DOCKER_NAMESPACE: bignya
+  DOCKER_NAMESPACE: ${{ secrets.DOCKER_USERNAME }}
 
 jobs:
   docker:
@@ -45,7 +45,7 @@ jobs:
 
             make build-container \
               SERVICE_NAME=$SERVICE \
-              PLATFORM=linux/amd64,linux/arm64 \
+              PLATFORM=linux/amd64 \
               CONTAINER_IMAGE_TAG=$TAG \
               DOCKER_NAMESPACE=$DOCKER_NAMESPACE
 

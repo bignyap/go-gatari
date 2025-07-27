@@ -108,7 +108,7 @@ compile:
 # Docker
 ######################
 build-container: compile-artifacts
-	@echo "📦 Building Docker image: $(CONTAINER_IMAGE)"
+	echo "📦 Building Docker image: $(CONTAINER_IMAGE)"
 	docker buildx build \
 		--platform=$(PLATFORM) \
 		--build-arg BINARY_NAME=$(SERVICE_NAME) \
