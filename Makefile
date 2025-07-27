@@ -8,24 +8,18 @@ CONTAINER_IMAGE = $(SERVICE_NAME):$(CONTAINER_IMAGE_TAG)
 CONTAINER_IMAGE_LATEST = $(SERVICE_NAME):latest
 
 # Entry point defaults based on service
-ifeq ($(SERVICE_NAME),go-admin)
-	ENTRYPOINT = cmd/go-admin/main.go
-	DEBUG_ENTRYPOINT = cmd/debug/debug.go
-	DB_NAME = go-admin
-else ifeq ($(SERVICE_NAME),gate-keeper)
-	ENTRYPOINT = cmd/gate-keeper/main.go
-	DEBUG_ENTRYPOINT = cmd/gate-keeper/debug.go
-	DB_NAME = gate-keeper
-endif
-
-ENABLE_PPROF = true
-PROFILE_OUTPUT = top
+ENTRYPOINT = cmd/$(SERVICE_NAME)/main.go
+DEBUG_ENTRYPOINT = cmd/debug/debug.go
 
 # Goose / DB
 GOOSE = go run github.com/pressly/goose/v3/cmd/goose
 DB_DRIVER = postgres
+DB_NAME = go-admin
 DB_DSN = postgres://$(DB_NAME):$(DB_NAME)@localhost:5432/$(DB_NAME)?sslmode=disable
 MIGRATIONS_DIR = ./internal/database/sqlc/schema
+
+ENABLE_PPROF = true
+PROFILE_OUTPUT = top
 
 ######################
 # Go Clean & Setup
@@ -148,6 +142,8 @@ clean-build-run:
 	$(MAKE) stop-container
 	$(MAKE) remove-container SERVICE_NAME=go-admin
 	$(MAKE) remove-container SERVICE_NAME=gate-keeper
+	$(MAKE) remove-container SERVICE_NAME=gatari-db-init
 	$(MAKE) build-container SERVICE_NAME=go-admin
 	$(MAKE) build-container SERVICE_NAME=gate-keeper
+	$(MAKE) build-container SERVICE_NAME=gatari-db-init
 	$(MAKE) start-container
