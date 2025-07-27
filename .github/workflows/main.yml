@@ -2,7 +2,7 @@ name: Build & Push Multi-Arch Docker Images
 
 on:
   push:
-    branches: [main]
+    # branches: [main]
     tags:
       - 'v*'
   workflow_dispatch:
@@ -48,12 +48,5 @@ jobs:
               PLATFORM=linux/amd64 \
               CONTAINER_IMAGE_TAG=$TAG \
               DOCKER_NAMESPACE=$DOCKER_NAMESPACE
-
-            docker push $IMAGE_NAME:$TAG
-
-            if [ -n "$GIT_TAG" ]; then
-              docker push $IMAGE_NAME:$GIT_TAG
-            fi
-
-            docker push $IMAGE_NAME:latest
           done
+          
