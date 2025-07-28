@@ -35,8 +35,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      gatari-db-init:
-        condition: service_completed_successfully
+      # gatari-db-init:
+      #   condition: service_completed_successfully
 
   gate-keeper:
     container_name: gate-keeper
@@ -76,17 +76,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      gatari-db-init:
-        condition: service_completed_successfully
+      # gatari-db-init:
+      #   condition: service_completed_successfully
 
-  gatari-db-init:
-    container_name: gatari-db-init
-    image: bignya/gatari-db-init:latest
-    environment:
-      DB_DSN: postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # gatari-db-init:
+  #   container_name: gatari-db-init
+  #   image: bignya/gatari-db-init:latest
+  #   environment:
+  #     DB_DSN: postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
   postgres:
     image: postgres:15

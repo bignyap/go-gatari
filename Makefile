@@ -6,7 +6,7 @@ GIT_HASH := $(shell git rev-parse --short HEAD)
 GIT_TAG := $(shell git describe --tags --exact-match HEAD 2>/dev/null || true)
 CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
 DOCKER_NAMESPACE ?=
-PLATFORM ?= linux/amd64
+PLATFORM ?= linux/arm64
 
 # Conditional Docker image names
 ifeq ($(DOCKER_NAMESPACE),)
