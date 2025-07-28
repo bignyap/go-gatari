@@ -99,15 +99,21 @@ compile-artifacts: pre_compile compile
 pre_compile: clean mod-update
 
 compile:
-	@echo "🧱 Compiling binary for $(SERVICE_NAME)..."
+	echo "🧱 Compiling statically linked binary for $(SERVICE_NAME)..."
 	mkdir -p $(BUILD_DIR)
 	cd "$(REPO_FOLDER)/cmd/$(SERVICE_NAME)" && \
-		GOOS=linux GOARCH=amd64 go build -o "$(BUILD_DIR)/$(SERVICE_NAME)" main.go
+		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o "$(BUILD_DIR)/$(SERVICE_NAME)" main.go
+
 
 ######################
 # Docker
 ######################
 build-container: compile-artifacts
+	@if [ "$(SERVICE_NAME)" = "gatari-db-init" ]; then \
+		echo "🔧 Copying schema for gatari-db-init..."; \
+		mkdir -p schema; \
+		cp -r internal/database/sqlc/schema/* schema/; \
+	fi
 	echo "📦 Building Docker image: $(CONTAINER_IMAGE)"
 	docker buildx build \
 		--platform=$(PLATFORM) \
@@ -115,6 +121,8 @@ build-container: compile-artifacts
 		-t $(CONTAINER_IMAGE) \
 		-t $(CONTAINER_IMAGE_LATEST) \
 		$(if $(DOCKER_NAMESPACE),--push,--load) .
+	@rm -rf schema
+
 
 remove-container:
 	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(IMAGE_NAME)' | xargs -r docker rmi
