@@ -109,19 +109,17 @@ compile:
 # Docker
 ######################
 build-container: compile-artifacts
+	mkdir -p schema
 	@if [ "$(SERVICE_NAME)" = "gatari-db-init" ]; then \
-		echo "🔧 Copying schema for gatari-db-init..."; \
-		mkdir -p schema; \
 		cp -r internal/database/sqlc/schema/* schema/; \
 	fi
-	echo "📦 Building Docker image: $(CONTAINER_IMAGE)"
 	docker buildx build \
 		--platform=$(PLATFORM) \
 		--build-arg BINARY_NAME=$(SERVICE_NAME) \
 		-t $(CONTAINER_IMAGE) \
 		-t $(CONTAINER_IMAGE_LATEST) \
-		$(if $(DOCKER_NAMESPACE),--push,--load) .
-	@rm -rf schema
+		--push .
+	rm -rf schema
 
 
 remove-container:
