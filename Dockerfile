@@ -1,4 +1,5 @@
-FROM gcr.io/distroless/base
+# FROM gcr.io/distroless/base
+FROM alpine:3.22.1
 
 EXPOSE 8080
 
