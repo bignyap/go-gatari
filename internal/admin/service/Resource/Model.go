@@ -7,6 +7,7 @@ type RegisterEndpointParams struct {
 	PathTemplate   string  `form:"path_template" json:"path_template" validate:"required"`
 	ResourceTypeID int32   `form:"resource_type_id" json:"resource_type_id" validate:"required"`
 	PermissionCode string  `form:"permission_code" json:"permission_code" validate:"required"`
+	AccessType     string  `form:"access_type" json:"access_type" validate:"required,oneof=free paid private"`
 }
 
 type RegisterEndpointOutputs struct {

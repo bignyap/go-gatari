@@ -35,6 +35,9 @@ func (s *GateKeepingService) RecordUsage(ctx context.Context, input *RecordUsage
 			server.ErrorUnauthorized, "failed to validate request", err,
 		)
 	}
+	if orgSubDetails.Endpoint.AccessType != "paid" {
+		return 0, nil
+	}
 
 	pricingcacheKey := common.RedisKeyFormatter(
 		string(common.PricingPrefix), string(orgSubDetails.Subscription.ID),
@@ -115,12 +118,22 @@ func updateUsageCounters(
 	)
 }
 
+// Steps
+// 1. Match the endpoint with the code using cache system
+// 2. Get the organization details
+// 3. Get the endpoint details
+// 4. Check organization permission details
+// 5. Get active subscription
+// 6. Check usage details
 func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, method, path, orgName string) (*GetOrgSubDetailsOutput, error) {
+
+	// Match the endpoint with the code using cache system
 	endpointCode, found := s.Match.Match(method, path)
 	if !found {
 		return nil, server.NewError(server.ErrorNotFound, "no matching endpoint", nil)
 	}
 
+	// Get the organization details
 	orgKey := common.RedisKeyFormatter(string(common.OrganizationPrefix), orgName)
 	org, err := caching.GetFromCache(ctx, s.Cache, orgKey, func() (sqlcgen.GetOrganizationByNameRow, error) {
 		return s.DB.GetOrganizationByName(ctx, orgName)
@@ -129,6 +142,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		return nil, server.NewError(server.ErrorNotFound, "organization not found", err)
 	}
 
+	// Get api endpoint details
 	epKey := common.RedisKeyFormatter(string(common.EndpointPrefix), endpointCode)
 	endpoint, err := caching.GetFromCache(ctx, s.Cache, epKey, func() (sqlcgen.GetApiEndpointByNameRow, error) {
 		return s.DB.GetApiEndpointByName(ctx, endpointCode)
@@ -137,6 +151,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		return nil, server.NewError(server.ErrorNotFound, "endpoint not found", err)
 	}
 
+	// Check organization permission details
 	epPerKey := common.RedisKeyFormatter(
 		string(common.OrganizationPrefix), string(org.ID),
 		string(common.EndpointPrefix), string(endpoint.ResourceTypeID),
@@ -153,6 +168,7 @@ func (s *GateKeepingService) GetOrgSubDetailsFromCache(ctx context.Context, meth
 		return nil, server.NewError(server.ErrorUnauthorized, "insufficient permission", err)
 	}
 
+	// Get active subscription
 	subKey := common.RedisKeyFormatter(
 		string(common.SubscriptionPrefix),
 		strconv.Itoa(int(org.ID)),

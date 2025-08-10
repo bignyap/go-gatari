@@ -47,24 +47,30 @@ type CreateCustomPricingsParams struct {
 	CostMode          string  `json:"cost_mode"`
 }
 
-const deleteCustomPricingById = `-- name: DeleteCustomPricingById :exec
+const deleteCustomPricingById = `-- name: DeleteCustomPricingById :one
 DELETE FROM custom_endpoint_pricing
 WHERE custom_endpoint_pricing_id = $1
+RETURNING subscription_id
 `
 
-func (q *Queries) DeleteCustomPricingById(ctx context.Context, customEndpointPricingID int32) error {
-	_, err := q.db.Exec(ctx, deleteCustomPricingById, customEndpointPricingID)
-	return err
+func (q *Queries) DeleteCustomPricingById(ctx context.Context, customEndpointPricingID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteCustomPricingById, customEndpointPricingID)
+	var subscription_id int32
+	err := row.Scan(&subscription_id)
+	return subscription_id, err
 }
 
-const deleteCustomPricingBySubscriptionId = `-- name: DeleteCustomPricingBySubscriptionId :exec
+const deleteCustomPricingBySubscriptionId = `-- name: DeleteCustomPricingBySubscriptionId :one
 DELETE FROM custom_endpoint_pricing
 WHERE subscription_id = $1
+RETURNING subscription_id
 `
 
-func (q *Queries) DeleteCustomPricingBySubscriptionId(ctx context.Context, subscriptionID int32) error {
-	_, err := q.db.Exec(ctx, deleteCustomPricingBySubscriptionId, subscriptionID)
-	return err
+func (q *Queries) DeleteCustomPricingBySubscriptionId(ctx context.Context, subscriptionID int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteCustomPricingBySubscriptionId, subscriptionID)
+	var subscription_id int32
+	err := row.Scan(&subscription_id)
+	return subscription_id, err
 }
 
 const getCustomPricing = `-- name: GetCustomPricing :many

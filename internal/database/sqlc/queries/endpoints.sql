@@ -35,9 +35,10 @@ INSERT INTO api_endpoint (
   http_method,
   path_template,
   resource_type_id,
-  permission_code
+  permission_code,
+  access_type
 )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING api_endpoint_id;
 
 -- name: RegisterApiEndpoints :copyfrom
@@ -47,9 +48,10 @@ INSERT INTO api_endpoint (
   http_method,
   path_template,
   resource_type_id,
-  permission_code
+  permission_code,
+  access_type
 )
-VALUES ($1, $2, $3, $4, $5, $6);
+VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: DeleteApiEndpointById :exec
 DELETE FROM api_endpoint
@@ -63,7 +65,8 @@ SET
   http_method = $4,
   path_template = $5,
   resource_type_id = $6,
-  permission_code = $7
+  permission_code = $7,
+  access_type = $8
 WHERE api_endpoint_id = $1;
 
 -- name: UpsertApiEndpointByName :one
@@ -73,16 +76,18 @@ INSERT INTO api_endpoint (
   http_method,
   path_template,
   resource_type_id,
-  permission_code
+  permission_code,
+  access_type
 )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (endpoint_name) DO UPDATE
 SET
   endpoint_description = EXCLUDED.endpoint_description,
   http_method = EXCLUDED.http_method,
   path_template = EXCLUDED.path_template,
   resource_type_id = EXCLUDED.resource_type_id,
-  permission_code = EXCLUDED.permission_code
+  permission_code = EXCLUDED.permission_code,
+  access_type = EXCLUDED.access_type
 RETURNING api_endpoint_id;
 
 -- name: GetEndpointByName :one

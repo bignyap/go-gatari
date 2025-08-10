@@ -76,7 +76,7 @@ func (s *PricingService) DeleteCustomPricing(ctx context.Context, idType string,
 
 	switch strings.ToLower(idType) {
 	case "subscription":
-		err := s.DB.DeleteCustomPricingBySubscriptionId(ctx, int32(id))
+		_, err := s.DB.DeleteCustomPricingBySubscriptionId(ctx, int32(id))
 		if err != nil {
 			return server.NewError(
 				server.ErrorInternal,
@@ -85,7 +85,7 @@ func (s *PricingService) DeleteCustomPricing(ctx context.Context, idType string,
 			)
 		}
 	case "pricing":
-		err := s.DB.DeleteCustomPricingById(ctx, int32(id))
+		_, err := s.DB.DeleteCustomPricingById(ctx, int32(id))
 		if err != nil {
 			return server.NewError(
 				server.ErrorInternal,
