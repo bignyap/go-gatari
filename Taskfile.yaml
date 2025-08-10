@@ -132,18 +132,46 @@ tasks:
         {{else}}
         mkdir -p {{.BUILD_DIR}}
         {{end}}
+
+  create-schema-dir:
+    cmds:
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "if (!(Test-Path 'schema')) { New-Item -ItemType Directory -Path 'schema' | Out-Null }"
+        {{else}}
+        mkdir -p schema
+        {{end}}
+
+  remove-schema-dir:
+    cmds:
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "if (Test-Path 'schema') { Remove-Item -Recurse -Force 'schema' }"
+        {{else}}
+        rm -rf schema
+        {{end}}
   
   build-container:
     vars:
       CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
       CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
       CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
-    deps: 
+    deps:
       - task: compile-artifacts
         vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
     cmds:
+      - task: create-schema-dir
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "if ('{{.CURRENT_SERVICE_NAME}}' -eq 'gatari-db-init') { Copy-Item -Recurse internal/database/sqlc/schema/* schema/ }"
+        {{else}}
+        if [ "{{.CURRENT_SERVICE_NAME}}" = "gatari-db-init" ]; then
+          cp -r internal/database/sqlc/schema/* schema/
+        fi
+        {{end}}
       - docker build --build-arg BINARY_NAME={{.CURRENT_SERVICE_NAME}} -t {{.CONTAINER_IMAGE}} .
       - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
+      - task: remove-schema-dir
 
   remove-container:
     vars:
