@@ -63,3 +63,5 @@ go.work.sum
 
 .env
 .codegpt
+
+__swagger_cleaned.yaml

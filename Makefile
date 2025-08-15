@@ -7,12 +7,28 @@ GIT_TAG := $(shell git describe --tags --exact-match HEAD 2>/dev/null || true)
 CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
 DOCKER_NAMESPACE ?=
 PLATFORM ?= linux/arm64
+OS_NAME := $(shell uname -s)
 
 # Conditional Docker image names
 ifeq ($(DOCKER_NAMESPACE),)
   IMAGE_NAME = $(SERVICE_NAME)
 else
   IMAGE_NAME = $(DOCKER_NAMESPACE)/$(SERVICE_NAME)
+endif
+
+# Define the virtual environment activation command based on the OS
+ifeq ($(OS_NAME),Darwin)
+    # macOS
+    VENV_ACTIVATE := source .venv/bin/activate
+else ifeq ($(OS_NAME),Linux)
+    # Linux
+    VENV_ACTIVATE := source .venv/bin/activate
+else ifeq ($(OS_NAME),MINGW64_NT)
+    # Git Bash on Windows
+    VENV_ACTIVATE := .venv/Scripts/activate
+else
+    # Default to macOS/Linux, or handle other cases
+    VENV_ACTIVATE := source .venv/bin/activate
 endif
 
 CONTAINER_IMAGE = $(IMAGE_NAME):$(CONTAINER_IMAGE_TAG)
@@ -56,6 +72,11 @@ run-go-admin:
 
 run-gatekeeper:
 	$(MAKE) run-debug SERVICE_NAME=gate-keeper
+
+run-mcp-server:
+    cd mcp-server && python -m venv .venv
+    cd mcp-server && $(VENV_ACTIVATE) && pip install -r requirements.txt
+    cd mcp-server && $(VENV_ACTIVATE) && python main.py
 
 ######################
 # Testing

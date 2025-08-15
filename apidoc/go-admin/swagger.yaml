@@ -103,7 +103,7 @@ paths:
     $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1subId~1{subscription_id}'
   /billingHistory/orgId/{organization_id}:
     $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1orgId~1{organization_id}'
-  /billingHistory/endpointId/id/{id}:
+  /billingHistory/id/{billing_id}:
     $ref: './paths/billinghistory.yaml#/paths/~1billingHistory~1id~1{billing_id}'
 
   /dashboard/counts:

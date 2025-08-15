@@ -39,7 +39,6 @@ paths:
           in: query
           required: false
           schema:
-            schema:
             type: string
             format: date-time
             nullable: true
