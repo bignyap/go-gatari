@@ -47,7 +47,7 @@ Pygments==2.19.2
 pyperclip==1.9.0
 python-dotenv==1.1.1
 python-multipart==0.0.20
-pywin32==311
+# pywin32==311
 PyYAML==6.0.2
 referencing==0.36.2
 requests==2.32.4
@@ -115,7 +115,7 @@ Pygments==2.19.2
 pyperclip==1.9.0
 python-dotenv==1.1.1
 python-multipart==0.0.20
-pywin32==311
+# pywin32==311
 PyYAML==6.0.2
 referencing==0.36.2
 requests==2.32.4
