@@ -13,7 +13,7 @@ load_dotenv()
 local_spec_path_str = os.getenv("OPENAPI_SPEC_PATH", "/swagger.yaml")
 LOCAL_SPEC_PATH = Path(local_spec_path_str)
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8080")
-PORT = os.getenv("PORT", 8000)
+PORT = int(os.getenv("PORT", 8000))
 
 def _rewrite_local_refs_to_absolute(obj, base_dir: Path):
     """

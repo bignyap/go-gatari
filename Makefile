@@ -8,6 +8,7 @@ CONTAINER_IMAGE_TAG ?= $(if $(GIT_TAG),$(GIT_TAG),$(GIT_HASH))
 DOCKER_NAMESPACE ?=
 PLATFORM ?= linux/arm64
 OS_NAME := $(shell uname -s)
+PYTHON := python
 
 # Conditional Docker image names
 ifeq ($(DOCKER_NAMESPACE),)
@@ -74,9 +75,11 @@ run-gatekeeper:
 	$(MAKE) run-debug SERVICE_NAME=gate-keeper
 
 run-mcp-server:
-    cd mcp-server && python -m venv .venv
-    cd mcp-server && $(VENV_ACTIVATE) && pip install -r requirements.txt
-    cd mcp-server && $(VENV_ACTIVATE) && python main.py
+	cd mcp-server && \
+	$(PYTHON) -m venv .venv && \
+	. .venv/bin/activate && \
+	pip install -r requirements.txt && \
+	$(PYTHON) main.py
 
 ######################
 # Testing
@@ -142,6 +145,16 @@ build-container: compile-artifacts
 		--push .
 	rm -rf schema
 
+build-container-local: compile-artifacts
+	mkdir -p schema
+	@if [ "$(SERVICE_NAME)" = "gatari-db-init" ]; then \
+		cp -r internal/database/sqlc/schema/* schema/; \
+	fi
+	docker build \
+		--build-arg BINARY_NAME=$(SERVICE_NAME) \
+		-t $(CONTAINER_IMAGE) \
+		-t $(CONTAINER_IMAGE_LATEST) .
+	rm -rf schema
 
 remove-container:
 	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(IMAGE_NAME)' | xargs -r docker rmi
@@ -174,7 +187,7 @@ clean-build-run:
 	$(MAKE) remove-container SERVICE_NAME=go-admin
 	$(MAKE) remove-container SERVICE_NAME=gate-keeper
 	$(MAKE) remove-container SERVICE_NAME=gatari-db-init
-	$(MAKE) build-container SERVICE_NAME=go-admin
-	$(MAKE) build-container SERVICE_NAME=gate-keeper
-	$(MAKE) build-container SERVICE_NAME=gatari-db-init
+	$(MAKE) build-container-local SERVICE_NAME=go-admin
+	$(MAKE) build-container-local SERVICE_NAME=gate-keeper
+	$(MAKE) build-container-local SERVICE_NAME=gatari-db-init
 	$(MAKE) start-container
