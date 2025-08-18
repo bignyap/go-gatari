@@ -64,7 +64,11 @@ tasks:
 
   run-mcp-server:
     cmds:
-      - powershell -ExecutionPolicy Bypass -Command "cd mcp-server; python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt; python main.py"
+      - powershell -ExecutionPolicy Bypass -Command "cd mcp-server; python -m venv .venv; .\.venv\Scripts\Activate.ps1; python -m pip install --upgrade pip; python -m pip install -r requirements.txt; python main.py"
+
+  run-mcp-client:
+    cmds:
+      - powershell -ExecutionPolicy Bypass -Command "cd mcp-client; python -m venv .venv; .\.venv\Scripts\Activate.ps1; python -m pip install --upgrade pip; python -m pip install -r requirements.txt; python main.py"
 
   test:
     cmds:

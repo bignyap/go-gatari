@@ -14,11 +14,16 @@ from fastmcp import Client  # ✅ no more transport import
 # OpenAI (official python client)
 from openai import OpenAI
 
+# Gemini (official python client)
+import google.generativeai as genai
+
 load_dotenv()
 
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8084/mcp")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 PORT = int(os.getenv("BACKEND_PORT", "9000"))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
@@ -46,7 +51,15 @@ async def get_mcp_client() -> Client:
 
 async def mcp_list_tools():
     client = await get_mcp_client()
-    return await client.list_tools()
+    tools = await client.list_tools()
+    return [
+        {
+            "name": t.name,
+            "description": getattr(t, "description", ""),
+            "parameters": getattr(t, "parameters", {}),
+        }
+        for t in tools
+    ]
 
 async def mcp_call_tool(name: str, arguments: Dict[str, Any]):
     client = await get_mcp_client()
@@ -58,6 +71,11 @@ if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY not set. Put it in backend/.env")
 
 oai = OpenAI(api_key=OPENAI_API_KEY)
+
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY not set. Put it in backend/.env")
+
+genai.configure(api_key=GEMINI_API_KEY)
 
 INTENT_SCHEMA = {
     "type": "object",
@@ -71,7 +89,62 @@ INTENT_SCHEMA = {
     "additionalProperties": False,
 }
 
-async def llm_plan(user_message: str, tools: list[dict]) -> dict:
+async def gemini_llm_plan(user_message: str, tools: list[dict]) -> dict:
+    tool_catalog = []
+    for t in tools:
+        tool_catalog.append({
+            "name": t.get("name"),
+            "description": t.get("description", ""),
+            "parameters": t.get("parameters", {}),
+        })
+
+    # System instructions go into system_instruction, not as a "system" role
+    system_instruction = (
+        "You convert natural language requests into MCP tool invocations.\n"
+        "Return ONLY a strict JSON object with fields: tool, args, summary, confirmation.\n"
+        "If no suitable tool exists, set tool=null and args={}. Do not invent tools.\n"
+        "Use the provided parameter schemas when forming args."
+    )
+
+    # User content
+    user_payload = json.dumps({
+        "available_tools": tool_catalog,
+        "user_request": user_message,
+    }, ensure_ascii=False)
+
+    # Attach system_instruction here instead of role=system
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",  # or your GEMINI_MODEL
+        system_instruction=system_instruction,
+    )
+
+    resp = model.generate_content(user_payload)
+
+    # Gemini returns plain text, not JSON
+    content = resp.text or "{}"
+    try:
+        parsed = json.loads(content)
+    except Exception:
+        parsed = {
+            "tool": None,
+            "args": {},
+            "summary": "Failed to parse plan.",
+            "confirmation": "I couldn't understand the request."
+        }
+
+    # Ensure all required fields exist
+    for k in ["tool", "args", "summary", "confirmation"]:
+        if k not in parsed:
+            if k == "tool":
+                parsed[k] = None
+            elif k == "args":
+                parsed[k] = {}
+            else:
+                parsed[k] = ""
+
+    return parsed
+
+async def oai_llm_plan(user_message: str, tools: list[dict]) -> dict:
     tool_catalog = []
     for t in tools:
         tool_catalog.append({
@@ -174,11 +247,14 @@ async def ws_chat(ws: WebSocket):
 
             await ws.send_text(ws_msg("bot", "Thinking…"))
             try:
-                plan = await llm_plan(user_text, tools)
+                plan = await gemini_llm_plan(user_text, tools)
             except Exception as e:
                 await ws.send_text(ws_msg("error", f"LLM error: {e}"))
                 continue
 
+            
+            print(plan)
+            
             tool = plan.get("tool")
             args = plan.get("args") or {}
             summary = plan.get("summary") or ""

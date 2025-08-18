@@ -7,8 +7,14 @@ from fastmcp import FastMCP
 from fastmcp.server.openapi import RouteMap, MCPType
 from dotenv import load_dotenv
 
+import asyncio
+import sys
+
 # Load environment variables from .env file
 load_dotenv()
+
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 local_spec_path_str = os.getenv("OPENAPI_SPEC_PATH", "/swagger.yaml")
 LOCAL_SPEC_PATH = Path(local_spec_path_str)
