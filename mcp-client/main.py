@@ -6,8 +6,10 @@ from typing import Any, Dict, Optional
 import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from fastmcp import Client  # ✅ no more transport import
 
 # OpenAI (official python client)
 from openai import OpenAI
@@ -31,32 +33,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---- JSON-RPC helpers to talk to MCP server ----
+# ---- MCP client ----
 
-def _jsonrpc_payload(method: str, params: Optional[Dict[str, Any]] = None):
-    return {
-        "jsonrpc": "2.0",
-        "id": str(uuid.uuid4()),
-        "method": method,
-        "params": params or {},
-    }
+_mcp_client: Optional[Client] = None
 
-async def mcp_rpc(method: str, params: Optional[Dict[str, Any]] = None):
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(MCP_SERVER_URL, json=_jsonrpc_payload(method, params))
-        r.raise_for_status()
-        data = r.json()
-        if "error" in data:
-            raise RuntimeError(f"MCP error: {data['error']}")
-        return data["result"]
+async def get_mcp_client() -> Client:
+    global _mcp_client
+    if _mcp_client is None:
+        _mcp_client = Client(MCP_SERVER_URL)
+        await _mcp_client.__aenter__()  # establish connection
+    return _mcp_client
 
 async def mcp_list_tools():
-    res = await mcp_rpc("tools/list")
-    # Expected shape: { "tools": [ { "name": str, "description": str, "parameters": {...} }, ... ] }
-    return res.get("tools", [])
+    client = await get_mcp_client()
+    return await client.list_tools()
 
 async def mcp_call_tool(name: str, arguments: Dict[str, Any]):
-    return await mcp_rpc("tools/call", {"name": name, "arguments": arguments})
+    client = await get_mcp_client()
+    return await client.call_tool(name, arguments)
 
 # ---- OpenAI intent parsing ----
 
@@ -78,11 +72,6 @@ INTENT_SCHEMA = {
 }
 
 async def llm_plan(user_message: str, tools: list[dict]) -> dict:
-    """
-    Ask the LLM to map the user request to a tool + args.
-    Returns a JSON dict matching INTENT_SCHEMA.
-    """
-    # We give the LLM the list of tool names and their JSON Schemas (if available).
     tool_catalog = []
     for t in tools:
         tool_catalog.append({
@@ -103,7 +92,6 @@ async def llm_plan(user_message: str, tools: list[dict]) -> dict:
         "user_request": user_message,
     }, ensure_ascii=False)
 
-    # Use JSON mode to force valid JSON
     resp = oai.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[
@@ -120,7 +108,6 @@ async def llm_plan(user_message: str, tools: list[dict]) -> dict:
     except Exception:
         parsed = {"tool": None, "args": {}, "summary": "Failed to parse plan.", "confirmation": "I couldn't understand the request."}
 
-    # Final sanity checks on keys
     for k in ["tool", "args", "summary", "confirmation"]:
         if k not in parsed:
             if k == "tool":
@@ -134,15 +121,10 @@ async def llm_plan(user_message: str, tools: list[dict]) -> dict:
 # ---- WebSocket chat protocol ----
 
 class WSIncoming(BaseModel):
-    # type: 'user' messages from the frontend
     type: str = Field(..., description="Currently only 'user'")
     text: str
 
-# Outgoing message envelope
 def ws_msg(kind: str, text: str, payload: Optional[dict] = None) -> str:
-    """
-    kind: 'bot', 'confirm', 'result', 'error'
-    """
     out = {"type": kind, "text": text}
     if payload is not None:
         out["payload"] = payload
@@ -170,7 +152,6 @@ async def ws_chat(ws: WebSocket):
 
             user_text = incoming.text.strip()
 
-            # If we are waiting for a yes/no on a pending action:
             if pending_action:
                 low = user_text.lower()
                 if low in ("y", "yes", "confirm", "ok", "okay", "do it"):
@@ -191,7 +172,6 @@ async def ws_chat(ws: WebSocket):
                     await ws.send_text(ws_msg("bot", "Please reply 'yes' or 'no'."))
                 continue
 
-            # Otherwise: parse new intent with LLM
             await ws.send_text(ws_msg("bot", "Thinking…"))
             try:
                 plan = await llm_plan(user_text, tools)
@@ -208,16 +188,21 @@ async def ws_chat(ws: WebSocket):
                 await ws.send_text(ws_msg("bot", "I couldn't map that to a known action. Try rephrasing."))
                 continue
 
-            # Show confirmation card
             pending_action = {"tool": tool, "args": args}
             confirm_text = f"{summary}\n\n{confirmation}\n\nTool: {tool}\nArgs: {json.dumps(args, ensure_ascii=False)}\n\nType 'yes' to proceed or 'no' to cancel."
             await ws.send_text(ws_msg("confirm", confirm_text, payload={"tool": tool, "args": args}))
 
     except WebSocketDisconnect:
-        # Client left
         return
 
-# --- Optional: simple health endpoint ---
 @app.get("/health")
 async def health():
     return {"ok": True}
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=True
+    )

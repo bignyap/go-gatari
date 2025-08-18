@@ -81,6 +81,13 @@ run-mcp-server:
 	pip install -r requirements.txt && \
 	$(PYTHON) main.py
 
+run-mcp-client:
+	cd mcp-client && \
+	$(PYTHON) -m venv .venv && \
+	. .venv/bin/activate && \
+	pip install -r requirements.txt && \
+	$(PYTHON) main.py
+
 ######################
 # Testing
 ######################
