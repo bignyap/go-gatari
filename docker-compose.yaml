@@ -88,6 +88,63 @@ services:
   #     postgres:
   #       condition: service_healthy
 
+
+  gatari-mcp-server:
+    container_name: gatari-mcp-server
+    image: gatari-mcp-server:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
+    restart: always
+    environment:
+      BASE_URL: ${BASE_URL}
+      PORT: ${PORT}
+    ports:
+      - '8084:8084'
+    expose:
+      - '8084'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/mcp/status || exit 1;"]
+      interval: 19s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      go-admin:
+        condition: service_healthy
+
+  gatari-mcp-client:
+    container_name: gatari-mcp-client
+    image: gatari-mcp-client:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     CACHE_BUST: ${CACHE_BUST}
+    restart: always
+    environment:
+      MCP_SERVER_URL: ${BASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      PORT: ${PORT}
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      OPENAI_MODEL: ${OPENAI_MODEL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+    ports:
+      - '9000:9000'
+    expose:
+      - '9000'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1;"]
+      interval: 19s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      gatari-mcp-server:
+        condition: service_healthy
+
   postgres:
     image: postgres:15
     restart: always

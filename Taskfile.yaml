@@ -159,6 +159,14 @@ tasks:
         rm -rf schema
         {{end}}
   
+  copy-openapi-spec:
+    cmds: 
+    - powershell -ExecutionPolicy Bypass -Command "cp -r apidoc/ mcp-server/_apidoc"
+  
+  remove-openapi-spec:
+    cmds:
+    - powershell -ExecutionPolicy Bypass -Command "rm -rf mcp-server/_apidoc"
+
   build-container:
     vars:
       CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
@@ -180,6 +188,26 @@ tasks:
       - docker build --build-arg BINARY_NAME={{.CURRENT_SERVICE_NAME}} -t {{.CONTAINER_IMAGE}} .
       - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
       - task: remove-schema-dir
+
+  build-mcp-client-container:
+    vars:
+      CURRENT_SERVICE_NAME: "gatari-mcp-client"
+      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+    cmds:
+      - powershell -ExecutionPolicy Bypass -Command "cd mcp-client; docker build -t {{.CONTAINER_IMAGE}} ."
+      - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
+
+  build-mcp-server-container:
+    vars:
+      CURRENT_SERVICE_NAME: "gatari-mcp-server"
+      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+    cmds:
+      - task: copy-openapi-spec
+      - powershell -ExecutionPolicy Bypass -Command "cd mcp-server; docker build -t {{.CONTAINER_IMAGE}} ."
+      - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
+      - task: remove-openapi-spec
 
   remove-container:
     vars:
