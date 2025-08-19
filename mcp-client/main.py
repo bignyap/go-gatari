@@ -69,7 +69,7 @@ async def mcp_call_tool(name: str, arguments: Dict[str, Any]):
 def get_llm(provider: str = LLM_PROVIDER):
     if provider == "openai":
         if not OPENAI_API_KEY:
-            raise RuntimeError("OPENAI_API_KEY not set in .env")
+            raise RuntimeError("OPENAI_API_KEY not set")
         return ChatOpenAI(
             model=OPENAI_MODEL,
             api_key=OPENAI_API_KEY,
@@ -77,7 +77,7 @@ def get_llm(provider: str = LLM_PROVIDER):
         )
     elif provider == "gemini":
         if not GEMINI_API_KEY:
-            raise RuntimeError("GEMINI_API_KEY not set in .env")
+            raise RuntimeError("GEMINI_API_KEY not set")
         return ChatGoogleGenerativeAI(
             model=GEMINI_MODEL,
             google_api_key=GEMINI_API_KEY,
@@ -168,7 +168,16 @@ async def ws_chat(ws: WebSocket):
                         result = await mcp_call_tool(
                             pending_action["tool"], pending_action["args"]
                         )
-                        await ws.send_text(ws_msg("result", "✅ Done.", payload=result))
+
+                        # ✅ Convert to JSON-safe dict
+                        if hasattr(result, "dict"):
+                            result_payload = result.dict()
+                        elif hasattr(result, "json"):
+                            result_payload = json.loads(result.json())
+                        else:
+                            result_payload = str(result)
+
+                        await ws.send_text(ws_msg("result", "✅ Done.", payload=result_payload))
                     except Exception as e:
                         await ws.send_text(ws_msg("error", f"❌ Execution failed: {e}"))
                     finally:
