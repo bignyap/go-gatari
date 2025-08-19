@@ -9,13 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from fastmcp import Client  # ✅ no more transport import
+from fastmcp import Client
 
-# OpenAI (official python client)
-from openai import OpenAI
-
-# Gemini (official python client)
-import google.generativeai as genai
+# LangChain imports
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
 
 load_dotenv()
 
@@ -24,12 +24,13 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # "openai" or "gemini"
 PORT = int(os.getenv("BACKEND_PORT", "9000"))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
 app = FastAPI(title="GATARI MCP Chat Backend")
 
-# CORS (so the React app can talk to us)
+# ---- CORS ----
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in ALLOWED_ORIGINS],
@@ -39,7 +40,6 @@ app.add_middleware(
 )
 
 # ---- MCP client ----
-
 _mcp_client: Optional[Client] = None
 
 async def get_mcp_client() -> Client:
@@ -65,134 +65,68 @@ async def mcp_call_tool(name: str, arguments: Dict[str, Any]):
     client = await get_mcp_client()
     return await client.call_tool(name, arguments)
 
-# ---- OpenAI intent parsing ----
+# ---- LangChain LLM Factory ----
+def get_llm(provider: str = LLM_PROVIDER):
+    if provider == "openai":
+        if not OPENAI_API_KEY:
+            raise RuntimeError("OPENAI_API_KEY not set in .env")
+        return ChatOpenAI(
+            model=OPENAI_MODEL,
+            api_key=OPENAI_API_KEY,
+            temperature=0.1,
+        )
+    elif provider == "gemini":
+        if not GEMINI_API_KEY:
+            raise RuntimeError("GEMINI_API_KEY not set in .env")
+        return ChatGoogleGenerativeAI(
+            model=GEMINI_MODEL,
+            google_api_key=GEMINI_API_KEY,
+            temperature=0.1,
+        )
+    else:
+        raise ValueError(f"Unsupported LLM provider: {provider}")
 
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY not set. Put it in backend/.env")
+# ---- Prompt & Parser ----
+INTENT_PROMPT = ChatPromptTemplate.from_messages([
+    ("system",
+     "You convert natural language requests into MCP tool invocations.\n"
+     "Return ONLY a strict JSON object with fields: tool, args, summary, confirmation.\n"
+     "If no suitable tool exists, set tool=null and args={{}}. Do not invent tools.\n"
+     "Use the provided parameter schemas when forming args."),
+    ("user", "{user_input}")
+])
+parser = JsonOutputParser()
 
-oai = OpenAI(api_key=OPENAI_API_KEY)
+async def llm_plan(user_message: str, tools: list[dict], provider: str = LLM_PROVIDER) -> dict:
+    llm = get_llm(provider)
 
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not set. Put it in backend/.env")
-
-genai.configure(api_key=GEMINI_API_KEY)
-
-INTENT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "tool": {"type": ["string", "null"]},
-        "args": {"type": "object"},
-        "summary": {"type": "string"},
-        "confirmation": {"type": "string"},
-    },
-    "required": ["tool", "args", "summary", "confirmation"],
-    "additionalProperties": False,
-}
-
-async def gemini_llm_plan(user_message: str, tools: list[dict]) -> dict:
-    tool_catalog = []
-    for t in tools:
-        tool_catalog.append({
+    tool_catalog = [
+        {
             "name": t.get("name"),
             "description": t.get("description", ""),
             "parameters": t.get("parameters", {}),
-        })
+        }
+        for t in tools
+    ]
 
-    # System instructions go into system_instruction, not as a "system" role
-    system_instruction = (
-        "You convert natural language requests into MCP tool invocations.\n"
-        "Return ONLY a strict JSON object with fields: tool, args, summary, confirmation.\n"
-        "If no suitable tool exists, set tool=null and args={}. Do not invent tools.\n"
-        "Use the provided parameter schemas when forming args."
-    )
-
-    # User content
     user_payload = json.dumps({
         "available_tools": tool_catalog,
         "user_request": user_message,
     }, ensure_ascii=False)
 
-    # Attach system_instruction here instead of role=system
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",  # or your GEMINI_MODEL
-        system_instruction=system_instruction,
-    )
+    chain = INTENT_PROMPT | llm | parser
 
-    resp = model.generate_content(user_payload)
-
-    # Gemini returns plain text, not JSON
-    content = resp.text or "{}"
     try:
-        parsed = json.loads(content)
-    except Exception:
-        parsed = {
+        return await chain.ainvoke({"user_input": user_payload})
+    except Exception as e:
+        return {
             "tool": None,
             "args": {},
-            "summary": "Failed to parse plan.",
+            "summary": f"Failed to parse plan: {e}",
             "confirmation": "I couldn't understand the request."
         }
 
-    # Ensure all required fields exist
-    for k in ["tool", "args", "summary", "confirmation"]:
-        if k not in parsed:
-            if k == "tool":
-                parsed[k] = None
-            elif k == "args":
-                parsed[k] = {}
-            else:
-                parsed[k] = ""
-
-    return parsed
-
-async def oai_llm_plan(user_message: str, tools: list[dict]) -> dict:
-    tool_catalog = []
-    for t in tools:
-        tool_catalog.append({
-            "name": t.get("name"),
-            "description": t.get("description", ""),
-            "parameters": t.get("parameters", {}),
-        })
-
-    system = (
-        "You convert natural language requests into MCP tool invocations.\n"
-        "Return ONLY a strict JSON object with fields: tool, args, summary, confirmation.\n"
-        "If no suitable tool exists, set tool=null and args={}. Do not invent tools.\n"
-        "Use the provided parameter schemas when forming args."
-    )
-
-    user = json.dumps({
-        "available_tools": tool_catalog,
-        "user_request": user_message,
-    }, ensure_ascii=False)
-
-    resp = oai.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.1,
-    )
-
-    content = resp.choices[0].message.content or "{}"
-    try:
-        parsed = json.loads(content)
-    except Exception:
-        parsed = {"tool": None, "args": {}, "summary": "Failed to parse plan.", "confirmation": "I couldn't understand the request."}
-
-    for k in ["tool", "args", "summary", "confirmation"]:
-        if k not in parsed:
-            if k == "tool":
-                parsed[k] = None
-            elif k == "args":
-                parsed[k] = {}
-            else:
-                parsed[k] = ""
-    return parsed
-
 # ---- WebSocket chat protocol ----
-
 class WSIncoming(BaseModel):
     type: str = Field(..., description="Currently only 'user'")
     text: str
@@ -210,7 +144,7 @@ async def ws_chat(ws: WebSocket):
     tools = await mcp_list_tools()
 
     try:
-        await ws.send_text(ws_msg("bot", "Hi! Tell me what to do. I’ll propose an action and ask for confirmation."))
+        await ws.send_text(ws_msg("bot", "Hi! Tell me what to do. I'll propose an action and ask for confirmation."))
         while True:
             raw = await ws.receive_text()
             try:
@@ -225,6 +159,7 @@ async def ws_chat(ws: WebSocket):
 
             user_text = incoming.text.strip()
 
+            # If awaiting confirmation
             if pending_action:
                 low = user_text.lower()
                 if low in ("y", "yes", "confirm", "ok", "okay", "do it"):
@@ -245,16 +180,16 @@ async def ws_chat(ws: WebSocket):
                     await ws.send_text(ws_msg("bot", "Please reply 'yes' or 'no'."))
                 continue
 
+            # Otherwise create a plan
             await ws.send_text(ws_msg("bot", "Thinking…"))
             try:
-                plan = await gemini_llm_plan(user_text, tools)
+                plan = await llm_plan(user_text, tools, provider=LLM_PROVIDER)
             except Exception as e:
                 await ws.send_text(ws_msg("error", f"LLM error: {e}"))
                 continue
 
-            
-            print(plan)
-            
+            print("Plan:", plan)
+
             tool = plan.get("tool")
             args = plan.get("args") or {}
             summary = plan.get("summary") or ""
@@ -265,7 +200,11 @@ async def ws_chat(ws: WebSocket):
                 continue
 
             pending_action = {"tool": tool, "args": args}
-            confirm_text = f"{summary}\n\n{confirmation}\n\nTool: {tool}\nArgs: {json.dumps(args, ensure_ascii=False)}\n\nType 'yes' to proceed or 'no' to cancel."
+            confirm_text = (
+                f"{summary}\n\n{confirmation}\n\n"
+                f"Tool: {tool}\nArgs: {json.dumps(args, ensure_ascii=False)}\n\n"
+                "Type 'yes' to proceed or 'no' to cancel."
+            )
             await ws.send_text(ws_msg("confirm", confirm_text, payload={"tool": tool, "args": args}))
 
     except WebSocketDisconnect:
