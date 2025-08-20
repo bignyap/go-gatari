@@ -120,6 +120,7 @@ cpu-profile:
 migrate-up:
 	go get github.com/pressly/goose/v3/cmd/goose
 	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" up
+	go mod tidy
 
 migrate-down:
 	$(GOOSE) -dir $(MIGRATIONS_DIR) $(DB_DRIVER) "$(DB_DSN)" down

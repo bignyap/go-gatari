@@ -22,13 +22,22 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8080")
 PORT = int(os.getenv("PORT", 8000))
 
 def _resolve_case_insensitive(base_dir: Path, rel: str) -> Path:
+    """
+    Resolve rel against base_dir, case-insensitively.
+    If rel has N parts, we search base_dir with '**' up to that depth.
+    """
     target = base_dir / rel
+    print("Target:", target)
     if target.exists():
         return target
-    # try case-insensitive match
-    for f in base_dir.glob("*"):
-        if f.name.lower() == Path(rel).name.lower():
+
+    parts_len = len(Path(rel).parts)
+    # Build a glob like '*/*/...'
+    pattern = "*/" * (parts_len - 1) + "*"
+    for f in base_dir.glob(pattern):
+        if f.is_file() and f.name.lower() == Path(rel).name.lower():
             return f
+
     raise FileNotFoundError(f"Could not resolve {rel} in {base_dir}")
 
 def _rewrite_local_refs_to_absolute(obj, base_dir: Path):

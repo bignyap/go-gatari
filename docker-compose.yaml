@@ -28,10 +28,10 @@ services:
     expose:
       - '8081'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
-      interval: 19s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
     expose:
       - '8082'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1;"]
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
       interval: 19s
       timeout: 5s
       retries: 10
@@ -99,20 +99,20 @@ services:
     restart: always
     environment:
       BASE_URL: ${BASE_URL}
-      PORT: ${PORT}
+      PORT: ${MCP_SERVER_PORT}
       OPENAPI_SPEC_PATH: ${OPENAPI_SPEC_PATH}
     ports:
       - '8084:8084'
     expose:
       - '8084'
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:8084/mcp/status || exit 1;"]
-    #   interval: 19s
-    #   timeout: 5s
-    #   retries: 10
-    # depends_on:
-    #   go-admin:
-    #     condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8084"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    depends_on:
+      go-admin:
+        condition: service_healthy
 
   gatari-mcp-client:
     container_name: gatari-mcp-client
@@ -126,7 +126,7 @@ services:
     environment:
       MCP_SERVER_URL: ${BASE_URL}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
-      PORT: ${PORT}
+      PORT: ${MCP_CLIENT_PORT}
       LLM_PROVIDER: ${LLM_PROVIDER}
       OPENAI_MODEL: ${OPENAI_MODEL}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -136,14 +136,14 @@ services:
       - '9000:9000'
     expose:
       - '9000'
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1;"]
-    #   interval: 19s
-    #   timeout: 5s
-    #   retries: 10
-    # depends_on:
-    #   gatari-mcp-server:
-    #     condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9000"]
+      interval: 19s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      gatari-mcp-server:
+        condition: service_healthy
 
   postgres:
     image: postgres:15

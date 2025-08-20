@@ -14,6 +14,12 @@ COPY . .
 # Stage 2: Final Image
 FROM python:3.12.11-slim
 
+# Install curl & netcat (Debian-based command, not apk)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy installed packages from builder

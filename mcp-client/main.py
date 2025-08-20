@@ -3,7 +3,6 @@ import uuid
 import json
 from typing import Any, Dict, Optional
 
-import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
