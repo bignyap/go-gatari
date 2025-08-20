@@ -1,24 +1,25 @@
 # Stage 1: Builder
-FROM python:3.13-alpine3.21 AS builder
+FROM python:3.12.11-slim AS builder
 
 WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
+RUN pip install --upgrade pip setuptools
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
 # Stage 2: Final Image
-FROM python:3.13-alpine3.21
+FROM python:3.12.11-slim
 
-COPY /_apidoc/go-admin /
+COPY /_apidoc/go-admin /app/_apidoc/go-admin
 
 WORKDIR /app
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
 # Copy application code
 COPY --from=builder /app .

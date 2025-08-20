@@ -10,11 +10,19 @@ PLATFORM ?= linux/arm64
 OS_NAME := $(shell uname -s)
 PYTHON := python
 
+NEW_SERVICE_NAME := $(SERVICE_NAME)
+
+# If SERVICE_NAME is either mcp-client or mcp-server, prefix with gatari-
+ifneq (,$(filter $(SERVICE_NAME),mcp-client mcp-server))
+  NEW_SERVICE_NAME := gatari-$(SERVICE_NAME)
+endif
+
+
 # Conditional Docker image names
 ifeq ($(DOCKER_NAMESPACE),)
-  IMAGE_NAME = $(SERVICE_NAME)
+  IMAGE_NAME = $(NEW_SERVICE_NAME)
 else
-  IMAGE_NAME = $(DOCKER_NAMESPACE)/$(SERVICE_NAME)
+  IMAGE_NAME = $(DOCKER_NAMESPACE)/$(NEW_SERVICE_NAME)
 endif
 
 # Define the virtual environment activation command based on the OS
@@ -163,6 +171,21 @@ build-container-local: compile-artifacts
 		-t $(CONTAINER_IMAGE_LATEST) .
 	rm -rf schema
 
+build-mcp-container-local:
+	cp -r "$(REPO_FOLDER)/apidoc/" "$(REPO_FOLDER)/$(SERVICE_NAME)/_apidoc"
+	cd "$(REPO_FOLDER)/$(SERVICE_NAME)" && docker build -t $(CONTAINER_IMAGE) -t $(CONTAINER_IMAGE_LATEST) .
+	rm -rf "$(REPO_FOLDER)/$(SERVICE_NAME)/_apidoc"
+
+build-mcp-container:
+	cp -r "$(REPO_FOLDER)/apidoc/" "$(REPO_FOLDER)/$(SERVICE_NAME)/_apidoc"
+	cd "$(REPO_FOLDER)/$(SERVICE_NAME)" && \
+	docker buildx build \
+		--platform=$(PLATFORM) \
+		-t $(CONTAINER_IMAGE) \
+		-t $(CONTAINER_IMAGE_LATEST) \
+		--push .
+	rm -rf "$(REPO_FOLDER)/$(SERVICE_NAME)/_apidoc"
+
 remove-container:
 	docker images --format "{{.Repository}}:{{.Tag}}" | grep '^$(IMAGE_NAME)' | xargs -r docker rmi
 
@@ -194,7 +217,11 @@ clean-build-run:
 	$(MAKE) remove-container SERVICE_NAME=go-admin
 	$(MAKE) remove-container SERVICE_NAME=gate-keeper
 	$(MAKE) remove-container SERVICE_NAME=gatari-db-init
+	$(MAKE) remove-container SERVICE_NAME=mcp-server
+	$(MAKE) remove-container SERVICE_NAME=mcp-client
 	$(MAKE) build-container-local SERVICE_NAME=go-admin
 	$(MAKE) build-container-local SERVICE_NAME=gate-keeper
 	$(MAKE) build-container-local SERVICE_NAME=gatari-db-init
+	$(MAKE) build-mcp-container-local SERVICE_NAME=mcp-server
+	$(MAKE) build-mcp-container-local SERVICE_NAME=mcp-client
 	$(MAKE) start-container

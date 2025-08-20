@@ -10,6 +10,7 @@ on:
 env:
   SERVICES: go-admin gate-keeper gatari-db-init
   DOCKER_NAMESPACE: ${{ secrets.DOCKER_USERNAME }}
+  MCP_SERVICES: mcp-server mcp-client
 
 jobs:
   docker:
@@ -44,6 +45,24 @@ jobs:
             echo "🚀 Building and pushing $IMAGE_NAME:$TAG..."
 
             make build-container \
+              SERVICE_NAME=$SERVICE \
+              PLATFORM=linux/amd64,linux/arm64 \
+              CONTAINER_IMAGE_TAG=$TAG \
+              DOCKER_NAMESPACE=$DOCKER_NAMESPACE
+          done
+      
+      - name: 🧱 Build and Push Multi-Arch MCP Docker Images
+        run: |
+          GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || true)
+          GIT_HASH=$(git rev-parse --short HEAD)
+
+          for SERVICE in $MCP_SERVICES; do
+            IMAGE_NAME=${DOCKER_NAMESPACE}/gatari-${SERVICE}
+            TAG=${GIT_TAG:-$GIT_HASH}
+
+            echo "🚀 Building and pushing $IMAGE_NAME:$TAG..."
+
+            make build-mcp-container \
               SERVICE_NAME=$SERVICE \
               PLATFORM=linux/amd64,linux/arm64 \
               CONTAINER_IMAGE_TAG=$TAG \

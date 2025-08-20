@@ -16,10 +16,20 @@ load_dotenv()
 if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-local_spec_path_str = os.getenv("OPENAPI_SPEC_PATH", "/swagger.yaml")
+local_spec_path_str = os.getenv("OPENAPI_SPEC_PATH", "/app/_apidoc/go-admin/swagger.yaml")
 LOCAL_SPEC_PATH = Path(local_spec_path_str)
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8080")
 PORT = int(os.getenv("PORT", 8000))
+
+def _resolve_case_insensitive(base_dir: Path, rel: str) -> Path:
+    target = base_dir / rel
+    if target.exists():
+        return target
+    # try case-insensitive match
+    for f in base_dir.glob("*"):
+        if f.name.lower() == Path(rel).name.lower():
+            return f
+    raise FileNotFoundError(f"Could not resolve {rel} in {base_dir}")
 
 def _rewrite_local_refs_to_absolute(obj, base_dir: Path):
     """
@@ -31,10 +41,10 @@ def _rewrite_local_refs_to_absolute(obj, base_dir: Path):
             if k == "$ref" and isinstance(v, str) and v.startswith("./"):
                 if "#" in v:
                     rel, frag = v.split("#", 1)
-                    abs_path = (base_dir / rel).resolve()
+                    abs_path = _resolve_case_insensitive(base_dir, rel).resolve()
                     obj[k] = f"{abs_path.as_posix()}#{frag}"
                 else:
-                    abs_path = (base_dir / v).resolve()
+                    abs_path = _resolve_case_insensitive(base_dir, v).resolve()
                     obj[k] = abs_path.as_posix()
             else:
                 _rewrite_local_refs_to_absolute(v, base_dir)

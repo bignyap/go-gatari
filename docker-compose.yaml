@@ -88,7 +88,6 @@ services:
   #     postgres:
   #       condition: service_healthy
 
-
   gatari-mcp-server:
     container_name: gatari-mcp-server
     image: gatari-mcp-server:latest
@@ -101,18 +100,19 @@ services:
     environment:
       BASE_URL: ${BASE_URL}
       PORT: ${PORT}
+      OPENAPI_SPEC_PATH: ${OPENAPI_SPEC_PATH}
     ports:
       - '8084:8084'
     expose:
       - '8084'
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8084/mcp/status || exit 1;"]
-      interval: 19s
-      timeout: 5s
-      retries: 10
-    depends_on:
-      go-admin:
-        condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8084/mcp/status || exit 1;"]
+    #   interval: 19s
+    #   timeout: 5s
+    #   retries: 10
+    # depends_on:
+    #   go-admin:
+    #     condition: service_healthy
 
   gatari-mcp-client:
     container_name: gatari-mcp-client
@@ -136,14 +136,14 @@ services:
       - '9000:9000'
     expose:
       - '9000'
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1;"]
-      interval: 19s
-      timeout: 5s
-      retries: 10
-    depends_on:
-      gatari-mcp-server:
-        condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:9000/health || exit 1;"]
+    #   interval: 19s
+    #   timeout: 5s
+    #   retries: 10
+    # depends_on:
+    #   gatari-mcp-server:
+    #     condition: service_healthy
 
   postgres:
     image: postgres:15
