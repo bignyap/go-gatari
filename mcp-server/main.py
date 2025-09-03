@@ -129,4 +129,4 @@ mcp = FastMCP.from_openapi(
 )
 
 if __name__ == "__main__":
-    mcp.run(transport="http", port=PORT)
+    mcp.run(transport="http", port=PORT, host="0.0.0.0")

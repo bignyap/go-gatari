@@ -124,7 +124,7 @@ services:
     #     CACHE_BUST: ${CACHE_BUST}
     restart: always
     environment:
-      MCP_SERVER_URL: ${BASE_URL}
+      MCP_SERVER_URL: ${MCP_SERVER_URL}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       PORT: ${MCP_CLIENT_PORT}
       LLM_PROVIDER: ${LLM_PROVIDER}

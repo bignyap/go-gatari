@@ -1,7 +1,6 @@
 import os
-import uuid
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, AsyncGenerator, cast
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +8,7 @@ import uvicorn
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from fastmcp import Client
+from contextlib import asynccontextmanager
 
 # LangChain imports
 from langchain_openai import ChatOpenAI
@@ -23,11 +23,33 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # "openai" or "gemini"
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 PORT = int(os.getenv("BACKEND_PORT", "9000"))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
-app = FastAPI(title="GATARI MCP Chat Backend")
+# ---- MCP client lifecycle ----
+_mcp_client: Optional[Client] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """
+    Handles application startup and shutdown events.
+    """
+    global _mcp_client
+    # Code to run on startup
+    _mcp_client = Client(MCP_SERVER_URL)
+    await _mcp_client.__aenter__()
+    print("MCP client connected successfully.")
+
+    yield
+
+    # Code to run on shutdown
+    if _mcp_client is not None:
+        await _mcp_client.__aexit__(None, None, None)
+        _mcp_client = None
+        print("MCP client disconnected.")
+
+app = FastAPI(title="GATARI MCP Chat Backend", lifespan=lifespan)
 
 # ---- CORS ----
 app.add_middleware(
@@ -38,15 +60,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---- MCP client ----
-_mcp_client: Optional[Client] = None
-
 async def get_mcp_client() -> Client:
-    global _mcp_client
     if _mcp_client is None:
-        _mcp_client = Client(MCP_SERVER_URL)
-        await _mcp_client.__aenter__()  # establish connection
-    return _mcp_client
+        raise RuntimeError("MCP client not initialized")
+    return cast(Client, _mcp_client)
 
 async def mcp_list_tools():
     client = await get_mcp_client()
@@ -90,8 +107,7 @@ INTENT_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You convert natural language requests into MCP tool invocations.\n"
      "Return ONLY a strict JSON object with fields: tool, args, summary, confirmation.\n"
-     "If no suitable tool exists, set tool=null and args={{}}. Do not invent tools.\n"
-     "Use the provided parameter schemas when forming args."),
+     "If no suitable tool exists, set tool=null and args={{}}."),
     ("user", "{user_input}")
 ])
 parser = JsonOutputParser()
@@ -143,13 +159,13 @@ async def ws_chat(ws: WebSocket):
     tools = await mcp_list_tools()
 
     try:
-        await ws.send_text(ws_msg("bot", "Hi! Tell me what to do. I'll propose an action and ask for confirmation."))
+        await ws.send_text(ws_msg("bot", "Hi! Tell me what to do. I'll propose an action."))
         while True:
             raw = await ws.receive_text()
             try:
                 incoming = WSIncoming.model_validate_json(raw)
             except Exception:
-                await ws.send_text(ws_msg("error", "Invalid message. Send JSON: { type: 'user', text: '...' }"))
+                await ws.send_text(ws_msg("error", "Invalid message."))
                 continue
 
             if incoming.type != "user":
@@ -167,8 +183,6 @@ async def ws_chat(ws: WebSocket):
                         result = await mcp_call_tool(
                             pending_action["tool"], pending_action["args"]
                         )
-
-                        # ✅ Convert to JSON-safe dict
                         if hasattr(result, "dict"):
                             result_payload = result.dict()
                         elif hasattr(result, "json"):
@@ -182,7 +196,7 @@ async def ws_chat(ws: WebSocket):
                     finally:
                         pending_action = None
                 elif low in ("n", "no", "cancel", "stop"):
-                    await ws.send_text(ws_msg("bot", "❌ Cancelled. What next?"))
+                    await ws.send_text(ws_msg("bot", "❌ Cancelled."))
                     pending_action = None
                 else:
                     await ws.send_text(ws_msg("bot", "Please reply 'yes' or 'no'."))
@@ -196,15 +210,13 @@ async def ws_chat(ws: WebSocket):
                 await ws.send_text(ws_msg("error", f"LLM error: {e}"))
                 continue
 
-            print("Plan:", plan)
-
             tool = plan.get("tool")
             args = plan.get("args") or {}
             summary = plan.get("summary") or ""
             confirmation = plan.get("confirmation") or ""
 
             if not tool:
-                await ws.send_text(ws_msg("bot", "I couldn't map that to a known action. Try rephrasing."))
+                await ws.send_text(ws_msg("bot", "I couldn't map that to a known action."))
                 continue
 
             pending_action = {"tool": tool, "args": args}
@@ -227,5 +239,5 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=PORT,
-        reload=True
+        reload=True,
     )
