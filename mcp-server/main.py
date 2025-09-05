@@ -24,18 +24,35 @@ PORT = int(os.getenv("PORT", 8000))
 def _resolve_case_insensitive(base_dir: Path, rel: str) -> Path:
     """
     Resolve rel against base_dir, case-insensitively.
-    If rel has N parts, we search base_dir with '**' up to that depth.
+    Priority:
+      1. Exact match
+      2. Case-insensitive match in the expected subdir
+      3. Recursive case-insensitive match (fallback)
     """
-    target = base_dir / rel
-    print("Target:", target)
+    print(f"Resolving {rel} in {base_dir} (case-insensitive)")
+
+    rel_path = Path(rel)
+    target = base_dir / rel_path
+
+    # 1. Exact match
     if target.exists():
+        print(f"Resolved {rel} to {target}")
         return target
 
-    parts_len = len(Path(rel).parts)
-    # Build a glob like '*/*/...'
+    # 2. Case-insensitive match in the same subdir
+    subdir = base_dir / rel_path.parent
+    if subdir.exists():
+        for f in subdir.iterdir():
+            if f.is_file() and f.name.lower() == rel_path.name.lower():
+                print(f"Resolved {rel} to {f} (case-insensitive in subdir)")
+                return f
+
+    # 3. Fallback: search recursively anywhere in base_dir
+    parts_len = len(rel_path.parts)
     pattern = "*/" * (parts_len - 1) + "*"
     for f in base_dir.glob(pattern):
-        if f.is_file() and f.name.lower() == Path(rel).name.lower():
+        if f.is_file() and f.name.lower() == rel_path.name.lower():
+            print(f"Resolved {rel} to {f} (case-insensitive fallback)")
             return f
 
     raise FileNotFoundError(f"Could not resolve {rel} in {base_dir}")
