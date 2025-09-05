@@ -1,7 +1,7 @@
 services:
   go-admin:
     container_name: go-admin
-    image: go-admin:latest
+    image: bignya/go-admin:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -40,7 +40,7 @@ services:
 
   gate-keeper:
     container_name: gate-keeper
-    image: gate-keeper:latest
+    image: bignya/gate-keeper:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -90,7 +90,7 @@ services:
 
   gatari-mcp-server:
     container_name: gatari-mcp-server
-    image: gatari-mcp-server:latest
+    image: bignya/gatari-mcp-server:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -116,7 +116,7 @@ services:
 
   gatari-mcp-client:
     container_name: gatari-mcp-client
-    image: gatari-mcp-client:latest
+    image: bignya/gatari-mcp-client:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -183,7 +183,7 @@ services:
       retries: 10
 
   gatari-apidoc:
-    image: styled-swagger-ui:latest
+    image: bignya/styled-swagger-ui:latest
     restart: always
     ports:
       - '8083:80'

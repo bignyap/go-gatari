@@ -2,6 +2,7 @@ version: '3'
 
 vars:
   SERVICE_NAME: go-admin
+  DOCKER_NAMESPACE: bignya
   REPO_FOLDER:
     sh: pwd
   BUILD_DIR: "{{.REPO_FOLDER}}/build"
@@ -109,8 +110,6 @@ tasks:
   compile-artifacts:
     vars:
       CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
-      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
-      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
     cmds:
       - task: pre_compile
         vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
@@ -165,13 +164,19 @@ tasks:
   
   remove-openapi-spec:
     cmds:
-    - powershell -ExecutionPolicy Bypass -Command "rm -rf mcp-server/_apidoc"
+      - |
+        {{if eq OS "windows"}}
+        powershell -Command "if (Test-Path 'mcp-server/_apidoc') { Remove-Item -Recurse -Force 'mcp-server/_apidoc' }"
+        {{else}}
+        rm -rf mcp-server/_apidoc
+        {{end}}
 
   build-container:
     vars:
+      DOCKER_NAMESPACE: "{{.DOCKER_NAMESPACE | default .DOCKER_NAMESPACE}}"
       CURRENT_SERVICE_NAME: "{{.SERVICE_NAME | default .SERVICE_NAME}}"
-      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
-      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+      CONTAINER_IMAGE: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:latest"
     deps:
       - task: compile-artifacts
         vars: { SERVICE_NAME: "{{.CURRENT_SERVICE_NAME}}" }
@@ -191,18 +196,20 @@ tasks:
 
   build-mcp-client-container:
     vars:
+      DOCKER_NAMESPACE: "{{.DOCKER_NAMESPACE | default .DOCKER_NAMESPACE}}"
       CURRENT_SERVICE_NAME: "gatari-mcp-client"
-      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
-      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+      CONTAINER_IMAGE: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:latest"
     cmds:
       - powershell -ExecutionPolicy Bypass -Command "cd mcp-client; docker build -t {{.CONTAINER_IMAGE}} ."
       - docker tag {{.CONTAINER_IMAGE}} {{.CONTAINER_IMAGE_LATEST}}
 
   build-mcp-server-container:
     vars:
+      DOCKER_NAMESPACE: "{{.DOCKER_NAMESPACE | default .DOCKER_NAMESPACE}}"
       CURRENT_SERVICE_NAME: "gatari-mcp-server"
-      CONTAINER_IMAGE: "{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
-      CONTAINER_IMAGE_LATEST: "{{.CURRENT_SERVICE_NAME}}:latest"
+      CONTAINER_IMAGE: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:{{.CONTAINER_IMAGE_TAG}}"
+      CONTAINER_IMAGE_LATEST: "{{.DOCKER_NAMESPACE}}/{{.CURRENT_SERVICE_NAME}}:latest"
     cmds:
       - task: copy-openapi-spec
       - powershell -ExecutionPolicy Bypass -Command "cd mcp-server; docker build -t {{.CONTAINER_IMAGE}} ."
@@ -230,3 +237,27 @@ tasks:
   stop-container:
     cmds:
       - docker compose -f docker-compose.yaml down
+
+  clean-build-run:
+    aliases: [cbr]
+    cmds:
+      - task: stop-container
+      - task: remove-container
+        vars: { SERVICE_NAME: go-admin }
+      - task: remove-container
+        vars: { SERVICE_NAME: gate-keeper }
+      - task: remove-container
+        vars: { SERVICE_NAME: gatari-db-init }
+      - task: remove-container
+        vars: { SERVICE_NAME: gatari-mcp-server }
+      - task: remove-container
+        vars: { SERVICE_NAME: gatari-mcp-client }
+      - task: build-container
+        vars: { SERVICE_NAME: go-admin }
+      - task: build-container
+        vars: { SERVICE_NAME: gate-keeper }
+      - task: build-container
+        vars: { SERVICE_NAME: gatari-db-init }
+      - task: build-mcp-server-container
+      - task: build-mcp-client-container
+      - task: start-container
